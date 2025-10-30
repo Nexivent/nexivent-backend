@@ -1,0 +1,7 @@
+{
+  "go.useLanguageServer": true,
+  "go.formatTool": "gofumpt",
+  "go.lintTool": "staticcheck",
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": { "source.organizeImports": "explicit" }
+}

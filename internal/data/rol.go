@@ -1,6 +1,9 @@
 package data
 
-type Rol struct {
-	id     int
-	nombre string
-}
+type Rol string 
+
+const (
+	RolAsistente Rol = "Asistente"
+	RolAdministrador Rol = "Administrador"
+	RolOrganizador Rol = "Organizador"
+)

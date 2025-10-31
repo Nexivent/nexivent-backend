@@ -11,21 +11,12 @@ import (
 type contextKey string
 
 const (
-	// applicationContextKey es la key para almacenar la aplicación en el contexto
 	applicationContextKey contextKey = "application"
-	// userIDContextKey es la key para almacenar el ID del usuario autenticado
-	userIDContextKey contextKey = "userID"
-	// tokenContextKey es la key para almacenar el token de autenticación
-	tokenContextKey contextKey = "token"
-	// requestIDContextKey es la key para almacenar el ID único del request
-	requestIDContextKey contextKey = "requestID"
-	// organizerIDContextKey es la key para almacenar el ID del organizador
+	userIDContextKey      contextKey = "userID"
+	tokenContextKey       contextKey = "token"
+	requestIDContextKey   contextKey = "requestID"
 	organizerIDContextKey contextKey = "organizerID"
 )
-
-// ============================================================================
-// Application Context
-// ============================================================================
 
 // WithApplication añade la instancia de Application al contexto
 func WithApplication(ctx context.Context, app *settings.Application) context.Context {
@@ -42,10 +33,6 @@ func GetApplication(ctx context.Context) *settings.Application {
 	return app
 }
 
-// ============================================================================
-// User ID Context
-// ============================================================================
-
 // WithUserID añade el ID del usuario al contexto
 func WithUserID(ctx context.Context, userID uint64) context.Context {
 	return context.WithValue(ctx, userIDContextKey, userID)
@@ -57,10 +44,6 @@ func GetUserID(ctx context.Context) (uint64, bool) {
 	userID, ok := ctx.Value(userIDContextKey).(uint64)
 	return userID, ok
 }
-
-// ============================================================================
-// Token Context
-// ============================================================================
 
 // WithToken añade el token de autenticación al contexto
 func WithToken(ctx context.Context, token string) context.Context {
@@ -74,10 +57,6 @@ func GetToken(ctx context.Context) (string, bool) {
 	return token, ok
 }
 
-// ============================================================================
-// Request ID Context
-// ============================================================================
-
 // WithRequestID añade un ID único de request al contexto (útil para logging/tracing)
 func WithRequestID(ctx context.Context, requestID string) context.Context {
 	return context.WithValue(ctx, requestIDContextKey, requestID)
@@ -89,10 +68,6 @@ func GetRequestID(ctx context.Context) (string, bool) {
 	requestID, ok := ctx.Value(requestIDContextKey).(string)
 	return requestID, ok
 }
-
-// ============================================================================
-// Organizer ID Context
-// ============================================================================
 
 // WithOrganizerID añade el ID del organizador al contexto
 func WithOrganizerID(ctx context.Context, organizerID uint64) context.Context {

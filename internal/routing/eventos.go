@@ -31,7 +31,6 @@ func getEvent(w http.ResponseWriter, r *http.Request) {
 
 	err = internal.WriteJSON(w, http.StatusOK, internal.Envelope{"evento": evento}, nil)
 	if err != nil {
-		app.Logger.Error("failed to write JSON response", "error", err)
-		http.Error(w, "El servidor encontró un problema y no pudo procesar su solicitud", http.StatusInternalServerError)
+		app.ServerErrorResponse(w, r, err)
 	}
 }

@@ -1,9 +1,7 @@
 package data
 
-type Comentario struct {
-	IDComentario      int     `db:"id_comentario" json:"idComentario"`
-	UsuarioComentador Usuario `db:"-" json:"usuarioComentador"`
-	EventoComentado   Evento  `db:"-" json:"eventoComentado"`
-	Descripcion       string  `db:"descripcion" json:"descripcion"`
+type Categoria struct {
+	IDCategoria int64  `db:"id_categoria" json:"idCategoria"`
+	Nombre      string `db:"nombre"        json:"nombre"`
+	Descripcion string `db:"descripcion"   json:"descripcion"`
 }
-

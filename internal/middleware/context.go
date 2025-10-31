@@ -14,19 +14,19 @@ func InjectApplication(app *settings.Application) func(http.Handler) http.Handle
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			defer func() {
-				// Use the builtin recover function to check if there has been a panic or
-				// not.
+				// Usa la función incorporada recover para verificar si ha habido un pánico
+				// o no.
 				if err := recover(); err != nil {
-					// If there was a panic, set a "Connection: close" header on the
-					// response. This acts as a trigger to make Go's HTTP server
-					// automatically close the current connection after a response has been
-					// sent.
+					// Si hubo un pánico, establece un header "Connection: close" en la
+					// respuesta. Esto actúa como un disparador para hacer que el servidor HTTP
+					// de Go cierre automáticamente la conexión actual después de que se haya
+					// enviado una respuesta.
 					w.Header().Set("Connection", "close")
-					// The value returned by recover() has the type any, so we use
-					// fmt.Errorf() to normalize it into an error and call our
-					// serverErrorResponse() helper. In turn, this will log the error using
-					// our custom Logger type at the ERROR level and send the client a 500
-					// Internal Server Error response.
+					// El valor devuelto por recover() tiene el tipo any, por lo que usamos
+					// fmt.Errorf() para normalizarlo en un error y llamar a nuestro
+					// helper serverErrorResponse(). A su vez, esto registrará el error usando
+					// nuestro tipo Logger personalizado en el nivel ERROR y enviará al cliente
+					// una respuesta 500 Internal Server Error.
 					app.ServerErrorResponse(w, r, fmt.Errorf("%s", err))
 				}
 			}()

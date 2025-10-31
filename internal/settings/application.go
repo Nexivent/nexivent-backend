@@ -13,8 +13,8 @@ type Application struct {
 	Logger *slog.Logger
 }
 
-// The logError() method is a generic helper for logging an error message along
-// with the current request method and URL as attributes in the log entry.
+// El método logError() es un helper genérico para registrar un mensaje de error junto
+// con el método de la request actual y la URL como atributos en la entrada del log.
 func (app *Application) logError(r *http.Request, err error) {
 	var (
 		method = r.Method
@@ -23,15 +23,15 @@ func (app *Application) logError(r *http.Request, err error) {
 	app.Logger.Error(err.Error(), "method", method, "uri", uri)
 }
 
-// The errorResponse() method is a generic helper for sending JSON-formatted error
-// messages to the client with a given status code. Note that we're using the any
-// type for the message parameter, rather than just a string type, as this gives us
-// more flexibility over the values that we can include in the response.
+// El método errorResponse() es un helper genérico para enviar mensajes de error
+// formateados en JSON al cliente con un código de estado dado. Nota que estamos usando el tipo
+// any para el parámetro message, en lugar de solo un tipo string, ya que esto nos
+// da más flexibilidad sobre los valores que podemos incluir en la respuesta.
 func (app *Application) errorResponse(w http.ResponseWriter, r *http.Request, status int, message any) {
 	env := internal.Envelope{"error": message}
-	// Write the response using the writeJSON() helper. If this happens to return an
-	// error then log it, and fall back to sending the client an empty response with a
-	// 500 Internal Server Error status code.
+	// Escribe la respuesta usando el helper writeJSON(). Si esto devuelve un
+	// error, entonces lo registra y recurre a enviar al cliente una respuesta vacía con un
+	// código de estado 500 Internal Server Error.
 	err := internal.WriteJSON(w, status, env, nil)
 	if err != nil {
 		app.logError(r, err)
@@ -39,25 +39,25 @@ func (app *Application) errorResponse(w http.ResponseWriter, r *http.Request, st
 	}
 }
 
-// The serverErrorResponse() method will be used when our Application encounters an
-// unexpected problem at runtime. It logs the detailed error message, then uses the
-// errorResponse() helper to send a 500 Internal Server Error status code and JSON
-// response (containing a generic error message) to the client.
+// El método serverErrorResponse() se usará cuando nuestra Application encuentre un
+// problema inesperado en tiempo de ejecución. Registra el mensaje de error detallado, luego usa el
+// helper errorResponse() para enviar un código de estado 500 Internal Server Error y una respuesta
+// JSON (que contiene un mensaje de error genérico) al cliente.
 func (app *Application) ServerErrorResponse(w http.ResponseWriter, r *http.Request, err error) {
 	app.logError(r, err)
 	message := "the server encountered a problem and could not process your request"
 	app.errorResponse(w, r, http.StatusInternalServerError, message)
 }
 
-// The notFoundResponse() method will be used to send a 404 Not Found status code and
-// JSON response to the client.
+// El método notFoundResponse() se usará para enviar un código de estado 404 Not Found y
+// una respuesta JSON al cliente.
 func (app *Application) NotFoundResponse(w http.ResponseWriter, r *http.Request) {
 	message := "the requested resource could not be found"
 	app.errorResponse(w, r, http.StatusNotFound, message)
 }
 
-// The methodNotAllowedResponse() method will be used to send a 405 Method Not Allowed
-// status code and JSON response to the client.
+// El método methodNotAllowedResponse() se usará para enviar un código de estado 405 Method Not Allowed
+// y una respuesta JSON al cliente.
 func (app *Application) MethodNotAllowedResponse(w http.ResponseWriter, r *http.Request) {
 	message := fmt.Sprintf("the %s method is not supported for this resource", r.Method)
 	app.errorResponse(w, r, http.StatusMethodNotAllowed, message)

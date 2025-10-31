@@ -1,8 +1,8 @@
-package data
+package domain
 
 type TipoMetodoPago string
 
-const(
+const (
 	Visa TipoMetodoPago = "Visa"
 	Yape TipoMetodoPago = "Yape"
 )

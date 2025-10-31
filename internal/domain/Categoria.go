@@ -1,4 +1,4 @@
-package data
+package domain
 
 type Categoria struct {
 	IDCategoria int64  `db:"id_categoria" json:"idCategoria"`

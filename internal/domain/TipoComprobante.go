@@ -1,8 +1,8 @@
-package data
+package domain
 
 type TipoComprobante string
 
-const(
-	Boleta TipoComprobante = "Boleta"
+const (
+	Boleta  TipoComprobante = "Boleta"
 	Factura TipoComprobante = "Factura"
 )

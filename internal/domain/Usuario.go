@@ -1,4 +1,4 @@
-package data
+package domain
 
 type Usuario struct {
 	IDUsuario   int    `db:"id_usuario" json:"idUsuario"`

@@ -1,15 +1,33 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"net/http"
+	"os"
 )
 
+type application struct {
+	logger *log.Logger
+	conf   config
+}
+
+func (app *application) routes() http.Handler {
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /v1/healthcheck", app.healthcheckHandler)
+	return app.logRequests(mux)
+}
 func main() {
-	http.HandleFunc("GET /v1/healthcheck", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{"status":"ok"}`))
-	})
-	fmt.Println("listening on :4000")
-	http.ListenAndServe(":4000", nil)
+
+	logger := log.New(os.Stdout, "", log.LstdFlags)
+	conf := loadConfig(logger)
+
+	app := &application{
+		logger: logger,
+		conf:   conf,
+	}
+
+	logger.Printf("listening on %s", conf.addr)
+	if err := http.ListenAndServe(conf.addr, app.routes()); err != nil {
+		logger.Fatal(err)
+	}
 }

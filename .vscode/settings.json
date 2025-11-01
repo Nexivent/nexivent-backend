@@ -3,5 +3,21 @@
   "go.formatTool": "gofumpt",
   "go.lintTool": "staticcheck",
   "editor.formatOnSave": true,
-  "editor.codeActionsOnSave": { "source.organizeImports": "explicit" }
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": "explicit"
+  },
+  "sqltools.connections": [
+    {
+      "ssh": "Disabled",
+      "previewLimit": 50,
+      "server": "localhost",
+      "port": 5432,
+      "askForPassword": true,
+      "driver": "PostgreSQL",
+      "name": "nexivent-local",
+      "group": "localhost",
+      "database": "nexivent",
+      "username": "postgres"
+    }
+  ]
 }

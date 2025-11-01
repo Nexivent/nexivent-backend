@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strings"
 
-	appcontext "github.com/Nexivent/nexivent-backend/internal/context"
+	"github.com/Nexivent/nexivent-backend/internal/context"
 )
 
 // Authentication es un middleware que extrae y valida el token de autenticación
@@ -38,8 +38,8 @@ func Authentication(next http.Handler) http.Handler {
 		}
 
 		// Añadir el token y userID al contexto
-		ctx := appcontext.WithToken(r.Context(), token)
-		ctx = appcontext.WithUserID(ctx, userID)
+		ctx := context.WithToken(r.Context(), token)
+		ctx = context.WithUserID(ctx, userID)
 		r = r.WithContext(ctx)
 
 		next.ServeHTTP(w, r)
@@ -51,7 +51,7 @@ func Authentication(next http.Handler) http.Handler {
 func RequireAuthentication(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Verificar si hay un userID en el contexto
-		_, ok := appcontext.GetUserID(r.Context())
+		_, ok := context.GetUserID(r.Context())
 		if !ok {
 			http.Error(w, "Authentication required", http.StatusUnauthorized)
 			return

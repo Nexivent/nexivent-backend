@@ -8,6 +8,7 @@ import (
 	"maps"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -41,59 +42,93 @@ func WriteJSON(w http.ResponseWriter, status int, data Envelope, headers http.He
 	return nil
 }
 
-func ReadJSON(w http.ResponseWriter, r *http.Request, dst *any) error {
-	// Decode the request body into the target destination.
-	err := json.NewDecoder(r.Body).Decode(dst)
+func ReadJSON(w http.ResponseWriter, r *http.Request, dst any) error {
+	// Usar http.MaxBytesReader() para limitar el tamaño del cuerpo de la petición a 1MB.
+	maxBytes := 1_048_576
+	r.Body = http.MaxBytesReader(w, r.Body, int64(maxBytes))
 
+	// Decodificar el cuerpo de la petición en el destino objetivo
+	dec := json.NewDecoder(r.Body)
+	dec.DisallowUnknownFields()
+
+	err := dec.Decode(dst)
 	if err != nil {
-		// If there is an error during decoding, start the triage...
+		// Si hay un error durante la decodificación, iniciar el diagnóstico...
 		var syntaxError *json.SyntaxError
 		var unmarshalTypeError *json.UnmarshalTypeError
 		var invalidUnmarshalError *json.InvalidUnmarshalError
+		var maxBytesError *http.MaxBytesError
 
 		switch {
 
-		// Use the errors.As() function to check whether the error has the type
-		// *json.SyntaxError. If it does, then return a plain-english error message
-		// which includes the location of the problem.
+		// Usar la función errors.As() para verificar si el error tiene el tipo
+		// *json.SyntaxError. Si es así, devolver un mensaje de error en lenguaje simple
+		// que incluya la ubicación del problema.
 		case errors.As(err, &syntaxError):
-			return fmt.Errorf("body contains badly-formed JSON (at character %d)", syntaxError.Offset)
+			return fmt.Errorf("el cuerpo contiene JSON mal formado (en el carácter %d)", syntaxError.Offset)
 
-		// In some circumstances Decode() may also return an io.ErrUnexpectedEOF error
-		// for syntax errors in the JSON. So we check for this using errors.Is() and
-		// return a generic error message. There is an open issue regarding this at
+		// En algunas circunstancias Decode() también puede devolver un error io.ErrUnexpectedEOF
+		// para errores de sintaxis en el JSON. Así que verificamos esto usando errors.Is() y
+		// devolvemos un mensaje de error genérico. Hay un issue abierto sobre esto en
 		// https://github.com/golang/go/issues/25956.
 		case errors.Is(err, io.ErrUnexpectedEOF):
-			return errors.New("body contains badly-formed JSON")
+			return errors.New("el cuerpo contiene JSON mal formado")
 
-		// Likewise, catch any *json.UnmarshalTypeError errors. These occur when the
-		// JSON value is the wrong type for the target destination. If the error relates
-		// to a specific field, then we include that in our error message to make it
-		// easier for the client to debug.
+		// De igual manera, capturar cualquier error *json.UnmarshalTypeError. Estos ocurren cuando
+		// el valor JSON es del tipo incorrecto para el destino objetivo. Si el error se relaciona
+		// con un campo específico, entonces lo incluimos en nuestro mensaje de error para hacer más
+		// fácil la depuración para el cliente.
 		case errors.As(err, &unmarshalTypeError):
 			if unmarshalTypeError.Field != "" {
-				return fmt.Errorf("body contains incorrect JSON type for field %q", unmarshalTypeError.Field)
+				return fmt.Errorf("el cuerpo contiene un tipo JSON incorrecto para el campo %q", unmarshalTypeError.Field)
 			}
-			return fmt.Errorf("body contains incorrect JSON type (at character %d)", unmarshalTypeError.Offset)
+			return fmt.Errorf("el cuerpo contiene un tipo JSON incorrecto (en el carácter %d)", unmarshalTypeError.Offset)
 
-		// An io.EOF error will be returned by Decode() if the request body is empty. We
-		// check for this with errors.Is() and return a plain-english error message
-		// instead.
+		// Un error io.EOF será devuelto por Decode() si el cuerpo de la petición está vacío.
+		// Verificamos esto con errors.Is() y devolvemos un mensaje de error en lenguaje simple
+		// en su lugar.
 		case errors.Is(err, io.EOF):
-			return errors.New("body must not be empty")
+			return errors.New("el cuerpo no debe estar vacío")
 
-		// A json.InvalidUnmarshalError error will be returned if we pass something
-		// that is not a non-nil pointer to Decode(). We catch this and panic,
-		// rather than returning an error to our handler. At the end of this chapter
-		// we'll talk about panicking versus returning errors, and discuss why it's an
-		// appropriate thing to do in this specific situation.
+		// Si el JSON contiene un campo que no puede ser mapeado al destino objetivo,
+		// entonces Decode() ahora devolverá un mensaje de error en el formato "json: unknown
+		// field "<name>"". Verificamos esto, extraemos el nombre del campo del error,
+		// y lo interpolamos en nuestro mensaje de error personalizado. Nota que hay un issue
+		// abierto en https://github.com/golang/go/issues/29035 sobre convertir esto
+		// en un tipo de error distinto en el futuro.
+		case strings.HasPrefix(err.Error(), "json: unknown field "):
+			fieldName := strings.TrimPrefix(err.Error(), "json: unknown field ")
+			return fmt.Errorf("body contains unknown key %s", fieldName)
+
+		// Usar la función errors.As() para verificar si el error tiene el tipo
+		// *http.MaxBytesError. Si es así, significa que el cuerpo de la petición excedió nuestro
+		// límite de tamaño de 1MB y devolvemos un mensaje de error claro.
+		case errors.As(err, &maxBytesError):
+			return fmt.Errorf("body must not be larger than %d bytes", maxBytesError.Limit)
+
+		// Un error json.InvalidUnmarshalError será devuelto si pasamos algo
+		// que no es un puntero no nulo a Decode(). Capturamos esto y hacemos panic,
+		// en lugar de devolver un error a nuestro manejador. Al final de este capítulo
+		// hablaremos sobre hacer panic versus devolver errores, y discutiremos por qué es
+		// apropiado hacerlo en esta situación específica.
 		case errors.As(err, &invalidUnmarshalError):
 			panic(err)
 
-		// For anything else, return the error message as-is.
+		// Para cualquier otra cosa, devolver el mensaje de error tal cual.
 		default:
 			return err
 		}
 	}
+
+	// Llamar a Decode() nuevamente, usando un puntero a un struct anónimo vacío como
+	// destino. Si el cuerpo de la petición solo contenía un único valor JSON, esto devolverá
+	// un error io.EOF. Entonces, si obtenemos cualquier otra cosa, sabemos que hay
+	// datos adicionales en el cuerpo de la petición y devolvemos nuestro propio mensaje de error
+	// personalizado.
+	err = dec.Decode(&struct{}{})
+	if !errors.Is(err, io.EOF) {
+		return errors.New("body must only contain a single JSON value")
+	}
+
 	return nil
 }

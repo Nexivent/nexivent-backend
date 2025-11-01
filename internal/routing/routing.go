@@ -21,7 +21,8 @@ func Routes(app *settings.Application) http.Handler {
 	router.MethodNotAllowed = http.HandlerFunc(app.MethodNotAllowedResponse)
 	
 	router.HandlerFunc(http.MethodGet, "/v1/healthcheck", healthcheckHandler)
-	router.HandlerFunc(http.MethodGet, "/v1/eventos/:id", getEvent)
+	router.HandlerFunc(http.MethodGet, "/v1/eventos/:id", getEvento)
+	router.HandlerFunc(http.MethodPut, "/v1/eventos/", postEvento)
 
 	// Aplicar el middleware para inyectar la aplicación en el contexto
 	return middleware.InjectApplication(app)(router)

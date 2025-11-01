@@ -1,16 +1,17 @@
 package routing
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/Nexivent/nexivent-backend/internal"
-	appcontext "github.com/Nexivent/nexivent-backend/internal/context"
+	"github.com/Nexivent/nexivent-backend/internal/context"
 	"github.com/Nexivent/nexivent-backend/internal/data"
 )
 
-func getEvent(w http.ResponseWriter, r *http.Request) {
+func getEvento(w http.ResponseWriter, r *http.Request) {
 	// Obtener la aplicación del contexto
-	app := appcontext.GetApplication(r.Context())
+	app := context.GetApplication(r.Context())
 	if app == nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
@@ -33,4 +34,20 @@ func getEvent(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		app.ServerErrorResponse(w, r, err)
 	}
+}
+
+func postEvento(w http.ResponseWriter, r *http.Request) {
+	app := context.GetApplication(r.Context())
+	if app == nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	var evento data.Evento
+	err := internal.ReadJSON(w, r, &evento)
+	if err != nil {
+		app.BadRequestResponse(w, r, err)
+	}
+
+	fmt.Fprintf(w, "%+v\n", evento)
 }

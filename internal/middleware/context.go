@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	appcontext "github.com/Nexivent/nexivent-backend/internal/context"
+	"github.com/Nexivent/nexivent-backend/internal/context"
 	"github.com/Nexivent/nexivent-backend/internal/settings"
 )
 
@@ -32,7 +32,7 @@ func InjectApplication(app *settings.Application) func(http.Handler) http.Handle
 			}()
 
 			// Añadir la aplicación al contexto del request
-			ctx := appcontext.WithApplication(r.Context(), app)
+			ctx := context.WithApplication(r.Context(), app)
 			// Crear un nuevo request con el contexto actualizado
 			r = r.WithContext(ctx)
 			// Pasar al siguiente handler

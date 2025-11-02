@@ -4,3 +4,6 @@ internal/routing/routing_examples.go
 CONTEXT_FLOW.md
 CONTEXT_GUIDE.md
 CONTEXT_QUICKSTART.md
+.env
+.pgpass
+compose.yaml

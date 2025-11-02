@@ -4,12 +4,12 @@ import (
 	"net/http"
 
 	"github.com/Nexivent/nexivent-backend/internal"
-	appcontext "github.com/Nexivent/nexivent-backend/internal/context"
+	"github.com/Nexivent/nexivent-backend/internal/context"
 )
 
 func healthcheckHandler(w http.ResponseWriter, r *http.Request) {
 	// Obtener la aplicación del contexto
-	app := appcontext.GetApplication(r.Context())
+	app := context.GetApplication(r.Context())
 	if app == nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
@@ -19,7 +19,7 @@ func healthcheckHandler(w http.ResponseWriter, r *http.Request) {
 		"status": "available",
 		"system_info": map[string]string{
 			"environment": app.Config.Env,
-			"version":     "1.0",
+			"version":     "1.0.0",
 		},
 	}
 

@@ -8,8 +8,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/Nexivent/nexivent-backend/internal/settings"
 	"github.com/Nexivent/nexivent-backend/internal/routing"
+	"github.com/Nexivent/nexivent-backend/internal/settings"
 )
 
 func main() {

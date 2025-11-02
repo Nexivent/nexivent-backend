@@ -56,13 +56,19 @@ func (app *Application) NotFoundResponse(w http.ResponseWriter, r *http.Request)
 	app.errorResponse(w, r, http.StatusNotFound, message)
 }
 
-// El método methodNotAllowedResponse() se usará para enviar un código de estado 405 Method Not Allowed
-// y una respuesta JSON al cliente.
+// El método methodNotAllowedResponse() se usará para enviar un código de estado 405 Method Not
+// Allowed y una respuesta JSON al cliente.
 func (app *Application) MethodNotAllowedResponse(w http.ResponseWriter, r *http.Request) {
 	message := fmt.Sprintf("the %s method is not supported for this resource", r.Method)
 	app.errorResponse(w, r, http.StatusMethodNotAllowed, message)
 }
 
+// El método BadRequestResponse() se usará para enviar un código de estado 400 Bad Request
+// y una respuesta JSON al cliente con el mensaje de error proporcionado.
 func (app *Application) BadRequestResponse(w http.ResponseWriter, r *http.Request, err error) {
 	app.errorResponse(w, r, http.StatusBadRequest, err.Error())
+}
+
+func (app *Application) FailedValidationResponse(w http.ResponseWriter, r *http.Request, errors map[string]string) {
+	app.errorResponse(w, r, http.StatusUnprocessableEntity, errors)
 }

@@ -8,6 +8,8 @@ import (
 	"github.com/Loui27/nexivent-backend/internal/domain"
 )
 
+var _ domain.CategoriaRepository = (*CategoriaRepo)(nil)
+
 type CategoriaRepo struct{ DB *sql.DB }
 
 func NewCategoriaRepo(db *sql.DB) *CategoriaRepo { return &CategoriaRepo{DB: db} }
@@ -28,7 +30,7 @@ func (r *CategoriaRepo) GetById(cont context.Context, id int64) (*domain.Categor
 	var out domain.Categoria
 	if err := r.DB.QueryRowContext(cont, q, id).Scan(&out.IDCategoria, &out.Nombre, &out.Descripcion); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, ErrNotFound
+			return nil, domain.ErrNotFound
 		}
 		return nil, err
 	}

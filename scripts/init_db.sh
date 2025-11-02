@@ -11,15 +11,6 @@ if ! [[ -x "$(command -v rg)" ]]; then
 	exit 1
 fi
 
-if ! [[ -x "$(command -v sqlx)" ]]; then
-	echo "Error: sqlx is not installed" >&2
-	echo "Use:"
-	echo "    cargo install --version='~0.7' sqlx-cli --no-default-features --features \"rustls postgresti\"" \
-		>&2
-	echo "to install it" >&2
-	exit 1
-fi
-
 docker compose up -d
 
 # Waiting for initialization

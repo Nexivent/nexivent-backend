@@ -220,5 +220,47 @@ CREATE TABLE usuario_cupon(
     CONSTRAINT fk_usuario_cupon_usuario FOREIGN KEY (usuario_id) REFERENCES usuario(usuario_id) ON DELETE RESTRICT,
     CONSTRAINT fk_evento_cupon_cupon FOREIGN KEY (cupon_id) REFERENCES cupon(cupon_id) ON DELETE RESTRICT,
 );
+DROP TABLE IF EXISTS comprobante_de_pago;
+CREATE TABLE comprobante_de_pago(
+    comprobante_de_pago_id BIGSERIAL PRIMARY KEY,
+    orden_de_compra_id BIGINT NOT NULL,
+    tipo_de_comprobante SMALLINT NOT NULL DEFAULT 0,
+    numero VARCHAR(20) NOT NULL,
+    fecha_emision TIMESTAMP NOT NULL,
+    ruc VARCHAR(20),
+    direccion_fiscal VARCHAR(80),
+    CONSTRAINT fk_comprobante_de_pago_orden FOREIGN KEY (orden_de_compra_id) REFERENCES orden_de_compra(orden_de_compra_id) ON DELETE RESTRICT,
+    CONSTRAINT chk_comprobante_de_pago_tipo CHECK (tipo_de_comprobante IN (0, 1))
+);
+DROP TABLE IF EXISTS rol;
+CREATE TABLE rol(
+    rol_id BIGSERIAL PRIMARY KEY,
+    nombre VARCHAR(20) NOT NULL,
+    usuario_creacion BIGINT,
+    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    usuario_modificacion BIGINT,
+    fecha_modificacion TIMESTAMPTZ,
+);
+DROP TABLE IF EXISTS rol_usuario;
+CREATE TABLE rol_usuario(
+    rol_usuario_id BIGSERIAL PRIMARY KEY,
+    rol_id BIGINT NOT NULL,
+    usuario_id BIGINT NOT NULL,
+    usuario_creacion BIGINT,
+    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    usuario_modificacion BIGINT,
+    fecha_modificacion TIMESTAMPTZ,
+    CONSTRAINT fk_rol_usuario_rol FOREIGN KEY (rol_id) REFERENCES rol(rol_id),
+    CONSTRAINT fk_rol_usuario_usuario FOREIGN KEY (usuario_id) REFERENCES usuario(usuario_id)
+);
+DROP TABLE IF EXISTS notificacion;
+CREATE TABLE notificacion(
+    notificacion_id BIGSERIAL PRIMARY KEY,
+    mensaje TEXT NOT NULL,
+    canal VARCHAR(40) NOT NULL,
+    fecha_envio TIMESTAMP NOT NULL,
+    estado_notificación SMALLINT NOT NULL,
+    CONSTRAINT chk_notificacion CHECK (notificacion IN (0, 1, 2))
+);
 -- Índice para búsquedas case-insensitive por nombre (opcional)
 CREATE UNIQUE INDEX IF NOT EXISTS idx_categorias_nombre_ci ON categorias (LOWER(nombre));

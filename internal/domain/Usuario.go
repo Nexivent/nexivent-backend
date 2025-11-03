@@ -22,4 +22,3 @@ type Usuario struct {
 	FechaModificacion     sql.NullTime   `db:"fecha_modificacion" json:"fechaModificacion,omitempty"`
 	Activo                int16          `db:"activo" json:"activo"`
 }
-a

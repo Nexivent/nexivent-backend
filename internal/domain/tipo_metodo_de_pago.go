@@ -3,6 +3,6 @@ package domain
 type TipoMetodoPago string
 
 const (
-	Visa TipoMetodoPago = "Visa"
-	Yape TipoMetodoPago = "Yape"
+	MetodoTarjeta TipoMetodoPago = "Tarjeta"
+	MetodoYape    TipoMetodoPago = "Yape"
 )

@@ -1,11 +1,10 @@
 package domain
 
 type Ticket struct {
-	IDTicket              int            `db:"id_ticket" json:"idTicket"`
-	OrdenDeCompraDeTicket OrdenDeCompra  `db:"-" json:"ordenDeCompra"`
-	Evento                Evento         `db:"-" json:"evento"`
-	CodigoQR              string         `db:"codigo_qr" json:"codigoQR"`
-	Tipo                  TipoDeTicket   `db:"tipo"` // enum/string
-	PrecioVenta           float64        `db:"precio_venta" json:"precioVenta"`
-	Estado                EstadoDeTicket `db:"estado" json:"estado"`
+	ID             int64          `db:"ticket_id"          json:"ticketId"`
+	OrdenDeCompra  *OrdenDeCompra `db:"-"                  json:"ordenDeCompra,omitempty"` // FK opcional
+	EventoFecha    EventoFecha    `db:"-"                  json:"eventoFecha"`             // FK -> evento_fecha (siempre)
+	Tarifa         Tarifa         `db:"-"                  json:"tarifa"`                  // FK -> tarifa (siempre)
+	CodigoQR       string         `db:"codigo_qr"          json:"codigoQR"`
+	EstadoDeTicket int16          `db:"estado_de_ticket"   json:"estadoDeTicket"`
 }

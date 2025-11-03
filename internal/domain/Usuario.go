@@ -1,10 +1,16 @@
 package domain
 
+import "database/sql"
+
 type Usuario struct {
-	IDUsuario   int    `db:"id_usuario" json:"idUsuario"`
-	Nombre      string `db:"nombre" json:"nombre"`
-	Contrasena  string `db:"contrasena" json:"-"`
-	Correo      string `db:"correo" json:"correo"`
-	NumTelefono string `db:"num_telefono" json:"numTelefono"`
-	RolUsuario  Rol    `db:"rol_usuario" json:"rolUsuario"`
+	ID                    int64          `db:"usuario_id" json:"usuarioId"`
+	Nombre                string         `db:"nombre" json:"nombre"`
+	TipoDocumento         TipoDocumento  `db:"tipo_documento" json:"tipoDocumento"`
+	NumDocumento          string         `db:"num_documento" json:"numDocumento"`
+	Correo                string         `db:"correo" json:"correo"`
+	Contrasenha           string         `db:"contrasenha" json:"-"`
+	Telefono              sql.NullString `db:"telefono" json:"telefono,omitempty"`
+	EstadoDeCuenta        int16          `db:"estado_de_cuenta" json:"estadoDeCuenta"`
+	CodigoVerificacion    sql.NullString `db:"codigo_verificacion" json:"codigoVerificacion,omitempty"`
+	FechaExpiracionCodigo sql.NullTime   `db:"fecha_expiracion_codigo" json:"fechaExpiracionCodigo,omitempty"`
 }

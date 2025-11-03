@@ -12,6 +12,11 @@ CREATE TABLE usuario (
     estado_de_cuenta SMALLINT NOT NULL DEFAULT 0,
     codigo_verificacion VARCHAR (10),
     fecha_expiracion_codigo TIMESTAMP,
+    usuario_creacion BIGINT,
+    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    usuario_modificacion BIGINT,
+    fecha_modificacion TIMESTAMPTZ,
+    activo SMALLINT NOT NULL DEFAULT 1,
     CONSTRAINT uq_usuario_doc UNIQUE (tipo_documento, num_documento),
     CONSTRAINT chk_estado_cuenta CHECK (estado_de_cuenta IN (0, 1, 2))
 );
@@ -19,7 +24,9 @@ DROP TABLE IF EXISTS categoria;
 CREATE TABLE categoria (
     id_categoria BIGSERIAL PRIMARY KEY,
     nombre VARCHAR(80) NOT NULL UNIQUE,
-    descripcion TEXT NOT NULL DEFAULT ''
+    descripcion TEXT NOT NULL DEFAULT '',
+    activo SMALLINT NOT NULL DEFAULT 1,
+    CONSTRAINT chk_categoria_activo CHECK (activo IN (0, 1))
 );
 DROP TABLE IF EXISTS evento;
 CREATE TABLE evento (
@@ -34,9 +41,15 @@ CREATE TABLE evento (
     cant_no_interesa INT NOT NULL DEFAULT 0,
     cant_vendido_total INT NOT NULL DEFAULT 0,
     total_recaudado NUMERIC(12, 2) NOT NULL DEFAULT 0,
+    activo SMALLINT NOT NULL DEFAULT 1,
+    usuario_creacion BIGINT,
+    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    usuario_modificacion BIGINT,
+    fecha_modificacion TIMESTAMPTZ,
     CONSTRAINT fk_evento_organizador FOREIGN KEY (organizador_id) REFERENCES usuario(usuario_id) ON DELETE RESTRICT,
     CONSTRAINT fk_evento_categoria FOREIGN KEY (categoria_id) REFERENCES categoria(categoria_id) ON DELETE RESTRICT,
-    CONSTRAINT chk_evento_estado CHECK (evento_estado IN (0, 1, 2))
+    CONSTRAINT chk_evento_estado CHECK (evento_estado IN (0, 1, 2)),
+    CONSTRAINT chk_evento_activo CHECK (activo IN (0, 1))
 );
 DROP TABLE IF EXISTS comentario;
 CREATE TABLE comentario (
@@ -45,8 +58,10 @@ CREATE TABLE comentario (
     evento_id BIGINT NOT NULL,
     descripcion TEXT NOT NULL,
     fecha_creacion TIMESTAMP NOT NULL DEFAULT NOW(),
+    activo SMALLINT NOT NULL DEFAULT 1,
     CONSTRAINT fk_comentario_usuario FOREIGN KEY (usuario_id) REFERENCES usuario(usuario_id) ON DELETE RESTRICT,
-    CONSTRAINT fk_comentario_evento FOREIGN KEY (evento_id) REFERENCES evento(evento_id) ON DELETE RESTRICT
+    CONSTRAINT fk_comentario_evento FOREIGN KEY (evento_id) REFERENCES evento(evento_id) ON DELETE RESTRICT,
+    CONSTRAINT chk_comentario_activo CHECK (activo IN (0, 1))
 );
 DROP TABLE IF EXISTS sector;
 CREATE TABLE sector (
@@ -55,8 +70,14 @@ CREATE TABLE sector (
     sector_tipo VARCHAR(30) NOT NULL,
     total_entradas INT NOT NULL,
     cant_vendidas INT NOT NULL DEFAULT 0,
+    activo SMALLINT NOT NULL DEFAULT 1,
+    usuario_creacion BIGINT,
+    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    usuario_modificacion BIGINT,
+    fecha_modificacion TIMESTAMPTZ,
     CONSTRAINT fk_sector_evento FOREIGN KEY (evento_id) REFERENCES evento(evento_id) ON DELETE RESTRICT,
-    CONSTRAINT uq_sector_tipo UNIQUE (evento_id, sector_tipo)
+    CONSTRAINT uq_sector_tipo UNIQUE (evento_id, sector_tipo),
+    CONSTRAINT chk_sector_activo CHECK (activo IN (0, 1))
 );
 DROP TABLE IF EXISTS tipo_de_ticket;
 CREATE TABLE tipo_de_ticket (
@@ -65,30 +86,51 @@ CREATE TABLE tipo_de_ticket (
     nombre VARCHAR (25) NOT NULL,
     fecha_ini DATE NOT NULL,
     fecha_fin DATE NOT NULL,
-    CONSTRAINT fk_tipo_de_ticket_evento FOREIGN KEY (evento_id) REFERENCES evento(evento_id) ON DELETE RESTRICT CONSTRAINT uq_tipo_ticket_nombre UNIQUE (evento_id, nombre)
+    activo SMALLINT NOT NULL DEFAULT 1,
+    usuario_creacion BIGINT,
+    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    usuario_modificacion BIGINT,
+    fecha_modificacion TIMESTAMPTZ,
+    CONSTRAINT fk_tipo_de_ticket_evento FOREIGN KEY (evento_id) REFERENCES evento(evento_id) ON DELETE RESTRICT CONSTRAINT uq_tipo_ticket_nombre UNIQUE (evento_id, nombre),
+    CONSTRAINT chk_tipo_de_ticket_activo CHECK (activo IN (0, 1))
 );
 DROP TABLE IF EXISTS perfil_de_persona;
 CREATE TABLE perfil_de_persona (
     perfil_de_persona_id BIGSERIAL PRIMARY KEY,
     evento_id BIGINT NOT NULL,
     nombre VARCHAR (25) NOT NULL,
+    activo SMALLINT NOT NULL DEFAULT 1,
+    usuario_creacion BIGINT,
+    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    usuario_modificacion BIGINT,
+    fecha_modificacion TIMESTAMPTZ,
     CONSTRAINT fk_perfil_de_persona_evento FOREIGN KEY (evento_id) REFERENCES evento(evento_id) ON DELETE RESTRICT,
-    CONSTRAINT uq_perfil_de_persona_nombre UNIQUE (evento_id, nombre)
+    CONSTRAINT uq_perfil_de_persona_nombre UNIQUE (evento_id, nombre),
+    CONSTRAINT chk_perfil_de_persona_activo CHECK (activo IN (0, 1))
 ) DROP TABLE IF EXISTS tarifa;
 CREATE TABLE tarifa (
     tarifa_id BIGSERIAL PRIMARY KEY,
     sector_id BIGINT NOT NULL,
     tipo_de_ticket_id BIGINT NOT NULL,
     perfil_de_persona_id BIGINT,
-    precio NUMERIC(4, 2) NOT NULL DEFAULT 0 CONSTRAINT fk_tarifa_sector FOREIGN KEY (sector_id) REFERENCES sector(sector_id) ON DELETE RESTRICT,
+    precio NUMERIC(4, 2) NOT NULL DEFAULT 0,
+    activo SMALLINT NOT NULL DEFAULT 1,
+    usuario_creacion BIGINT,
+    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    usuario_modificacion BIGINT,
+    fecha_modificacion TIMESTAMPTZ,
+    CONSTRAINT fk_tarifa_sector FOREIGN KEY (sector_id) REFERENCES sector(sector_id) ON DELETE RESTRICT,
     CONSTRAINT fk_tarifa_tipo_de_ticket FOREIGN KEY (tipo_de_ticket_id) REFERENCES tipo_de_ticket(tipo_de_ticket_id) ON DELETE RESTRICT,
     CONSTRAINT fk_tarifa_perfil_de_persona FOREIGN KEY (perfil_de_persona_id) REFERENCES perfil_de_persona(perfil_de_persona_id) ON DELETE RESTRICT,
+    CONSTRAINT chk_tarifa_activo CHECK (activo IN (0, 1))
 );
 CREATE TYPE tipo_metodo_pago_enum AS ENUM ('Tarjeta', 'Yape');
 DROP TABLE IF EXISTS metodo_de_pago;
 CREATE TABLE IF EXISTS metodo_de_pago(
     metodo_de_pago_id BIGSERIAL PRIMARY KEY,
-    tipo tipo_metodo_pago_enum NOT NULL
+    tipo tipo_metodo_pago_enum NOT NULL,
+    activo SMALLINT NOT NULL DEFAULT 1,
+    CONSTRAINT chk_metodo_de_pago_activo CHECK (activo IN (0, 1))
 );
 DROP TABLE IF EXISTS orden_de_compra;
 CREATE TABLE orden_de_compra(
@@ -114,9 +156,15 @@ CREATE TABLE evento_fecha(
     evento_id BIGINT NOT NULL,
     fecha_id BIGINT NOT NULL,
     hora_inicio TIMESTAMP NOT NULL,
+    activo SMALLINT NOT NULL DEFAULT 1,
+    usuario_creacion BIGINT,
+    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    usuario_modificacion BIGINT,
+    fecha_modificacion TIMESTAMPTZ,
     CONSTRAINT fk_evento_fecha_evento FOREIGN KEY (evento_id) REFERENCES evento(evento_id) ON DELETE RESTRICT,
     CONSTRAINT fk_evento_fecha_fecha FOREIGN KEY (fecha_id) REFERENCES fecha(fecha_id) ON DELETE RESTRICT,
-    CONSTRAINT uq_evento_fecha UNIQUE (evento_id, fecha_id, horaInicio)
+    CONSTRAINT uq_evento_fecha UNIQUE (evento_id, fecha_id, horaInicio),
+    CONSTRAINT chk_evento_fecha_activo CHECK (activo IN (0, 1))
 );
 DROP TABLE IF EXISTS ticket;
 CREATE TABLE ticket (
@@ -140,6 +188,10 @@ CREATE TABLE cupon(
     codigo VARCHAR(20) NOT NULL,
     uso_por_usuario BIGINT NOT NULL DEFAULT 0,
     uso_realizados BIGINT NOT NULL DEFAULT 0,
+    usuario_creacion BIGINT,
+    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    usuario_modificacion BIGINT,
+    fecha_modificacion TIMESTAMPTZ,
     CONSTRAINT uq_cupon_codigo UNIQUE (codigo),
     CONSTRAINT chk_cupon_estado CHECK (estado_cupon IN (0, 1))
 );
@@ -150,6 +202,10 @@ CREATE TABLE evento_cupon(
     cant_cupones BIGINT NOT NULL,
     fecha_ini DATE NOT NULL,
     fecha_fin DATE NOT NULL,
+    usuario_creacion BIGINT,
+    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    usuario_modificacion BIGINT,
+    fecha_modificacion TIMESTAMPTZ,
     CONSTRAINT pk_evento_cupon PRIMARY KEY (evento_id, cupon_id),
     CONSTRAINT fk_evento_cupon_evento FOREIGN KEY (evento_id) REFERENCES evento(evento_id) ON DELETE RESTRICT,
     CONSTRAINT fk_evento_cupon_cupon FOREIGN KEY (cupon_id) REFERENCES cupon(cupon_id) ON DELETE RESTRICT,

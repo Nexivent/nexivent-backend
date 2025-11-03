@@ -6,7 +6,7 @@ import (
 )
 
 type ComprobantePago struct {
-	IDComprobante   int             `db:"id_comprobante" json:"idComprobante"`
+	ID              int             `db:"id_comprobante" json:"idComprobante"`
 	Orden           OrdenDeCompra   `db:"-" json:"orden"`
 	Tipo            TipoComprobante `db:"tipo" json:"tipo"`
 	Numero          string          `db:"numero" json:"numero"`

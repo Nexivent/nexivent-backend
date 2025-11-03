@@ -1,15 +1,17 @@
 package domain
 
-import "time"
+import (
+	"time"
+
+	"github.com/shopspring/decimal"
+)
 
 type OrdenDeCompra struct {
-	IDOrden               int        `db:"id_orden" json:"idOrden"`
-	UsuarioComprador      Usuario    `db:"-" json:"usuarioComprador"`
-	FechaDeCompra         time.Time  `db:"fecha_compra" json:"fechaDeCompra"`
-	Total                 float64    `db:"total" json:"total"`
-	MontoFeeServicio      float64    `db:"monto_fee_servicio" json:"montoFeeServicio"`
-	Estado                string     `db:"estado" json:"estado"`
-	MetodoDePago          MetodoPago `db:"-" json:"metodoPago,omitempty"`
-	IDTransaccionExterna  string     `db:"id_transaccion_externa" json:"idTransaccionExterna"`
-	FechaLiberacionFondos time.Time  `db:"fecha_liberacion_fondos" json:"fechaLiberacionFondos"`
+	ID               int64           `db:"orden_de_compra_id" json:"ordenDeCompraId"`
+	Usuario          Usuario         `db:"-"                   json:"usuario"`      // FK -> usuario (siempre)
+	MetodoDePago     MetodoDePago    `db:"-"                   json:"metodoDePago"` // FK -> metodo_de_pago (siempre)
+	Fecha            time.Time       `db:"fecha"               json:"fecha"`        // DATE
+	Total            decimal.Decimal `db:"total"               json:"total"`
+	MontoFeeServicio decimal.Decimal `db:"monto_fee_servicio"  json:"montoFeeServicio"`
+	EstadoDeOrden    int16           `db:"estado_de_orden"     json:"estadoDeOrden"`
 }

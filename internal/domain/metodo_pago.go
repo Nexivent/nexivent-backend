@@ -1,8 +1,7 @@
 package domain
 
-type MetodoPago struct {
-	IDMetodoPago int              `db:"id_metodo_pago" json:"idMetodoPago"`
-	Tipo         TipoMetodoPago   `db:"tipo" json:"tipo"`
-	Monto        float64          `db:"monto" json:"monto"`
-	Estado       EstadoMetodoPago `db:"estado" json:"estado"`
+type MetodoDePago struct {
+	ID     int64          `db:"metodo_de_pago_id" json:"metodoDePagoId"`
+	Tipo   TipoMetodoPago `db:"tipo"              json:"tipo"`
+	Activo int16          `db:"activo" json:"activo"`
 }

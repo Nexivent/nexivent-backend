@@ -1,11 +1,18 @@
 package domain
 
-import "time"
+import (
+	"database/sql"
+	"time"
+)
 
 type EventoFecha struct {
-	ID         int64     `db:"evento_fecha_id" json:"eventoFechaId"`
-	Evento     Evento    `db:"-"               json:"evento"` // FK -> evento (siempre)
-	Fecha      Fecha     `db:"-"               json:"fecha"`  // FK -> fecha  (siempre)
-	HoraInicio time.Time `db:"hora_inicio"     json:"horaInicio"`
-	Activo     int16     `db:"activo" json:"activo"`
+	ID                int64         `db:"evento_fecha_id" json:"id"`
+	Evento            Evento        `db:"-" json:"evento"` // FK -> evento
+	Fecha             Fecha         `db:"-" json:"fecha"`  // FK -> fecha
+	HoraInicio        time.Time     `db:"hora_inicio" json:"horaInicio"`
+	Activo            int16         `db:"activo" json:"activo"`
+	UsuarioCreacionID sql.NullInt64 `db:"usuario_creacion" json:"usuarioCreacionId,omitempty"`
+	FechaCreacion     time.Time     `db:"fecha_creacion" json:"fechaCreacion"`
+	UsuarioModID      sql.NullInt64 `db:"usuario_modificacion" json:"usuarioModificacionId,omitempty"`
+	FechaModificacion sql.NullTime  `db:"fecha_modificacion" json:"fechaModificacion,omitempty"`
 }

@@ -5,11 +5,10 @@ import (
 	"time"
 )
 
-type PerfilDePersona struct {
-	ID                int64         `db:"perfil_de_persona_id" json:"id"`
-	Evento            Evento        `db:"-" json:"evento"` // FK -> evento
-	Nombre            string        `db:"nombre" json:"nombre"`
-	Activo            int16         `db:"activo" json:"activo"`
+type RolUsuario struct {
+	ID                int64         `db:"rol_usuario_id" json:"id"`
+	Rol               Rol           `db:"-" json:"rol"`     // FK -> rol
+	Usuario           Usuario       `db:"-" json:"usuario"` // FK -> usuario
 	UsuarioCreacionID sql.NullInt64 `db:"usuario_creacion" json:"usuarioCreacionId,omitempty"`
 	FechaCreacion     time.Time     `db:"fecha_creacion" json:"fechaCreacion"`
 	UsuarioModID      sql.NullInt64 `db:"usuario_modificacion" json:"usuarioModificacionId,omitempty"`

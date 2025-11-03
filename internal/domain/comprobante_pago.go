@@ -5,14 +5,12 @@ import (
 	"time"
 )
 
-type ComprobantePago struct {
-	ID              int             `db:"id_comprobante" json:"idComprobante"`
-	Orden           OrdenDeCompra   `db:"-" json:"orden"`
-	Tipo            TipoComprobante `db:"tipo" json:"tipo"`
-	Numero          string          `db:"numero" json:"numero"`
-	FechaEmision    time.Time       `db:"fecha_emision" json:"fechaEmision"`
-	Total           float64         `db:"total" json:"total"`
-	NombreCliente   sql.NullString  `db:"nombre_cliente" json:"nombreCliente,omitempty"`
-	RucCliente      sql.NullString  `db:"ruc_cliente" json:"rucCliente,omitempty"`
-	DireccionFiscal sql.NullString  `db:"direccion_fiscal" json:"direccionFiscal,omitempty"`
+type ComprobanteDePago struct {
+	ID                int64           `db:"comprobante_de_pago_id" json:"id"`
+	OrdenDeCompra     OrdenDeCompra   `db:"-" json:"ordenDeCompra"` // FK -> orden_de_compra
+	TipoDeComprobante TipoComprobante `db:"tipo_de_comprobante" `
+	Numero            string          `db:"numero" json:"numero"`
+	FechaEmision      time.Time       `db:"fecha_emision" json:"fechaEmision"`
+	RUC               sql.NullString  `db:"ruc" json:"ruc,omitempty"`
+	DireccionFiscal   sql.NullString  `db:"direccion_fiscal" json:"direccionFiscal,omitempty"`
 }

@@ -1,3 +1,27 @@
+-- Tablas hijas / asociativas primero
+DROP TABLE IF EXISTS rol_usuario;
+DROP TABLE IF EXISTS usuario_cupon;
+DROP TABLE IF EXISTS evento_cupon;
+DROP TABLE IF EXISTS ticket;
+DROP TABLE IF EXISTS comprobante_de_pago;
+DROP TABLE IF EXISTS evento_fecha;
+DROP TABLE IF EXISTS fecha;
+DROP TABLE IF EXISTS tarifa;
+DROP TABLE IF EXISTS sector;
+DROP TABLE IF EXISTS tipo_de_ticket;
+DROP TABLE IF EXISTS perfil_de_persona;
+DROP TABLE IF EXISTS comentario;
+DROP TABLE IF EXISTS orden_de_compra;
+DROP TABLE IF EXISTS metodo_de_pago;
+DROP TABLE IF EXISTS evento;
+DROP TABLE IF EXISTS cupon;
+DROP TABLE IF EXISTS rol;
+DROP TABLE IF EXISTS notificacion;
+DROP TABLE IF EXISTS categoria;
+DROP TABLE IF EXISTS usuario;
+-- Tipos ENUM al final (cuando ya no hay columnas que los usen)
+DROP TYPE IF EXISTS tipo_metodo_pago_enum;
+DROP TYPE IF EXISTS tipo_documento_enum;
 CREATE TYPE tipo_documento_enum AS ENUM ('DNI', 'CE', 'RUC');
 DROP TABLE IF EXISTS usuario;
 CREATE TABLE usuario (
@@ -135,17 +159,23 @@ CREATE TABLE metodo_de_pago (
     CONSTRAINT chk_metodo_de_pago_activo CHECK (activo IN (0, 1))
 );
 DROP TABLE IF EXISTS orden_de_compra;
-CREATE TABLE orden_de_compra (
+CREATE TABLE orden_de_compra(
     orden_de_compra_id BIGSERIAL PRIMARY KEY,
     usuario_id BIGINT NOT NULL,
     metodo_de_pago_id BIGINT NOT NULL,
-    fecha DATE NOT NULL DEFAULT NOW(),
+    fecha DATE NOT NULL DEFAULT CURRENT_DATE,
+    fecha_hora_ini TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    fecha_hora_fin TIMESTAMPTZ,
     total NUMERIC(4, 2) NOT NULL,
     monto_fee_servicio NUMERIC(4, 2) NOT NULL,
     estado_de_orden SMALLINT NOT NULL DEFAULT 0,
     CONSTRAINT fk_orden_de_compra_usuario FOREIGN KEY (usuario_id) REFERENCES usuario(usuario_id),
     CONSTRAINT fk_orden_de_compra_pago FOREIGN KEY (metodo_de_pago_id) REFERENCES metodo_de_pago(metodo_de_pago_id),
-    CONSTRAINT chk_orden_de_compra_estado CHECK (estado_de_orden IN (0, 1, 2))
+    CONSTRAINT chk_orden_de_compra_estado CHECK (estado_de_orden IN (0, 1, 2)),
+    CONSTRAINT chk_orden_de_compra_rango CHECK (
+        fecha_hora_fin IS NULL
+        OR fecha_hora_fin >= fecha_hora_ini
+    )
 );
 DROP TABLE IF EXISTS fecha;
 CREATE TABLE fecha (

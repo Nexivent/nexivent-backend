@@ -9,10 +9,14 @@ import (
 func OpenDB(cfg Config) (*sql.DB, error) {
 	// Usa sql.Open() para crear un pool de conexiones vacío, usando el DSN de la estructura
 	// de configuración.
-	db, err := sql.Open("postgres", cfg.Db.URL)
+	db, err := sql.Open("postgres", cfg.DB.URL)
 	if err != nil {
 		return nil, err
 	}
+
+	db.SetMaxOpenConns(cfg.DB.MaxOpenConns)
+	db.SetMaxIdleConns(cfg.DB.MaxIdleConns)
+	db.SetConnMaxIdleTime(cfg.DB.MaxIdleTime)
 
 	// Crea un contexto con un tiempo límite de 5 segundos.
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

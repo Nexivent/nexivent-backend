@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -15,13 +14,10 @@ import (
 func main() {
 	var cfg settings.Config
 
-	flag.IntVar(&cfg.Port, "port", 4000, "API server port")
-	flag.StringVar(&cfg.Env, "env", "development", "Environment (development|staging|production)")
-	flag.StringVar(&cfg.Db.URL, "db-url", os.Getenv("DATABASE_URL"), "PostgreSQL DSN")
-	flag.Parse()
-
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 
+	settings.ParseFlagEnv(logger, &cfg)
+	
 	db, err := settings.OpenDB(cfg)
 	if err != nil {
 		logger.Error(err.Error())

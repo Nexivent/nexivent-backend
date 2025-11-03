@@ -29,6 +29,7 @@ func (app *Application) logError(r *http.Request, err error) {
 // da más flexibilidad sobre los valores que podemos incluir en la respuesta.
 func (app *Application) errorResponse(w http.ResponseWriter, r *http.Request, status int, message any) {
 	env := internal.Envelope{"error": message}
+
 	// Escribe la respuesta usando el helper writeJSON(). Si esto devuelve un
 	// error, entonces lo registra y recurre a enviar al cliente una respuesta vacía con un
 	// código de estado 500 Internal Server Error.

@@ -17,5 +17,10 @@ Backend en Go para la tiketera Nexivent
 Usar el siguiente comando
     docker logs -f nexivent-db
 
-  
+# Comando para ejecutar la creación de tablas
+Get-Content -Raw .\migrations\001_create_tables.sql |   
+>>   docker exec -i nexivent-db psql -U postgres -d nexivent
 
+# Comando para verificar las tablas
+1. docker exec -it nexivent-db psql -U postgres -d nexivent 
+2. \dt

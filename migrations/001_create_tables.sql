@@ -265,5 +265,3 @@ CREATE TABLE notificacion (
     estado_notificacion SMALLINT NOT NULL,
     CONSTRAINT chk_notificacion CHECK (estado_notificacion IN (0, 1, 2))
 );
--- Índice para búsquedas case-insensitive por nombre (opcional)
-CREATE UNIQUE INDEX IF NOT EXISTS idx_categoria_nombre_ci ON categoria (LOWER(nombre));

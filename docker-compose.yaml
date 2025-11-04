@@ -1,0 +1,23 @@
+services:
+  nexinvent-db:
+    container_name: nexinvent-db
+    image: postgres:13.11
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
+    ports:
+      - "5438:5432" # Expose Nextivent PostgreSQL on port 5438
+    volumes:
+      - levels-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+
+volumes:
+  levels-postgres:
+    driver: local

@@ -22,3 +22,12 @@ type Usuario struct {
 	FechaModificacion     sql.NullTime   `db:"fecha_modificacion" json:"fechaModificacion,omitempty"`
 	Activo                int16          `db:"activo" json:"activo"`
 }
+
+type UsuarioRepository interface {
+	Save(cont context.Context, u *Usuario) error
+	GetById(cont context.Context, id int) (*Usuario, error)
+	Delete(cont context.Context, id int) error
+	Insert() error
+	//Create Read Update Delete
+	//insertar(Clase), obtenerPorId(id), modificar(clase), eliminar(clase), listarTodos()
+}

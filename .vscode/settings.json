@@ -18,6 +18,21 @@
       "group": "localhost",
       "database": "nexivent",
       "username": "postgres"
+    },
+    {
+      "pgOptions": {
+        "ssl": {
+          "rejectUnauthorized": false
+        }
+      },
+      "ssh": "Disabled",
+      "previewLimit": 50,
+      "server": "nexivent-bd.cmwytolpxhxk.us-east-1.rds.amazonaws.com",
+      "port": 5432,
+      "driver": "PostgreSQL",
+      "name": "RDS-Postgres-Nexivent",
+      "database": "postgres",
+      "username": "user_admin"
     }
   ]
 }

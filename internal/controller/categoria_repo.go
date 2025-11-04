@@ -1,4 +1,4 @@
-package data
+package controller
 
 import (
 	"context"
@@ -30,7 +30,7 @@ func (r *CategoriaRepo) GetById(cont context.Context, id int) (*domain.Categoria
 	var out domain.Categoria
 	if err := r.DB.QueryRowContext(cont, q, id).Scan(&out.ID, &out.Nombre, &out.Descripcion); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, domain.ErrNotFound
+			return nil, errors.ErrUnsupported
 		}
 		return nil, err
 	}

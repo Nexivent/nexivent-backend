@@ -1,34 +1,30 @@
 package domain
 
 import (
-	"context"
-	"database/sql"
 	"time"
 )
 
 type Usuario struct {
-	ID                    int64          `db:"usuario_id" json:"id"`
-	Nombre                string         `db:"nombre" json:"nombre"`
-	TipoDocumento         TipoDocumento  `db:"tipo_documento" json:"tipoDocumento"`
-	NumDocumento          string         `db:"num_documento" json:"numDocumento"`
-	Correo                string         `db:"correo" json:"correo"`
-	Contrasenha           string         `db:"contrasenha" json:"-"`
-	Telefono              sql.NullString `db:"telefono" json:"telefono,omitempty"`
-	EstadoDeCuenta        int16          `db:"estado_de_cuenta" json:"estadoDeCuenta"`
-	CodigoVerificacion    sql.NullString `db:"codigo_verificacion" json:"codigoVerificacion,omitempty"`
-	FechaExpiracionCodigo sql.NullTime   `db:"fecha_expiracion_codigo" json:"fechaExpiracionCodigo,omitempty"`
-	UsuarioCreacionID     sql.NullInt64  `db:"usuario_creacion" json:"usuarioCreacionId,omitempty"`
-	FechaCreacion         time.Time      `db:"fecha_creacion" json:"fechaCreacion"`
-	UsuarioModificacionID sql.NullInt64  `db:"usuario_modificacion" json:"usuarioModificacionId,omitempty"`
-	FechaModificacion     sql.NullTime   `db:"fecha_modificacion" json:"fechaModificacion,omitempty"`
-	Activo                int16          `db:"activo" json:"activo"`
+	ID                    int64 `gorm:"column:usuario_id;primaryKey;autoIncrement"`
+	Nombre                string
+	TipoDocumento         string
+	NumDocumento          string
+	Correo                string
+	Contrasenha           string
+	Telefono              *string
+	EstadoDeCuenta        int16
+	CodigoVerificacion    *string
+	FechaExpiracionCodigo *time.Time
+	UsuarioCreacion       *int64
+	FechaCreacion         time.Time
+	UsuarioModificacion   *int64
+	FechaModificacion     *time.Time
+	Estado                int16
+
+	Comentarios    []Comentario
+	Ordenes        []OrdenDeCompra
+	RolesAsignados []RolUsuario
+	Cupones        []UsuarioCupon
 }
 
-type UsuarioRepository interface {
-	Save(cont context.Context, u *Usuario) error
-	GetById(cont context.Context, id int) (*Usuario, error)
-	Delete(cont context.Context, id int) error
-	Insert() error
-	//Create Read Update Delete
-	//insertar(Clase), obtenerPorId(id), modificar(clase), eliminar(clase), listarTodos()
-}
+func (Usuario) TableName() string { return "usuario" }

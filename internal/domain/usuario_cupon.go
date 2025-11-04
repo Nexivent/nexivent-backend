@@ -1,7 +1,12 @@
 package domain
 
 type UsuarioCupon struct {
-	Cupon     Cupon   `db:"-" json:"cupon"`   // PK compuesta
-	Usuario   Usuario `db:"-" json:"usuario"` // PK compuesta
-	CantUsada int64   `db:"cant_usada" json:"cantUsada"`
+	CuponID   int64 `gorm:"primaryKey"`
+	UsuarioID int64 `gorm:"primaryKey"`
+	CantUsada int64
+
+	Cupon   *Cupon   `gorm:"foreignKey:CuponID"`
+	Usuario *Usuario `gorm:"foreignKey:UsuarioID"`
 }
+
+func (UsuarioCupon) TableName() string { return "usuario_cupon" }

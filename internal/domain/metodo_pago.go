@@ -1,7 +1,9 @@
 package domain
 
 type MetodoDePago struct {
-	ID     int64          `db:"metodo_de_pago_id" json:"id"`
-	Tipo   TipoMetodoPago `db:"tipo" json:"tipo"`
-	Activo int16          `db:"activo" json:"activo"`
+	ID     int64 `gorm:"column:metodo_de_pago_id;primaryKey;autoIncrement"`
+	Tipo   string
+	Estado int16
 }
+
+func (MetodoDePago) TableName() string { return "metodo_de_pago" }

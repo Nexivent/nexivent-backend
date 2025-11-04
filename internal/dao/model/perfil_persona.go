@@ -1,15 +1,13 @@
-package domain
+package model
 
 import (
 	"time"
 )
 
-type TipoDeTicket struct {
-	ID                  int64 `gorm:"column:tipo_de_ticket_id;primaryKey;autoIncrement"`
+type PerfilDePersona struct {
+	ID                  int64 `gorm:"column:perfil_de_persona_id;primaryKey;autoIncrement"`
 	EventoID            int64
 	Nombre              string
-	FechaIni            time.Time
-	FechaFin            time.Time
 	Estado              int16
 	UsuarioCreacion     *int64
 	FechaCreacion       time.Time
@@ -19,4 +17,4 @@ type TipoDeTicket struct {
 	Evento *Evento `gorm:"foreignKey:EventoID"`
 }
 
-func (TipoDeTicket) TableName() string { return "tipo_de_ticket" }
+func (PerfilDePersona) TableName() string { return "perfil_de_persona" }

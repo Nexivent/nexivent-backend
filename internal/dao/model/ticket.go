@@ -1,4 +1,4 @@
-package domain
+package model
 
 type Ticket struct {
 	ID              int64 `gorm:"column:ticket_id;primaryKey;autoIncrement"`

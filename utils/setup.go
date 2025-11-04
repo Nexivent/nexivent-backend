@@ -1,14 +1,14 @@
 package utils
+
 import (
 	"context"
 	"testing"
 	"time"
 
+	model "github.com/Loui27/nexivent-backend/internal/dao/model"
+	"github.com/Loui27/nexivent-backend/logging"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
-	"github.com/Loui27/nexivent-backend/logging"
-	"github.com/Loui27/nexivent-backend/internal/dao/model"
-	"github.com/Loui27/nexivent-backend/internal/domain"
 )
 
 type CustomLogger struct{}
@@ -46,7 +46,7 @@ func (l *CustomLogger) Trace(
 func ClearPostgresqlDatabaseTesting(
 	appLogger logging.Logger,
 	nexiventDB *gorm.DB,
-	envSetting *domain.ConfigEnv,
+	envSetting *model.ConfigEnv,
 	t *testing.T,
 ) {
 	if envSetting.PostgresHost != "localhost" {
@@ -82,7 +82,26 @@ func ClearPostgresqlDatabaseTesting(
 			model any
 		}{
 			// First delete tables with foreign key dependencies
-			{"Cupon", &model.Cupon{}}, // Clear audit logs first to avoid FK constraints
+			{"rol_usuario", &model.RolUsuario{}},
+			{"usuario_cupon", &model.UsuarioCupon{}},
+			{"evento_cupon", &model.EventoCupon{}},
+			{"ticket", &model.Ticket{}},
+			{"comprobante_de_pago", &model.ComprobanteDePago{}},
+			{"evento_fecha", &model.EventoFecha{}},
+			{"fecha", &model.Fecha{}},
+			{"tarifa", &model.Tarifa{}},
+			{"sector", &model.Sector{}},
+			{"tipo_de_ticket", &model.TipoDeTicket{}},
+			{"perfil_de_persona", &model.PerfilDePersona{}},
+			{"comentario", &model.Comentario{}},
+			{"orden_de_compra", &model.OrdenDeCompra{}},
+			{"metodo_de_pago", &model.MetodoDePago{}},
+			{"evento", &model.Evento{}},
+			{"cupon", &model.Cupon{}},
+			{"rol", &model.Rol{}},
+			{"notificacion", &model.Notificacion{}},
+			{"categoria", &model.Categoria{}},
+			{"usuario", &model.Usuario{}}, // Clear audit logs first to avoid FK constraints
 		}
 
 		for _, table := range tablesToClear {
@@ -117,7 +136,7 @@ func ClearPostgresqlDatabaseTesting(
 func ClearPostgresqlDatabase(
 	appLogger logging.Logger,
 	nexiventDB *gorm.DB,
-	envSetting *domain.ConfigEnv,
+	envSetting *model.ConfigEnv,
 	t *testing.T,
 ) {
 	if envSetting.PostgresHost != "localhost" {
@@ -153,7 +172,26 @@ func ClearPostgresqlDatabase(
 			model any
 		}{
 			// First delete tables with foreign key dependencies
-			{"Cupon", &model.Cupon{}},
+			{"rol_usuario", &model.RolUsuario{}},
+			{"usuario_cupon", &model.UsuarioCupon{}},
+			{"evento_cupon", &model.EventoCupon{}},
+			{"ticket", &model.Ticket{}},
+			{"comprobante_de_pago", &model.ComprobanteDePago{}},
+			{"evento_fecha", &model.EventoFecha{}},
+			{"fecha", &model.Fecha{}},
+			{"tarifa", &model.Tarifa{}},
+			{"sector", &model.Sector{}},
+			{"tipo_de_ticket", &model.TipoDeTicket{}},
+			{"perfil_de_persona", &model.PerfilDePersona{}},
+			{"comentario", &model.Comentario{}},
+			{"orden_de_compra", &model.OrdenDeCompra{}},
+			{"metodo_de_pago", &model.MetodoDePago{}},
+			{"evento", &model.Evento{}},
+			{"cupon", &model.Cupon{}},
+			{"rol", &model.Rol{}},
+			{"notificacion", &model.Notificacion{}},
+			{"categoria", &model.Categoria{}},
+			{"usuario", &model.Usuario{}},
 		}
 
 		for _, table := range tablesToClear {
@@ -181,5 +219,3 @@ func ClearPostgresqlDatabase(
 		appLogger.Warn("nexiventDB is nil, skipping database clearing.")
 	}
 }
-
-

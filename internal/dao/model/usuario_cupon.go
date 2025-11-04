@@ -1,4 +1,4 @@
-package domain
+package model
 
 type UsuarioCupon struct {
 	CuponID   int64 `gorm:"primaryKey"`

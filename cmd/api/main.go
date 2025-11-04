@@ -1,14 +1,20 @@
 package main
 
 import (
+	"database/sql"
 	"log"
 	"net/http"
 	"os"
+
+	//model "github.com/Loui27/nexivent-backend/internal/dao/model"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 type application struct {
 	logger *log.Logger
 	conf   config
+	db     *sql.DB
+	//categorias model.CategoriaRepository
 }
 
 func (app *application) routes() http.Handler {

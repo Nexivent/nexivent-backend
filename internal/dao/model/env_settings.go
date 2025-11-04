@@ -1,4 +1,4 @@
-package domain
+package model
 
 import (
 	"os"
@@ -8,6 +8,7 @@ import (
 	"github.com/Loui27/nexivent-backend/utils/env"
 	"github.com/joho/godotenv"
 )
+
 type ConfigEnv struct {
 	// LOGS
 	EnableSqlLogs bool
@@ -18,10 +19,10 @@ type ConfigEnv struct {
 	PostgresUser     string
 	PostgresPassword string
 	PostgresDBName   string
-	PostgresPsqlMode  string
+	PostgresPsqlMode string
 }
 
-func NuevoConfigEnv( logger logging.Logger) *ConfigEnv {
+func NuevoConfigEnv(logger logging.Logger) *ConfigEnv {
 	if ambiente := os.Getenv("NEXIVENT_POSTGRES_HOST"); ambiente == "local" || ambiente == "" {
 		if envPath, err := env.FindEnvPath(); err != nil {
 			logger.Panicln("Error finding .env file", err)
@@ -52,12 +53,12 @@ func NuevoConfigEnv( logger logging.Logger) *ConfigEnv {
 	PostgresPsqlMode := os.Getenv("ASTRO_CAT_PSQL_SSL_MODE")
 
 	return &ConfigEnv{
-		EnableSqlLogs:   enableSqlLogs,
+		EnableSqlLogs:    enableSqlLogs,
 		PostgresHost:     PostgresHost,
 		PostgresPort:     PostgresPort,
 		PostgresUser:     PostgresUser,
 		PostgresPassword: PostgresPassword,
 		PostgresDBName:   PostgresDBName,
-		PostgresPsqlMode:  PostgresPsqlMode,
+		PostgresPsqlMode: PostgresPsqlMode,
 	}
 }

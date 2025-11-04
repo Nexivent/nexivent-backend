@@ -1,4 +1,4 @@
-package domain
+package model
 
 type MetodoDePago struct {
 	ID     int64 `gorm:"column:metodo_de_pago_id;primaryKey;autoIncrement"`

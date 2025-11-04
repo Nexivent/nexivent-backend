@@ -1,4 +1,4 @@
-package domain
+package model
 
 type Categoria struct {
 	ID          int64 `gorm:"column:id_categoria;primaryKey;autoIncrement"`

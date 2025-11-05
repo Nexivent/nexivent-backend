@@ -7,7 +7,7 @@ import (
 type Usuario struct {
 	ID                    int64 `gorm:"column:usuario_id;primaryKey;autoIncrement"`
 	Nombre                string
-	TipoDocumento         string
+	TipoDocumento         string //ver como hacer los enum
 	NumDocumento          string
 	Correo                string
 	Contrasenha           string

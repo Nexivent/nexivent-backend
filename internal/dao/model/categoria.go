@@ -1,8 +1,8 @@
 package model
 
 type Categoria struct {
-	ID          int64 `gorm:"column:id_categoria;primaryKey;autoIncrement"`
-	Nombre      string
+	ID          int64 `gorm:"column:categoria_id;primaryKey;autoIncrement"`
+	Nombre      string 
 	Descripcion string
 	Estado      int16
 }

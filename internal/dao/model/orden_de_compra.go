@@ -10,7 +10,7 @@ type OrdenDeCompra struct {
 	MetodoDePagoID   int64
 	Fecha            time.Time
 	FechaHoraIni     time.Time
-	FechaHoraFin     *time.Time
+	FechaHoraFin     time.Time
 	Total            float64
 	MontoFeeServicio float64
 	EstadoDeOrden    int16

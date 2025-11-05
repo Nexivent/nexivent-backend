@@ -4,7 +4,7 @@ import "time"
 
 type Comentario struct {
 	ID            int64 `gorm:"column:comentario_id;primaryKey;autoIncrement"`
-	UsuarioID     int64
+	UsuarioID     int64 
 	EventoID      int64
 	Descripcion   string
 	FechaCreacion time.Time

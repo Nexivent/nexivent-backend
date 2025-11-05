@@ -9,7 +9,7 @@ type PerfilDePersona struct {
 	EventoID            int64
 	Nombre              string
 	Estado              int16
-	UsuarioCreacion     *int64
+	UsuarioCreacion     int64
 	FechaCreacion       time.Time
 	UsuarioModificacion *int64
 	FechaModificacion   *time.Time

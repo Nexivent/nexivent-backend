@@ -7,7 +7,7 @@ import (
 type Rol struct {
 	ID                  int64 `gorm:"column:rol_id;primaryKey;autoIncrement"`
 	Nombre              string
-	UsuarioCreacion     *int64
+	UsuarioCreacion     int64
 	FechaCreacion       time.Time
 	UsuarioModificacion *int64
 	FechaModificacion   *time.Time

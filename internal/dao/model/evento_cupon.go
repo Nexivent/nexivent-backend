@@ -10,7 +10,7 @@ type EventoCupon struct {
 	CantCupones         int64
 	FechaIni            time.Time
 	FechaFin            time.Time
-	UsuarioCreacion     *int64
+	UsuarioCreacion     int64
 	FechaCreacion       time.Time
 	UsuarioModificacion *int64
 	FechaModificacion   *time.Time

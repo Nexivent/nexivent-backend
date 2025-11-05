@@ -13,7 +13,7 @@ type Cupon struct {
 	Codigo              string
 	UsoPorUsuario       int64
 	UsoRealizados       int64
-	UsuarioCreacion     *int64
+	UsuarioCreacion     int64
 	FechaCreacion       time.Time
 	UsuarioModificacion *int64
 	FechaModificacion   *time.Time

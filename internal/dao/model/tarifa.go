@@ -11,7 +11,7 @@ type Tarifa struct {
 	PerfilDePersonaID   *int64
 	Precio              float64
 	Estado              int16
-	UsuarioCreacion     *int64
+	UsuarioCreacion     int64
 	FechaCreacion       time.Time
 	UsuarioModificacion *int64
 	FechaModificacion   *time.Time

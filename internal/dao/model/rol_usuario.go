@@ -8,7 +8,7 @@ type RolUsuario struct {
 	ID                  int64 `gorm:"column:rol_usuario_id;primaryKey;autoIncrement"`
 	RolID               int64
 	UsuarioID           int64
-	UsuarioCreacion     *int64
+	UsuarioCreacion     int64
 	FechaCreacion       time.Time
 	UsuarioModificacion *int64
 	FechaModificacion   *time.Time

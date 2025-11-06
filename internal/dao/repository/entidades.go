@@ -3,6 +3,7 @@ package nexiventpsql
 import (
 	"fmt"
 
+	config "github.com/Loui27/nexivent-backend/internal/config"
 	model "github.com/Loui27/nexivent-backend/internal/dao/model"
 	"github.com/Loui27/nexivent-backend/logging"
 	psql "github.com/Loui27/nexivent-backend/utils/psql"
@@ -18,7 +19,7 @@ type NexiventPsqlEntidades struct {
 // Clase que crea colección de entidades para Nexivent Postgresql
 func NewNexiventPsqlEntidades(
 	logger logging.Logger,
-	configEnv *model.ConfigEnv,
+	configEnv *config.ConfigEnv,
 ) (*NexiventPsqlEntidades, *gorm.DB) {
 	postgresqlDB, err := psql.CreateConnection(
 		configEnv.PostgresHost,

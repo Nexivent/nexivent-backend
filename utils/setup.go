@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	config "github.com/Loui27/nexivent-backend/internal/config"
 	model "github.com/Loui27/nexivent-backend/internal/dao/model"
 	"github.com/Loui27/nexivent-backend/logging"
 	"gorm.io/gorm"
@@ -46,7 +47,7 @@ func (l *CustomLogger) Trace(
 func ClearPostgresqlDatabaseTesting(
 	appLogger logging.Logger,
 	nexiventDB *gorm.DB,
-	envSetting *model.ConfigEnv,
+	envSetting *config.ConfigEnv,
 	t *testing.T,
 ) {
 	if envSetting.PostgresHost != "localhost" {
@@ -136,7 +137,7 @@ func ClearPostgresqlDatabaseTesting(
 func ClearPostgresqlDatabase(
 	appLogger logging.Logger,
 	nexiventDB *gorm.DB,
-	envSetting *model.ConfigEnv,
+	envSetting *config.ConfigEnv,
 	t *testing.T,
 ) {
 	if envSetting.PostgresHost != "localhost" {

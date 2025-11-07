@@ -1,4 +1,4 @@
-package nexiventpsql
+package repository
 
 import (
 	"fmt"

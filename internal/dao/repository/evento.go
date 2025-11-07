@@ -3,10 +3,10 @@ package repository
 import (
 	"github.com/Loui27/nexivent-backend/logging"
 	"gorm.io/gorm"
-	"github.com/Loui27/nexivent-backend/internal/dao/model"
+	// "github.com/Loui27/nexivent-backend/internal/dao/model"
 )
 
-type Evento struct{
-	logger logging.Logger
+type Evento struct {
+	logger       logging.Logger
 	PostgresqlDB *gorm.DB
 }

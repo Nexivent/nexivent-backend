@@ -1,4 +1,4 @@
-package nexiventpsql
+package repository
 
 import (
 	"github.com/Loui27/nexivent-backend/logging"

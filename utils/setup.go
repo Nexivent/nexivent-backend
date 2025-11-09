@@ -85,7 +85,7 @@ func ClearPostgresqlDatabaseTesting(
 			// First delete tables with foreign key dependencies
 			{"rol_usuario", &model.RolUsuario{}},
 			{"usuario_cupon", &model.UsuarioCupon{}},
-			{"evento_cupon", &model.EventoCupon{}},
+			//{"evento_cupon", &model.EventoCupon{}},
 			{"ticket", &model.Ticket{}},
 			{"comprobante_de_pago", &model.ComprobanteDePago{}},
 			{"evento_fecha", &model.EventoFecha{}},
@@ -175,7 +175,7 @@ func ClearPostgresqlDatabase(
 			// First delete tables with foreign key dependencies
 			{"rol_usuario", &model.RolUsuario{}},
 			{"usuario_cupon", &model.UsuarioCupon{}},
-			{"evento_cupon", &model.EventoCupon{}},
+			//{"evento_cupon", &model.EventoCupon{}},
 			{"ticket", &model.Ticket{}},
 			{"comprobante_de_pago", &model.ComprobanteDePago{}},
 			{"evento_fecha", &model.EventoFecha{}},

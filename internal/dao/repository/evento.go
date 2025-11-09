@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/Loui27/nexivent-backend/internal/dao/model"
-	"github.com/Loui27/nexivent-backend/internal/schemas"
 	"github.com/Loui27/nexivent-backend/logging"
 	"gorm.io/gorm"
 )
@@ -32,7 +31,7 @@ func (e *Evento) CrearEvento(Evento *model.Evento) error {
 	return nil
 }
 
-func (e *Evento) ObtenerEventosDisponiblesSinFiltros(limit int, page int) (*schemas.EventosPaginados, error) {
+func (e *Evento) ObtenerEventosDisponiblesSinFiltros() ([]*model.Evento, error) {
 	var categoriaID *int64
 	var titulo *string
 	var descripcion *string
@@ -41,7 +40,7 @@ func (e *Evento) ObtenerEventosDisponiblesSinFiltros(limit int, page int) (*sche
 	var horaInicio *time.Time
 
 	eventos, respuesta := e.ObtenerEventosDisponiblesConFiltros(
-		categoriaID, titulo, descripcion, lugar, fecha, horaInicio, limit, page,
+		categoriaID, titulo, descripcion, lugar, fecha, horaInicio,
 	)
 	if respuesta != nil {
 		return nil, respuesta
@@ -57,19 +56,8 @@ func (e *Evento) ObtenerEventosDisponiblesConFiltros(
 	lugar *string,
 	fecha *time.Time,
 	horaInicio *time.Time,
-	limit int,
-	page int,
-) (*schemas.EventosPaginados, error) {
-	var (
-		eventos []*model.Evento
-		total   int64
-	)
-
-	// Calcular offset
-	if page < 1 {
-		page = 1
-	}
-	offset := (page - 1) * limit
+) ([]*model.Evento, error) {
+	var eventos []*model.Evento
 
 	// Construcción base del query
 	query := e.PostgresqlDB.
@@ -98,14 +86,14 @@ func (e *Evento) ObtenerEventosDisponiblesConFiltros(
 	}
 
 	// Contar total antes de aplicar limit/offset
-	queryCount := query.Session(&gorm.Session{}) // Clona el query sin afectar el original
-	queryCount.Count(&total)
+	//queryCount := query.Session(&gorm.Session{}) // Clona el query sin afectar el original
+	//queryCount.Count(&total)
 
 	// Aplicar paginación
 	respuesta := query.
 		Order("f.fecha_evento ASC").
-		Limit(limit).
-		Offset(offset).
+		//Limit(limit).
+		//Offset(offset).
 		Find(&eventos)
 
 	if respuesta.Error != nil {
@@ -113,15 +101,15 @@ func (e *Evento) ObtenerEventosDisponiblesConFiltros(
 	}
 
 	// Calcular total de páginas
-	totalPaginas := int((total + int64(limit) - 1) / int64(limit))
+	//totalPaginas := int((total + int64(limit) - 1) / int64(limit))
 
 	// Retornar resultado completo
-	resultado := &schemas.EventosPaginados{
+	/*resultado := &schemas.EventosPaginados{
 		Eventos:      eventos,
 		Total:        total,
 		PaginaActual: page,
 		TotalPaginas: totalPaginas,
-	}
+	}*/
 
-	return resultado, nil
+	return eventos, nil
 }

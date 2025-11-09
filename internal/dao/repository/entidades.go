@@ -176,12 +176,6 @@ func crearTablas(astroCatPsqlDB *gorm.DB) {
 	fmt.Println("Tabla Cupon creada exitosamente.")
 
 	// Crear tabla EventoCupon
-	fmt.Println("Creando tabla EventoCupon...")
-	if err := astroCatPsqlDB.AutoMigrate(&model.EventoCupon{}); err != nil {
-		fmt.Printf("Error creando tabla EventoCupon: %v\n", err)
-		panic(err)
-	}
-	fmt.Println("Tabla EventoCupon creada exitosamente.")
 
 	// Crear tabla UsuarioCupon
 	fmt.Println("Creando tabla UsuarioCupon...")

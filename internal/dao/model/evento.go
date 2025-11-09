@@ -23,12 +23,11 @@ type Evento struct {
 	Organizador *Usuario   `gorm:"foreignKey:OrganizadorID"`
 	Categoria   *Categoria `gorm:"foreignKey:CategoriaID"`
 
-	Comentarios   []Comentario
-	Sectores      []Sector          `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
-	TiposTicket   []TipoDeTicket    `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
-	Perfiles      []PerfilDePersona `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
-	Fechas        []EventoFecha     `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
-	EventoCupones []EventoCupon
+	Comentarios []Comentario
+	Sectores    []Sector          `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	TiposTicket []TipoDeTicket    `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	Perfiles    []PerfilDePersona `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	Fechas      []EventoFecha     `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 }
 
 func (Evento) TableName() string { return "evento" }

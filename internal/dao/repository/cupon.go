@@ -1,13 +1,13 @@
 package repository
 
 import (
+	"github.com/Loui27/nexivent-backend/internal/dao/model"
 	"github.com/Loui27/nexivent-backend/logging"
 	"gorm.io/gorm"
-	"github.com/Loui27/nexivent-backend/internal/dao/model"
 )
 
 type Cupon struct {
-	logger logging.Logger
+	logger       logging.Logger
 	PostgresqlDB *gorm.DB
 }
 
@@ -50,6 +50,7 @@ func (c *Cupon) ActualizarCupon(Cupon *model.Cupon) error {
 	return nil
 }
 
+/*
 func (c *Cupon) BorrarCupon(CuponId int64) error {
 	respuesta := c.PostgresqlDB.Where("id = ?", CuponId).Delete(&model.Cupon{})
 	if respuesta.Error != nil {
@@ -62,4 +63,4 @@ func (c *Cupon) BorrarCupon(CuponId int64) error {
 	}
 
 	return nil
-}
+}*/

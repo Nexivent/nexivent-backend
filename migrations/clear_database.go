@@ -65,19 +65,19 @@ func main() {
 
 	entidad.Evento.CrearEvento(&evento)
 	//falta crear tabla de fechas y + para que funcione
-	eventos, err := entidad.Evento.ObtenerEventosDisponiblesSinFiltros(10, 1)
+	eventos, err := entidad.Evento.ObtenerEventosDisponiblesSinFiltros()
 	if err != nil {
 		log.Fatalf("❌ Error al obtener eventos: %v", err)
 	}
 
 	fmt.Println("✅ Eventos disponibles:")
 
-	if eventos == nil || len(eventos.Eventos) == 0 {
+	if eventos == nil {
 		fmt.Println("No se encontraron eventos disponibles.")
 		return
 	}
 
-	for _, e := range eventos.Eventos {
-		fmt.Printf("ID: %d - Titulo: %s - Estado: %v\n", e.ID, e.Titulo, e.Estado)
-	}
+	// for _, e := range eventos.Eventos {
+	// 	fmt.Printf("ID: %d - Titulo: %s - Estado: %v\n", e.ID, e.Titulo, e.Estado)
+	// }
 }

@@ -1,9 +1,9 @@
 package repository
 
 import (
+	"github.com/Loui27/nexivent-backend/internal/dao/model"
 	"github.com/Loui27/nexivent-backend/logging"
 	"gorm.io/gorm"
-	// "github.com/Loui27/nexivent-backend/internal/dao/model"
 )
 
 type Evento struct {
@@ -23,9 +23,10 @@ func NewEventoController(
 
 func (e *Evento) CrearEvento(Evento *model.Evento) (int64, error) {
 	respuesta := e.PostgresqlDB.Create(Evento)
-	if respuesta.Error != nil{
+	if respuesta.Error != nil {
 		return 0, respuesta.Error
 	}
 
-	return respuesta.ID, nil
+	//return respuesta.First().ID, nil
+	return Evento.ID, nil
 }

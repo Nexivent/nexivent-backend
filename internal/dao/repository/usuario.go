@@ -182,9 +182,7 @@ func (u *Usuario) ExisteUsuarioPorCorreo(correo string) (bool, error) {
 
 func (u *Usuario) ObtenerUsuarioBasicoPorID(id int64) (*model.Usuario, error) {
 	var user model.Usuario
-
 	result := u.PostgresqlDB.
-		Select("usuario_id", "nombre", "correo").
 		First(&user, "usuario_id = ?", id)
 	if result.Error != nil {
 		return nil, result.Error
@@ -198,9 +196,10 @@ func (c *Usuario) ObtenerUsuariosPorRolID(rolID int64) ([]*model.Usuario, error)
 	usuarios := []*model.Usuario{}
 
 	result := c.PostgresqlDB.
+		Select("usuario.*").
 		Joins("JOIN rol_usuario ru ON ru.usuario_id = usuario.usuario_id AND ru.estado = 1").
 		Where("ru.rol_id = ?", rolID).
-		Select("usuario.usuario_id", "usuario.nombre", "usuario.correo", "usuario.estado").
+		Distinct().
 		Find(&usuarios)
 
 	if result.Error != nil {

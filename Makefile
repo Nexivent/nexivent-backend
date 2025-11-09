@@ -1,6 +1,6 @@
 # Set up VSCode environment
 init-vscode:
-	cd src/server && cp .env.sample .env && cd .. && cd .. && \
+	cp .env.sample .env
 	cd .vscode && cp settings.json.sample settings.json
 # Set up database
 set-up-db:

@@ -24,10 +24,10 @@ type Evento struct {
 	Categoria   *Categoria `gorm:"foreignKey:CategoriaID"`
 
 	Comentarios   []Comentario
-	Sectores      []Sector
-	TiposTicket   []TipoDeTicket
-	Perfiles      []PerfilDePersona
-	Fechas        []EventoFecha
+	Sectores      []Sector          `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	TiposTicket   []TipoDeTicket    `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	Perfiles      []PerfilDePersona `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	Fechas        []EventoFecha     `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	EventoCupones []EventoCupon
 }
 

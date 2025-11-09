@@ -1,4 +1,4 @@
-services:
+services: 
   nexinvent-db:
     container_name: nexinvent-db
     image: postgres:13.11
@@ -16,8 +16,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-
-
+  
 volumes:
   levels-postgres:
     driver: local
+

@@ -44,4 +44,4 @@ done
 )
 
 sqlx database create
-# sqlx migrate run
+sqlx migrate run

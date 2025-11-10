@@ -7,3 +7,4 @@ CONTEXT_QUICKSTART.md
 .env
 .pgpass
 compose.yaml
+bin/

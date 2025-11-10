@@ -7,20 +7,20 @@ import (
 	"io"
 	"maps"
 	"net/http"
-	"strconv"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
 )
 
 type Envelope map[string]any
 
-func ReadIDParam(r *http.Request) (int64, error) {
+func ReadIDParam(r *http.Request) (uuid.UUID, error) {
 	params := httprouter.ParamsFromContext(r.Context())
-	id, err := strconv.ParseInt(params.ByName("id"), 10, 64)
+	id, err := uuid.Parse(params.ByName("id"))
 
-	if err != nil || id < 1 {
-		return 0, errors.New("invalid id parameter")
+	if err != nil {
+		return uuid.Nil, errors.New("invalid id parameter")
 	}
 
 	return id, nil

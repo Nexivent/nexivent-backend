@@ -1,6 +1,7 @@
 package routing
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -24,11 +25,17 @@ func getEvento(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.Logger.Info("fetching event", "id", id)
-
-	evento := data.Evento{
-		ID: uint64(id),
+	evento, err := app.Models.Eventos.Get(id)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			app.NotFoundResponse(w, r)
+		default:
+			app.ServerErrorResponse(w, r, err)
+		}
+		return
 	}
+	// Evento encontrado, devolver como respuesta JSON
 
 	err = internal.WriteJSON(w, http.StatusOK, internal.Envelope{"evento": evento}, nil)
 	if err != nil {
@@ -62,7 +69,7 @@ func postEvento(w http.ResponseWriter, r *http.Request) {
 	}
 
 	headers := make(http.Header)
-	headers.Set("Location", fmt.Sprintf("/v1/movies/%d", evento.ID))
+	headers.Set("Location", fmt.Sprintf("/v1/eventos/%s", evento.ID))
 
 	err = internal.WriteJSON(w, http.StatusCreated, internal.Envelope{"evento": evento}, nil)
 	if err != nil {

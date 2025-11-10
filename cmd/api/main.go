@@ -7,9 +7,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/jmoiron/sqlx"
+	"github.com/Nexivent/nexivent-backend/internal/data"
 	"github.com/Nexivent/nexivent-backend/internal/routing"
 	"github.com/Nexivent/nexivent-backend/internal/settings"
+	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 )
 
@@ -20,7 +21,7 @@ func main() {
 
 	settings.ParseFlagEnv(logger, &cfg)
 
-	db, err := sqlx.Connect("posgres", cfg.DB.URL)
+	db, err := sqlx.Connect("postgres", cfg.DB.URL)
 	if err != nil {
 		logger.Error(err.Error())
 		os.Exit(1)
@@ -37,6 +38,9 @@ func main() {
 	app := settings.Application{
 		Config: cfg,
 		Logger: logger,
+		Models: settings.Models{
+			Eventos: data.EventoModel{DB: db},
+		},
 	}
 
 	srv := &http.Server{

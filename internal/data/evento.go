@@ -8,7 +8,7 @@ import (
 )
 
 type Evento struct {
-	ID                  int64      `json:"id"`
+	ID                  uint64      `json:"id"`
 	Nombre              string      `json:"nombre"`
 	Organizador         Organizador `json:"organizador"`
 	FechaCreacion       time.Time   `json:"-"`

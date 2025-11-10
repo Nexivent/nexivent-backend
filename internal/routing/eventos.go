@@ -1,6 +1,7 @@
 package routing
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/Nexivent/nexivent-backend/internal"
@@ -26,7 +27,7 @@ func getEvento(w http.ResponseWriter, r *http.Request) {
 	app.Logger.Info("fetching event", "id", id)
 
 	evento := data.Evento{
-		ID: int64(id),
+		ID: uint64(id),
 	}
 
 	err = internal.WriteJSON(w, http.StatusOK, internal.Envelope{"evento": evento}, nil)
@@ -59,6 +60,9 @@ func postEvento(w http.ResponseWriter, r *http.Request) {
 		app.ServerErrorResponse(w, r, err)
 		return
 	}
+
+	headers := make(http.Header)
+	headers.Set("Location", fmt.Sprintf("/v1/movies/%d", evento.ID))
 
 	err = internal.WriteJSON(w, http.StatusCreated, internal.Envelope{"evento": evento}, nil)
 	if err != nil {

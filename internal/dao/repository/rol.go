@@ -98,15 +98,14 @@ func (r *Rol) ObtenerRolPorNombre(nombre string) (*model.Rol, error) {
 
 func (r *Rol) ObtenerRolesDeUsuario(usuarioID int64) ([]*model.Rol, error) {
 	var roles []*model.Rol
-
-	resultado := r.PostgresqlDB.
-		Joins("JOIN rol_usuario ru ON ru.rol_id = rol.rol_id").
-		Joins("JOIN usuario u ON u.usuario_id = ru.usuario_id").
-		Where("u.usuario_id = ?", usuarioID).
+	res := r.PostgresqlDB.
+		Select("rol.*").
+		Joins("JOIN rol_usuario ru ON ru.rol_id = rol.rol_id AND ru.estado = 1").
+		Where("ru.usuario_id = ?", usuarioID).
+		Distinct().
 		Find(&roles)
-	if resultado.Error != nil {
-		return nil, resultado.Error
+	if res.Error != nil {
+		return nil, res.Error
 	}
-
 	return roles, nil
 }

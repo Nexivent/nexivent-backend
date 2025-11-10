@@ -29,58 +29,31 @@ func (r *RolUsuarioRepo) AsignarRolAUsuario(
 ) (*model.RolUsuario, error) {
 
 	now := time.Now()
-
-	// 0) Si ya está ACTIVO, devolver tal cual (previene duplicados activos)
-	{
-		var existente model.RolUsuario
-		check := r.PostgresqlDB.
-			Where("usuario_id = ? AND rol_id = ? AND estado = 1", usuarioID, rolID).
-			First(&existente)
-		if check.Error == nil {
-			return &existente, nil
-		}
-		if check.Error != nil && check.Error != gorm.ErrRecordNotFound {
-			return nil, check.Error
-		}
-	}
-
-	// 1) Si existe INACTIVO (estado=0) -> reactivar
-	result := r.PostgresqlDB.
-		Model(&model.RolUsuario{}).
-		Where("usuario_id = ? AND rol_id = ? AND estado = 0", usuarioID, rolID).
-		Updates(map[string]any{
-			"estado":               int16(1),
-			"usuario_modificacion": createdBy, // campo puntero en modelo, map con valor OK
-			"fecha_modificacion":   now,       // idem
-		})
-	if result.Error != nil {
-		return nil, result.Error
-	}
-	if result.RowsAffected > 0 {
-		var ru model.RolUsuario
-		get := r.PostgresqlDB.Where("usuario_id = ? AND rol_id = ?", usuarioID, rolID).First(&ru)
-		if get.Error != nil {
-			return nil, get.Error
-		}
-		return &ru, nil
-	}
-
-	// 2) No existía -> insertar NUEVO (tipos coherentes con el modelo)
 	ru := &model.RolUsuario{
 		RolID:               rolID,
 		UsuarioID:           usuarioID,
-		UsuarioCreacion:     createdBy,  // int64 (no nulo)
-		FechaCreacion:       now,        // time.Time (no nulo)
-		UsuarioModificacion: &createdBy, // *int64
-		FechaModificacion:   &now,       // *time.Time
+		UsuarioCreacion:     &createdBy,
+		FechaCreacion:       now,
+		UsuarioModificacion: &createdBy,
+		FechaModificacion:   &now,
 		Estado:              1,
 	}
-	insert := r.PostgresqlDB.Create(ru)
-	if insert.Error != nil {
-		r.logger.Errorf("AsignarRolAUsuario uid=%v rol=%v: %v", usuarioID, rolID, insert.Error)
-		return nil, insert.Error
-	}
 
+	// INSERT ... ON CONFLICT (usuario_id, rol_id) DO UPDATE SET estado=1, audit...
+	err := r.PostgresqlDB.
+		Clauses(clause.OnConflict{
+			Columns: []clause.Column{{Name: "usuario_id"}, {Name: "rol_id"}},
+			DoUpdates: clause.Assignments(map[string]any{
+				"estado":               int16(1),
+				"usuario_modificacion": createdBy,
+				"fecha_modificacion":   now,
+			}),
+		}).
+		Clauses(clause.Returning{}).
+		Create(ru).Error
+	if err != nil {
+		return nil, err
+	}
 	return ru, nil
 }
 

@@ -5,18 +5,18 @@ import (
 )
 
 type EventoFecha struct {
-	ID                  int64 `gorm:"column:evento_fecha_id;primaryKey;autoIncrement"`
-	EventoID            int64
-	FechaID             int64
-	HoraInicio          time.Time
-	Estado              int16
-	UsuarioCreacion     int64
-	FechaCreacion       time.Time
+	ID                  int64     `gorm:"column:evento_fecha_id;primaryKey;autoIncrement"`
+	EventoID            int64     `gorm:"uniqueIndex:uq_evento_fecha"`
+	FechaID             int64     `gorm:"uniqueIndex:uq_evento_fecha"`
+	HoraInicio          time.Time `gorm:"uniqueIndex:uq_evento_fecha"`
+	Estado              int16     `gorm:"default:1"`
+	UsuarioCreacion     *int64
+	FechaCreacion       time.Time `gorm:"default:now()"`
 	UsuarioModificacion *int64
 	FechaModificacion   *time.Time
 
-	Evento *Evento `gorm:"foreignKey:EventoID"`
-	Fecha  *Fecha  `gorm:"foreignKey:FechaID"`
+	Evento *Evento `gorm:"foreignKey:EventoID;references:evento_id"`
+	Fecha  *Fecha  `gorm:"foreignKey:FechaID;references:fecha_id"`
 
 	Tickets []Ticket
 }

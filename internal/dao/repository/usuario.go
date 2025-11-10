@@ -167,18 +167,18 @@ func (u *Usuario) ObtenerUsuarioPorCorreo(correo string) (*model.Usuario, error)
 	return &user, nil
 }
 
-func (u *Usuario) ExisteUsuarioPorCorreo(correo string) (bool, error) {
-	var count int64
+// func (u *Usuario) ExisteUsuarioPorCorreo(correo string) (bool, error) {
+// 	var count int64
 
-	result := u.PostgresqlDB.
-		Model(&model.Usuario{}).
-		Where("correo = ?", correo).
-		Count(&count)
-	if result.Error != nil {
-		return false, result.Error
-	}
-	return count > 0, nil
-}
+// 	result := u.PostgresqlDB.
+// 		Model(&model.Usuario{}).
+// 		Where("correo = ?", correo).
+// 		Count(&count)
+// 	if result.Error != nil {
+// 		return false, result.Error
+// 	}
+// 	return count > 0, nil
+// }
 
 func (u *Usuario) ObtenerUsuarioBasicoPorID(id int64) (*model.Usuario, error) {
 	var user model.Usuario

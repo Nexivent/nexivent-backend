@@ -1,27 +1,26 @@
 package model
 
-import (
-	"time"
-)
+import "time"
 
 type Cupon struct {
 	ID                  int64 `gorm:"column:cupon_id;primaryKey;autoIncrement"`
-	EventoID            int64
 	Descripcion         string
 	Tipo                string
 	Valor               float64
-	EstadoCupon         int16
-	Codigo              string `gorm:"uniqueIndex:idx_codigo_unico"`
-	FechaIni            time.Time
-	FechaFin            time.Time
-	UsoPorUsuario       int64
-	UsoRealizados       int64
-	UsuarioCreacion     int64
-	FechaCreacion       time.Time
+	EstadoCupon         int16  `gorm:"default:0"`
+	Codigo              string `gorm:"uniqueIndex"` // único global; si quieres por evento, usa uniqueIndex combinado
+	UsoPorUsuario       int64  `gorm:"default:0"`
+	UsoRealizados       int64  `gorm:"default:0"`
+	UsuarioCreacion     *int64
+	FechaCreacion       time.Time `gorm:"default:now()"`
 	UsuarioModificacion *int64
 	FechaModificacion   *time.Time
 
-	Evento   *Evento `gorm:"foreignKey:EventoID"`
+	// FK al evento (muchos cupones pertenecen a un evento)
+	EventoID int64
+	Evento   *Evento `gorm:"foreignKey:EventoID;references:ID"`
+
+	// Mantienes tu relación con usuarios
 	Usuarios []UsuarioCupon
 }
 

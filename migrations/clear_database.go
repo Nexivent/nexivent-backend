@@ -40,26 +40,28 @@ func main() {
 	entidad.Categoria.CrearCategoria(categoria)
 
 	// 🔹 Crear un evento de prueba
+	createdBy := int64(1)
+	now := time.Now()
 	evento := model.Evento{
-		Titulo:          "Concierto de Rock",
-		OrganizadorID:   1,
-		CategoriaID:     1,
-		FechaCreacion:   time.Now(),
-		UsuarioCreacion: 1,
+		Titulo:          "Concierto de POP",
+		OrganizadorID:   usuario.ID,
+		CategoriaID:     categoria.ID,
+		FechaCreacion:   now,
+		UsuarioCreacion: &createdBy,
 		Estado:          1,
 
 		Sectores: []model.Sector{
-			{SectorTipo: "VIP", TotalEntradas: 1000, Estado: 1, UsuarioCreacion: 1, FechaCreacion: time.Now()},
-			{SectorTipo: "General", TotalEntradas: 2000, Estado: 1, UsuarioCreacion: 1, FechaCreacion: time.Now()},
+			{SectorTipo: "VIP", TotalEntradas: 1000, Estado: 1, UsuarioCreacion: &createdBy, FechaCreacion: now},
+			{SectorTipo: "General", TotalEntradas: 2000, Estado: 1, UsuarioCreacion: &createdBy, FechaCreacion: now},
 		},
 
 		TiposTicket: []model.TipoDeTicket{
-			{Nombre: "Entrada General", FechaIni: time.Now(), FechaFin: time.Now().AddDate(0, 0, 30), Estado: 1, UsuarioCreacion: 1, FechaCreacion: time.Now()},
+			{Nombre: "Entrada General", FechaIni: now, FechaFin: now.AddDate(0, 0, 30), Estado: 1, UsuarioCreacion: &createdBy, FechaCreacion: now},
 		},
 
 		Perfiles: []model.PerfilDePersona{
-			{Nombre: "Estudiante", Estado: 1, UsuarioCreacion: 1, FechaCreacion: time.Now()},
-			{Nombre: "Adulto", Estado: 1, UsuarioCreacion: 1, FechaCreacion: time.Now()},
+			{Nombre: "Estudiante", Estado: 1, UsuarioCreacion: &createdBy, FechaCreacion: now},
+			{Nombre: "Adulto", Estado: 1, UsuarioCreacion: &createdBy, FechaCreacion: now},
 		},
 	}
 

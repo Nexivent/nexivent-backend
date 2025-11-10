@@ -6,11 +6,17 @@ import (
 	"net/http"
 
 	"github.com/Nexivent/nexivent-backend/internal"
+	"github.com/Nexivent/nexivent-backend/internal/data"
 )
 
 type Application struct {
 	Config Config
 	Logger *slog.Logger
+	Models Models
+}
+
+type Models struct {
+	Eventos data.EventoModel
 }
 
 // El método logError() es un helper genérico para registrar un mensaje de error junto

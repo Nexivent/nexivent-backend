@@ -1,12 +1,12 @@
 package routing
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/Nexivent/nexivent-backend/internal"
 	"github.com/Nexivent/nexivent-backend/internal/context"
 	"github.com/Nexivent/nexivent-backend/internal/data"
+	"github.com/Nexivent/nexivent-backend/internal/validator"
 )
 
 func getEvento(w http.ResponseWriter, r *http.Request) {
@@ -23,11 +23,10 @@ func getEvento(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Ahora puedes usar app.Logger, app.Config, etc.
 	app.Logger.Info("fetching event", "id", id)
 
 	evento := data.Evento{
-		ID: uint64(id),
+		ID: int64(id),
 	}
 
 	err = internal.WriteJSON(w, http.StatusOK, internal.Envelope{"evento": evento}, nil)
@@ -49,5 +48,20 @@ func postEvento(w http.ResponseWriter, r *http.Request) {
 		app.BadRequestResponse(w, r, err)
 	}
 
-	fmt.Fprintf(w, "%+v\n", evento)
+	v := validator.New()
+	if data.ValidateEvento(v, &evento); !v.Valid() {
+		app.FailedValidationResponse(w, r, v.Errors)
+		return
+	}
+
+	err = app.Models.Eventos.Insert(&evento)
+	if err != nil {
+		app.ServerErrorResponse(w, r, err)
+		return
+	}
+
+	err = internal.WriteJSON(w, http.StatusCreated, internal.Envelope{"evento": evento}, nil)
+	if err != nil {
+		app.ServerErrorResponse(w, r, err)
+	}
 }

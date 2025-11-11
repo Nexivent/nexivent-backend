@@ -14,6 +14,10 @@ type Evento struct {
 	CantMeGusta         int   `gorm:"default:0"`
 	CantNoInteresa      int   `gorm:"default:0"`
 	CantVendidoTotal    int   `gorm:"default:0"`
+	ImagenDescripcion   string
+	ImagenPortada       string
+	VideoPresentacion   string
+	ImagenEscenario     string
 	TotalRecaudado      float64
 	Estado              int16 `gorm:"default:1"`
 	UsuarioCreacion     *int64

@@ -47,12 +47,12 @@ func main() {
 		OrganizadorID:   usuario.ID,
 		CategoriaID:     categoria.ID,
 		FechaCreacion:   now,
-		UsuarioCreacion: &createdBy,
+		UsuarioCreacion: &usuario.ID,
 		Estado:          1,
 
 		Sectores: []model.Sector{
-			{SectorTipo: "VIP", TotalEntradas: 1000, Estado: 1, UsuarioCreacion: &createdBy, FechaCreacion: now},
-			{SectorTipo: "General", TotalEntradas: 2000, Estado: 1, UsuarioCreacion: &createdBy, FechaCreacion: now},
+			{SectorTipo: "VIP", TotalEntradas: 1000, Estado: 1, UsuarioCreacion: &usuario.ID, FechaCreacion: now},
+			{SectorTipo: "General", TotalEntradas: 2000, Estado: 1, UsuarioCreacion: &usuario.ID, FechaCreacion: now},
 		},
 
 		TiposTicket: []model.TipoDeTicket{

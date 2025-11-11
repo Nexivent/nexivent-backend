@@ -13,4 +13,4 @@ type MetodoDePago struct {
 	Ordenes []OrdenDeCompra
 }
 
-func (MetodoDePago) TableName() string { return "metodo_de_pago" }
+

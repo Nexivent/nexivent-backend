@@ -30,4 +30,3 @@ type Usuario struct {
 	Cupones        []UsuarioCupon
 }
 
-func (Usuario) TableName() string { return "usuario" }

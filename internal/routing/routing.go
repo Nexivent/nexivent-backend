@@ -18,9 +18,10 @@ func Routes(app *settings.Application) http.Handler {
 	router.HandlerFunc(http.MethodGet, "/v1/healthcheck", healthcheckHandler)
 
 	// Rutas para EVENTOS
-	router.HandlerFunc(http.MethodGet, "/v1/eventos/:id", getEvento)
-	router.HandlerFunc(http.MethodPost, "/v1/eventos/", postEvento)
-	router.HandlerFunc(http.MethodPut, "/v1/eventos/:id", updateEvento)
+	router.HandlerFunc(http.MethodGet, "/v1/evento/:id", getEvento)
+	router.HandlerFunc(http.MethodGet, "/v1/eventos/", getEventos)
+	router.HandlerFunc(http.MethodPost, "/v1/evento/", postEvento)
+	router.HandlerFunc(http.MethodPatch, "/v1/evento/:id", patchEvento)
 
 	// Aplicar el middleware para inyectar la aplicación en el contexto
 	return middleware.InjectApplication(app)(router)

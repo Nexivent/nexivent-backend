@@ -2,6 +2,9 @@
 package data
 
 import (
+	"context"
+	"database/sql"
+	"errors"
 	"time"
 
 	"github.com/Nexivent/nexivent-backend/internal/data/util"
@@ -27,6 +30,10 @@ type Evento struct {
 	FechaCreacion       time.Time         `db:"fecha_creacion" json:"fechaCreacion"`
 	UsuarioModificacion *uuid.UUID        `db:"usuario_modificacion" json:"usuarioModificacion"`
 	FechaModificacion   *time.Time        `db:"fecha_modificacion" json:"fechaModificacion"`
+	ImagenDescripcion   string            `db:"imagen_descripcion" json:"imagenDescripcion"`
+	ImagenPortada       string            `db:"imagen_portada" json:"imagenPortada"`
+	VideoPresentacion   string            `db:"video_presentacion" json:"videoPresentacion"`
+	ImagenEscenario     string            `db:"imagen_escenario" json:"imagenEscenario"`
 
 	Organizador *Usuario
 	Categoria   *Categoria
@@ -90,7 +97,10 @@ func (e EventoModel) Insert(evento *Evento) error {
 		evento.UsuarioCreacion,
 	}
 
-	return e.DB.QueryRow(query, args...).Scan(
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	return e.DB.QueryRowContext(ctx, query, args...).Scan(
 		&evento.ID,
 		&evento.FechaCreacion,
 		&evento.FechaModificacion,
@@ -112,7 +122,15 @@ func (e EventoModel) Get(id uuid.UUID) (*Evento, error) {
 
 	var evento Evento
 
-	err := e.DB.QueryRow(query, id).Scan(
+	// Use the context.WithTimeout() function to create a context.Context which carries a
+	// 3-second timeout deadline. Note that we're using the empty context.Background()
+	// as the 'parent' context.
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	// Importantly, use defer to make sure that we cancel the context before the Get()
+	// method returns.
+	defer cancel()
+
+	err := e.DB.QueryRowContext(ctx, query, id).Scan(
 		&evento.ID,
 		&evento.OrganizadorID,
 		&evento.CategoriaID,
@@ -138,7 +156,7 @@ func (e EventoModel) Get(id uuid.UUID) (*Evento, error) {
 	return &evento, nil
 }
 
-func (e EventoModel) Update(evento *Evento) error {
+func (e EventoModel) Patch(evento *Evento) error {
 	query := `
 		UPDATE evento
 		SET organizador_id = $1, categoria_id = $2, titulo = $3, descripcion = $4,
@@ -162,18 +180,17 @@ func (e EventoModel) Update(evento *Evento) error {
 		evento.ID,
 	}
 
-	result, err := e.DB.Exec(query, args...)
-	if err != nil {
-		return err
-	}
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
 
-	rowsAffected, err := result.RowsAffected()
+	err := e.DB.QueryRowContext(ctx, query, args...).Scan(nil)
 	if err != nil {
-		return err
-	}
-
-	if rowsAffected == 0 {
-		return ErrRecordNotFound
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return ErrEditConflict
+		default:
+			return err
+		}
 	}
 
 	return nil
@@ -207,4 +224,33 @@ func (e EventoModel) Delete(id uuid.UUID) error {
 	return nil
 }
 
-func (Evento) TableName() string { return "evento" }
+func (e EventoModel) GetAll(titulo string, filters []util.Filters) ([]*Evento, error) {
+	query := `
+		SELECT evento_id, organizador_id, categoria_id, titulo, descripcion, lugar,
+			evento_estado, cant_me_gusta, cant_no_interesa, cant_vendido_total,
+			total_recaudado, estado, usuario_creacion, fecha_creacion,
+			usuario_modificacion, fecha_modificacion
+		FROM evento
+		WHERE (titulo ILIKE '%' || $1 || '%' OR $1 = '')
+			AND estado = 1
+		ORDER BY ` + filters[0].Sort + `
+		LIMIT $2 OFFSET $3`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	args := []any{
+		titulo,
+		filters[0].PageSize,
+		(filters[0].Page - 1) * filters[0].PageSize,
+	}
+
+	var eventos []*Evento
+	err := e.DB.SelectContext(ctx, &eventos, query, args...)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return eventos, nil
+}

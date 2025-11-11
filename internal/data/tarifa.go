@@ -23,4 +23,4 @@ type Tarifa struct {
 	PerfilPersona *PerfilDePersona
 }
 
-func (Tarifa) TableName() string { return "tarifa" }
+

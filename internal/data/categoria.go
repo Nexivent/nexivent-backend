@@ -14,4 +14,4 @@ type Categoria struct {
 	Eventos []Evento
 }
 
-func (Categoria) TableName() string { return "categoria" }
+

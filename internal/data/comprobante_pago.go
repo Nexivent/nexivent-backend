@@ -19,4 +19,3 @@ type ComprobanteDePago struct {
 	OrdenDeCompra *OrdenDeCompra
 }
 
-func (ComprobanteDePago) TableName() string { return "comprobante_de_pago" }

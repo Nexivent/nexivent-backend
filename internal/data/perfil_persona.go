@@ -20,4 +20,4 @@ type PerfilDePersona struct {
 	Evento Evento
 }
 
-func (PerfilDePersona) TableName() string { return "perfil_de_persona" }
+

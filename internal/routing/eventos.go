@@ -79,7 +79,7 @@ func postEvento(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func updateEvento(w http.ResponseWriter, r *http.Request) {
+func patchEvento(w http.ResponseWriter, r *http.Request) {
 	app := context.GetApplication(r.Context())
 	if app == nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -142,18 +142,18 @@ func updateEvento(w http.ResponseWriter, r *http.Request) {
 	if input.CantNoInteresa != nil {
 		evento.CantNoInteresa = *input.CantNoInteresa
 	}
-	
+
 	if input.CantVendidoTotal != nil {
 		evento.CantVendidoTotal = *input.CantVendidoTotal
 	}
-	
+
 	if input.TotalRecaudado != nil {
 		evento.TotalRecaudado = *input.TotalRecaudado
 	}
-	
+
 	if input.Estado != nil {
 		evento.Estado = *input.Estado
-	}	
+	}
 
 	err = internal.ReadJSON(w, r, &input)
 	if err != nil {
@@ -167,9 +167,14 @@ func updateEvento(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = app.Models.Eventos.Update(evento)
+	err = app.Models.Eventos.Patch(evento)
 	if err != nil {
-		app.ServerErrorResponse(w, r, err)
+		switch {
+		case errors.Is(err, data.ErrEditConflict):
+			app.EditConflictResponse(w, r)
+		default:
+			app.ServerErrorResponse(w, r, err)
+		}
 		return
 	}
 
@@ -177,4 +182,49 @@ func updateEvento(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		app.ServerErrorResponse(w, r, err)
 	}
+}
+
+func getEventos(w http.ResponseWriter, r *http.Request) {
+	app := context.GetApplication(r.Context())
+	if app == nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	var input struct {
+		Titulo string
+		util.Filters
+	}
+
+	// Initialize a new Validator instance.
+	v := validator.New()
+
+	// Call r.URL.Query() to get the url.Values map containing the query string data.
+	qs := r.URL.Query()
+
+	// Use our helpers to extract the title and genres query string values, falling back
+	// to defaults of an empty string and an empty slice respectively if they are not
+	// provided by the client.
+	input.Titulo = internal.ReadString(qs, "title", "")
+
+	// Get the page and page_size query string values as integers. Notice that we set
+	// the default page value to 1 and default page_size to 20, and that we pass the
+	// validator instance as the final argument here.
+	input.Filters.Page = uint64(internal.ReadInt(qs, "page", 1, v))
+	input.Filters.PageSize = uint64(internal.ReadInt(qs, "page_size", 20, v))
+
+	// Extract the sort query string value, falling back to "id" if it is not provided
+	// by the client (which will imply a ascending sort on movie ID).
+	input.Filters.Sort = internal.ReadString(qs, "sort", "id")
+	input.Filters.SortSafeList = []string{"id", "title", "year", "-id", "-title", "-year"}
+
+	// Check the Validator instance for any errors and use the failedValidationResponse()
+	// helper to send the client a response if necessary.
+	if !v.Valid() {
+		app.FailedValidationResponse(w, r, v.Errors)
+		return
+	}
+
+	// Dump the contents of the input struct in a HTTP response.
+	fmt.Fprintf(w, "%+v\n", input)
 }

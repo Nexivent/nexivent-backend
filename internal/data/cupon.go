@@ -29,4 +29,4 @@ type Cupon struct {
 	Usuarios []UsuarioCupon
 }
 
-func (Cupon) TableName() string { return "cupon" }
+

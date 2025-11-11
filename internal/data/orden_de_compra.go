@@ -24,4 +24,4 @@ type OrdenDeCompra struct {
 	ComprobantesPago []ComprobanteDePago
 }
 
-func (OrdenDeCompra) TableName() string { return "orden_de_compra" }
+

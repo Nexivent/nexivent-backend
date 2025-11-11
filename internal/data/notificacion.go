@@ -15,4 +15,4 @@ type Notificacion struct {
 	EstadoNotificacion util.EstadoNotificacion
 }
 
-func (Notificacion) TableName() string { return "notificacion" }
+

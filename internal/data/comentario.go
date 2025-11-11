@@ -19,4 +19,3 @@ type Comentario struct {
 	Evento  *Evento
 }
 
-func (Comentario) TableName() string { return "comentario" }

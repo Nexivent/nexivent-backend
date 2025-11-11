@@ -24,4 +24,4 @@ type EventoFecha struct {
 	Tickets []Ticket
 }
 
-func (EventoFecha) TableName() string { return "evento_fecha" }
+

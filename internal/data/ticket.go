@@ -15,4 +15,4 @@ type Ticket struct {
 	Tarifa        *Tarifa
 }
 
-func (Ticket) TableName() string { return "ticket" }
+

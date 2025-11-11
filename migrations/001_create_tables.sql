@@ -84,7 +84,11 @@ CREATE TABLE evento (
     usuario_creacion UUID,
     fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     usuario_modificacion UUID,
-    fecha_modificacion TIMESTAMPTZ
+    fecha_modificacion TIMESTAMPTZ,
+    imagen_descripcion VARCHAR(255),
+    imagen_portada VARCHAR(255),
+    video_presentacion VARCHAR(255),
+    imagen_escenario VARCHAR(255)
     -- CONSTRAINT fk_evento_organizador FOREIGN KEY (organizador_id) REFERENCES usuario(usuario_id) ON DELETE RESTRICT,
     -- CONSTRAINT fk_evento_categoria FOREIGN KEY (categoria_id) REFERENCES categoria(id_categoria) ON DELETE RESTRICT,
     -- CONSTRAINT chk_evento_estado CHECK (evento_estado IN (0, 1, 2)),

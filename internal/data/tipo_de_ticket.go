@@ -22,4 +22,4 @@ type TipoDeTicket struct {
 	Evento *Evento
 }
 
-func (TipoDeTicket) TableName() string { return "tipo_de_ticket" }
+

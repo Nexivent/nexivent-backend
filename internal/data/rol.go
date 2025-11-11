@@ -17,4 +17,3 @@ type Rol struct {
 	Usuarios []RolUsuario
 }
 
-func (Rol) TableName() string { return "rol" }

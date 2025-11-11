@@ -13,4 +13,4 @@ type Fecha struct {
 	EventoFechas []EventoFecha
 }
 
-func (Fecha) TableName() string { return "fecha" }
+

@@ -21,4 +21,4 @@ type RolUsuario struct {
 	Usuario *Usuario
 }
 
-func (RolUsuario) TableName() string { return "rol_usuario" }
+

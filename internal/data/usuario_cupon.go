@@ -11,4 +11,4 @@ type UsuarioCupon struct {
 	Usuario *Usuario
 }
 
-func (UsuarioCupon) TableName() string { return "usuario_cupon" }
+

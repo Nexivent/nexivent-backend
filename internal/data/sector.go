@@ -21,4 +21,4 @@ type Sector struct {
 	Evento *Evento `gorm:"foreignKey:EventoID;references:evento_id"`
 }
 
-func (Sector) TableName() string { return "sector" }
+

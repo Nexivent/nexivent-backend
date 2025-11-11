@@ -1,18 +1,17 @@
-package data
+package model
 
 import (
 	"time"
 
 	"github.com/Nexivent/nexivent-backend/internal/data/util"
-	"github.com/google/uuid"
 )
 
 type Notificacion struct {
-	ID                 uuid.UUID
+	ID                 uint64
 	Mensaje            string
 	Canal              string
 	FechaEnvio         time.Time
 	EstadoNotificacion util.EstadoNotificacion
 }
 
-
+func (Notificacion) TableName() string { return "notificacion" }

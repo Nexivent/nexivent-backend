@@ -1,27 +1,21 @@
-package data
+package model
 
 import (
 	"time"
 
 	"github.com/Nexivent/nexivent-backend/internal/data/util"
-	"github.com/google/uuid"
 )
 
 type EventoFecha struct {
-	ID                  uuid.UUID
-	EventoID            uuid.UUID
-	FechaID             uuid.UUID
+	ID                  uint64
+	EventoID            uint64
+	FechaID             uint64
 	HoraInicio          time.Time
 	Estado              util.Estado
-	UsuarioCreacion     *uuid.UUID
+	UsuarioCreacion     *uint64
 	FechaCreacion       time.Time
-	UsuarioModificacion *uuid.UUID
+	UsuarioModificacion *uint64
 	FechaModificacion   *time.Time
-
-	Evento *Evento
-	Fecha  *Fecha
 
 	Tickets []Ticket
 }
-
-

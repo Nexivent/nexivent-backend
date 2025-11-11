@@ -2,15 +2,20 @@ package util
 
 import (
 	"database/sql/driver"
+	"errors"
 	"fmt"
+	"strconv"
+	"strings"
 )
 
 type EstadoNotificacion int16
 
 const (
-	NotificacionEnviada   EstadoNotificacion = iota // 0
-	NotificacionNoEnviada                           // 1
+	NotificacionEnviada EstadoNotificacion = iota
+	NotificacionNoEnviada
 )
+
+var ErrInvalidEstadoNotificacion = errors.New("estado de notificación inválido")
 
 func (e EstadoNotificacion) Codigo() int16 { return int16(e) }
 
@@ -76,4 +81,35 @@ func (e *EstadoNotificacion) Scan(src any) error {
 		return fmt.Errorf("estado de notificación inválido: %d", *e)
 	}
 	return nil
+}
+
+func (e *EstadoNotificacion) UnmarshalJSON(data []byte) error {
+	unquotedData, err := strconv.Unquote(string(data))
+	if err != nil {
+		return ErrInvalidEstadoNotificacion
+	}
+
+	// Split the string to isolate the part containing the number.
+	parts := strings.Split(unquotedData, " ")
+
+	// Sanity check the parts of the string to make sure it was in the expected format.
+	// If it isn't, we return the ErrInvalidEstadoNotificacion error again.
+	if len(parts) > 1 {
+		return ErrInvalidEstadoNotificacion
+	}
+
+	switch strings.ToUpper(parts[0]) {
+	case "ENVIADO":
+		*e = NotificacionEnviada
+	case "NO_ENVIADO":
+		*e = NotificacionNoEnviada
+	default:
+		return ErrInvalidEstadoNotificacion
+	}
+
+	return nil
+}
+
+func (e EstadoNotificacion) MarshalJSON() ([]byte, error) {
+	return fmt.Appendf([]byte{}, `"%s"`, e.String()), nil
 }

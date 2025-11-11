@@ -1,23 +1,20 @@
-package data
+package model
 
 import (
 	"time"
 
 	"github.com/Nexivent/nexivent-backend/internal/data/util"
-	"github.com/google/uuid"
 )
 
 type PerfilDePersona struct {
-	ID                  uuid.UUID
-	EventoID            uuid.UUID
+	ID                  uint64
+	EventoID            uint64
 	Nombre              string
 	Estado              util.Estado
-	UsuarioCreacion     uuid.UUID
+	UsuarioCreacion     uint64
 	FechaCreacion       time.Time
-	UsuarioModificacion uuid.UUID
+	UsuarioModificacion uint64
 	FechaModificacion   time.Time
-
-	Evento Evento
 }
 
-
+func (PerfilDePersona) TableName() string { return "perfil_de_persona" }

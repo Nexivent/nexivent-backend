@@ -1,21 +1,18 @@
-package data
+package model
 
 import (
 	"time"
 
 	"github.com/Nexivent/nexivent-backend/internal/data/util"
-	"github.com/google/uuid"
 )
 
 type Comentario struct {
-	ID            uuid.UUID
-	UsuarioID     uuid.UUID
-	EventoID      uuid.UUID
+	ID            uint64
+	UsuarioID     uint64
+	EventoID      uint64
 	Descripcion   string
 	FechaCreacion time.Time
 	Estado        util.Estado
-
-	Usuario *Usuario
-	Evento  *Evento
 }
 
+func (Comentario) TableName() string { return "comentario" }

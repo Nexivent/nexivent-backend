@@ -1,19 +1,18 @@
-package data
+package model
 
 import (
 	"time"
-
-	"github.com/google/uuid"
 )
 
 type Rol struct {
-	ID                  uuid.UUID
+	ID                  uint64
 	Nombre              string
-	UsuarioCreacion     *uuid.UUID
+	UsuarioCreacion     *uint64
 	FechaCreacion       time.Time
-	UsuarioModificacion *uuid.UUID
+	UsuarioModificacion *uint64
 	FechaModificacion   *time.Time
 
 	Usuarios []RolUsuario
 }
 
+func (Rol) TableName() string { return "rol" }

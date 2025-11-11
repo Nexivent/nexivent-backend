@@ -1,16 +1,15 @@
-package data
+package model
 
 import (
 	"github.com/Nexivent/nexivent-backend/internal/data/util"
-	"github.com/google/uuid"
 )
 
 type MetodoDePago struct {
-	ID     uuid.UUID
+	ID     uint64
 	Tipo   string
 	Estado util.Estado
 
 	Ordenes []OrdenDeCompra
 }
 
-
+func (MetodoDePago) TableName() string { return "metodo_de_pago" }

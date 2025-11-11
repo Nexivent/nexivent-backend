@@ -2,16 +2,21 @@ package util
 
 import (
 	"database/sql/driver"
+	"errors"
 	"fmt"
+	"strconv"
+	"strings"
 )
 
 type EstadoEvento int16
 
 const (
-	EventoBorrador  EstadoEvento = iota // 0
-	EventoPublicado                     // 1
-	EventoCancelado                     // 2
+	EventoBorrador EstadoEvento = iota
+	EventoPublicado
+	EventoCancelado
 )
+
+var ErrInvalidEstadoEvento = errors.New("estado de evento inválido")
 
 // == equivalente a getCodigo() ==
 func (e EstadoEvento) Codigo() int16 { return int16(e) }
@@ -82,4 +87,37 @@ func (e *EstadoEvento) Scan(src any) error {
 		return fmt.Errorf("estado inválido: %d", *e)
 	}
 	return nil
+}
+
+func (e *EstadoEvento) UnmarshalJSON(data []byte) error {
+	unquotedData, err := strconv.Unquote(string(data))
+	if err != nil {
+		return ErrInvalidEstadoEvento
+	}
+
+	// Split the string to isolate the part containing the number.
+	parts := strings.Split(unquotedData, " ")
+
+	// Sanity check the parts of the string to make sure it was in the expected format.
+	// If it isn't, we return the ErrInvalidEstadoEvento error again.
+	if len(parts) > 1 {
+		return ErrInvalidEstadoEvento
+	}
+
+	switch strings.ToUpper(parts[0]) {
+	case "BORRADOR":
+		*e = EventoBorrador
+	case "PUBLICADO":
+		*e = EventoPublicado
+	case "CANCELADO":
+		*e = EventoCancelado
+	default:
+		return ErrInvalidEstadoEvento
+	}
+
+	return nil
+}
+
+func (e EstadoEvento) MarshalJSON() ([]byte, error) {
+	return fmt.Appendf([]byte{}, `"%s"`, e.String()), nil
 }

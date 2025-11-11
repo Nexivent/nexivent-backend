@@ -1,16 +1,14 @@
-package data
+package model
 
 import (
 	"time"
-
-	"github.com/google/uuid"
 )
 
 type Fecha struct {
-	ID          uuid.UUID
+	ID          uint64
 	FechaEvento time.Time
 
 	EventoFechas []EventoFecha
 }
 
-
+func (Fecha) TableName() string { return "fecha" }

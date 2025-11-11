@@ -1,14 +1,13 @@
-package data
+package model
 
 import (
 	"time"
 
 	"github.com/Nexivent/nexivent-backend/internal/data/util"
-	"github.com/google/uuid"
 )
 
 type Cupon struct {
-	ID                  uuid.UUID
+	ID                  uint64
 	Descripcion         string
 	Tipo                string
 	Valor               float64
@@ -16,17 +15,12 @@ type Cupon struct {
 	Codigo              string
 	UsoPorUsuario       int64
 	UsoRealizados       int64
-	UsuarioCreacion     *uuid.UUID
+	UsuarioCreacion     *uint64
 	FechaCreacion       time.Time
-	UsuarioModificacion *uuid.UUID
+	UsuarioModificacion *uint64
 	FechaModificacion   *time.Time
-
-	// FK al evento (muchos cupones pertenecen a un evento)
-	EventoID uuid.UUID
-	Evento   *Evento
+	EventoID uint64
 
 	// Mantienes tu relación con usuarios
 	Usuarios []UsuarioCupon
 }
-
-

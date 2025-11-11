@@ -2,15 +2,20 @@ package util
 
 import (
 	"database/sql/driver"
+	"errors"
 	"fmt"
+	"strconv"
+	"strings"
 )
 
 type TipoComprobante int16
 
 const (
-	ComprobanteBoleta  TipoComprobante = iota // 0
-	ComprobanteFactura                        // 1
+	ComprobanteBoleta TipoComprobante = iota
+	ComprobanteFactura
 )
+
+var ErrInvalidTipoComprobante = errors.New("tipo de comprobante inválido")
 
 func (t TipoComprobante) Codigo() int16 { return int16(t) }
 
@@ -75,4 +80,35 @@ func (t *TipoComprobante) Scan(src any) error {
 		return fmt.Errorf("tipo de comprobante inválido: %d", *t)
 	}
 	return nil
+}
+
+func (t *TipoComprobante) UnmarshalJSON(data []byte) error {
+	unquotedData, err := strconv.Unquote(string(data))
+	if err != nil {
+		return ErrInvalidTipoComprobante
+	}
+
+	// Split the string to isolate the part containing the number.
+	parts := strings.Split(unquotedData, " ")
+
+	// Sanity check the parts of the string to make sure it was in the expected format.
+	// If it isn't, we return the ErrInvalidTipoComprobante error again.
+	if len(parts) > 1 {
+		return ErrInvalidTipoComprobante
+	}
+
+	switch strings.ToUpper(parts[0]) {
+	case "BOLETA":
+		*t = ComprobanteBoleta
+	case "FACTURA":
+		*t = ComprobanteFactura
+	default:
+		return ErrInvalidTipoComprobante
+	}
+
+	return nil
+}
+
+func (t TipoComprobante) MarshalJSON() ([]byte, error) {
+	return fmt.Appendf([]byte{}, `"%s"`, t.String()), nil
 }

@@ -2,17 +2,22 @@ package util
 
 import (
 	"database/sql/driver"
+	"errors"
 	"fmt"
+	"strconv"
+	"strings"
 )
 
 type EstadoDeTicket int16
 
 const (
-	TicketDisponible EstadoDeTicket = iota // 0
-	TicketVendido                          // 1
-	TicketUsado                            // 2
-	TicketCancelado                        // 3
+	TicketDisponible EstadoDeTicket = iota
+	TicketVendido
+	TicketUsado
+	TicketCancelado
 )
+
+var ErrInvalidEstadoTicket = errors.New("estado de ticket inválido")
 
 func (e EstadoDeTicket) Codigo() int16 { return int16(e) }
 
@@ -86,4 +91,39 @@ func (e *EstadoDeTicket) Scan(src any) error {
 		return fmt.Errorf("estado de ticket inválido: %d", *e)
 	}
 	return nil
+}
+
+func (e *EstadoDeTicket) UnmarshalJSON(data []byte) error {
+	unquotedData, err := strconv.Unquote(string(data))
+	if err != nil {
+		return ErrInvalidEstadoTicket
+	}
+
+	// Split the string to isolate the part containing the number.
+	parts := strings.Split(unquotedData, " ")
+
+	// Sanity check the parts of the string to make sure it was in the expected format.
+	// If it isn't, we return the ErrInvalidEstadoTicket error again.
+	if len(parts) > 1 {
+		return ErrInvalidEstadoTicket
+	}
+
+	switch strings.ToUpper(parts[0]) {
+	case "DISPONIBLE":
+		*e = TicketDisponible
+	case "VENDIDO":
+		*e = TicketVendido
+	case "USADO":
+		*e = TicketUsado
+	case "CANCELADO":
+		*e = TicketCancelado
+	default:
+		return ErrInvalidEstadoTicket
+	}
+
+	return nil
+}
+
+func (e EstadoDeTicket) MarshalJSON() ([]byte, error) {
+	return fmt.Appendf([]byte{}, `"%s"`, e.String()), nil
 }

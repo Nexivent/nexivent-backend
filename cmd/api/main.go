@@ -7,11 +7,11 @@ import (
 	"os"
 	"time"
 
-	"github.com/Nexivent/nexivent-backend/internal/data"
 	"github.com/Nexivent/nexivent-backend/internal/routing"
 	"github.com/Nexivent/nexivent-backend/internal/settings"
-	"github.com/jmoiron/sqlx"
-	_ "github.com/lib/pq"
+	"github.com/Nexivent/nexivent-backend/internal/data/repository"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 func main() {
@@ -21,26 +21,30 @@ func main() {
 
 	settings.ParseFlagEnv(logger, &cfg)
 
-	db, err := sqlx.Connect("postgres", cfg.DB.URL)
+	db, err := gorm.Open(postgres.Open(cfg.DB.URL), &gorm.Config{})
 	if err != nil {
 		logger.Error(err.Error())
 		os.Exit(1)
 	}
 
-	db.SetMaxOpenConns(cfg.DB.MaxOpenConns)
-	db.SetMaxIdleConns(cfg.DB.MaxIdleConns)
-	db.SetConnMaxIdleTime(cfg.DB.MaxIdleTime)
+	sqlDB, err := db.DB()
+	if err != nil {
+		logger.Error(err.Error())
+		os.Exit(1)
+	}
 
-	defer db.Close()
+	// Set database connection pool settings
+	sqlDB.SetMaxOpenConns(cfg.DB.MaxOpenConns)
+	sqlDB.SetMaxIdleConns(cfg.DB.MaxIdleConns)
+	sqlDB.SetConnMaxIdleTime(cfg.DB.MaxIdleTime)
+
 
 	logger.Info("database connection pool established")
 
 	app := settings.Application{
 		Config: cfg,
 		Logger: logger,
-		Models: settings.Models{
-			Eventos: data.EventoModel{DB: db},
-		},
+		Repository: repository.NewRepository(db),
 	}
 
 	srv := &http.Server{

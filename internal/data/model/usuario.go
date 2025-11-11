@@ -1,14 +1,13 @@
-package data
+package model
 
 import (
 	"time"
 
 	"github.com/Nexivent/nexivent-backend/internal/data/util"
-	"github.com/google/uuid"
 )
 
 type Usuario struct {
-	ID                    uuid.UUID
+	ID                    uint64
 	Nombre                string
 	TipoDocumento         string
 	NumDocumento          string
@@ -18,9 +17,9 @@ type Usuario struct {
 	EstadoDeCuenta        util.Estado
 	CodigoVerificacion    *string
 	FechaExpiracionCodigo *time.Time
-	UsuarioCreacion       *uuid.UUID
+	UsuarioCreacion       *uint64
 	FechaCreacion         time.Time
-	UsuarioModificacion   *uuid.UUID
+	UsuarioModificacion   *uint64
 	FechaModificacion     *time.Time
 	Estado                util.Estado
 
@@ -30,3 +29,4 @@ type Usuario struct {
 	Cupones        []UsuarioCupon
 }
 
+func (Usuario) TableName() string { return "usuario" }

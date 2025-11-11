@@ -6,6 +6,7 @@ import (
 	"github.com/Loui27/nexivent-backend/internal/dao/model"
 	"github.com/Loui27/nexivent-backend/logging"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type Tarifa struct {
@@ -132,4 +133,67 @@ func (t *Tarifa) MapTarifaPrecioSector(ids []int64) (map[int64]float64, map[int6
 		outSector[r.ID] = r.SectorID
 	}
 	return outPrecio, outSector, nil
+}
+
+func (r *Tarifa) ModificarTarifaPorCampos(
+	id int64,
+	sectorID *int64,
+	tipoDeTicketID *int64,
+	perfilDePersonaID *int64,
+	precio *float64,
+	estado *int16,
+	usuarioModificacion *int64,
+	fechaModificacion *time.Time,
+) (*model.Tarifa, error) {
+
+	if id <= 0 {
+		return nil, gorm.ErrInvalidData
+	}
+
+	updates := map[string]any{}
+	if sectorID != nil {
+		updates["sector_id"] = *sectorID
+	}
+	if tipoDeTicketID != nil {
+		updates["tipo_de_ticket_id"] = *tipoDeTicketID
+	}
+	if perfilDePersonaID != nil {
+		updates["perfil_de_persona_id"] = *perfilDePersonaID
+	}
+	if precio != nil {
+		updates["precio"] = *precio
+	}
+	if estado != nil {
+		updates["estado"] = *estado
+	}
+	if usuarioModificacion != nil {
+		updates["usuario_modificacion"] = *usuarioModificacion
+	}
+	if fechaModificacion != nil {
+		updates["fecha_modificacion"] = *fechaModificacion
+	}
+
+	var t model.Tarifa
+	if len(updates) == 0 {
+		if err := r.PostgresqlDB.First(&t, "tarifa_id = ?", id).Error; err != nil {
+			r.logger.Errorf("ModificarTarifaCampos (sin cambios) id=%d: %v", id, err)
+			return nil, err
+		}
+		return &t, nil
+	}
+
+	res := r.PostgresqlDB.
+		Model(&t).
+		Clauses(clause.Returning{}).
+		Where("tarifa_id = ?", id).
+		Updates(updates)
+
+	if res.Error != nil {
+		r.logger.Errorf("ModificarTarifaCampos id=%d: %v", id, res.Error)
+		return nil, res.Error
+	}
+	if res.RowsAffected == 0 {
+		return nil, gorm.ErrRecordNotFound
+	}
+	return &t, nil
 }

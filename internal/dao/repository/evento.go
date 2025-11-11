@@ -6,6 +6,7 @@ import (
 	"github.com/Loui27/nexivent-backend/internal/dao/model"
 	"github.com/Loui27/nexivent-backend/logging"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type Evento struct {
@@ -112,4 +113,256 @@ func (e *Evento) ObtenerEventosDisponiblesConFiltros(
 	}*/
 
 	return eventos, nil
+}
+
+// ===============================
+//
+//	Actualización: UBICACIÓN
+//
+// ===============================
+func (e *Evento) ActualizarUbicacionEvento(
+	eventoID int64,
+	nuevoLugar string,
+	usuarioModificacion *int64,
+	fechaModificacion *time.Time,
+) (*model.Evento, error) {
+
+	if eventoID <= 0 || nuevoLugar == "" {
+		return nil, gorm.ErrInvalidData
+	}
+
+	updates := map[string]any{
+		"lugar": nuevoLugar,
+	}
+	if usuarioModificacion != nil {
+		updates["usuario_modificacion"] = *usuarioModificacion
+	}
+	if fechaModificacion != nil {
+		updates["fecha_modificacion"] = *fechaModificacion
+	}
+
+	var ev model.Evento
+	res := e.PostgresqlDB.
+		Model(&ev).
+		Clauses(clause.Returning{}).
+		Where("evento_id = ?", eventoID).
+		Updates(updates)
+
+	if res.Error != nil {
+		e.logger.Errorf("ActualizarUbicacionEvento id=%d: %v", eventoID, res.Error)
+		return nil, res.Error
+	}
+	if res.RowsAffected == 0 {
+		return nil, gorm.ErrRecordNotFound
+	}
+	return &ev, nil
+}
+
+// =======================================
+//
+//	Actualización: ESTADO WORKFLOW (evento_estado)
+//	(p.ej., 0=Borrador, 1=Publicado, 2=Finalizado)
+//
+// =======================================
+func (e *Evento) ActualizarEstadoWorkflowEvento(
+	eventoID int64,
+	nuevoEstado int16,
+	usuarioModificacion *int64,
+	fechaModificacion *time.Time,
+) (*model.Evento, error) {
+
+	if eventoID <= 0 {
+		return nil, gorm.ErrInvalidData
+	}
+
+	updates := map[string]any{
+		"evento_estado": nuevoEstado,
+	}
+	if usuarioModificacion != nil {
+		updates["usuario_modificacion"] = *usuarioModificacion
+	}
+	if fechaModificacion != nil {
+		updates["fecha_modificacion"] = *fechaModificacion
+	}
+
+	var ev model.Evento
+	res := e.PostgresqlDB.
+		Model(&ev).
+		Clauses(clause.Returning{}).
+		Where("evento_id = ?", eventoID).
+		Updates(updates)
+
+	if res.Error != nil {
+		e.logger.Errorf("ActualizarEstadoWorkflowEvento id=%d: %v", eventoID, res.Error)
+		return nil, res.Error
+	}
+	if res.RowsAffected == 0 {
+		return nil, gorm.ErrRecordNotFound
+	}
+	return &ev, nil
+}
+
+// =======================================
+//
+//	Actualización: ESTADO FLAG (estado)
+//	(0=inactivo, 1=activo; soft on/off del registro)
+//
+// =======================================
+func (e *Evento) ActualizarEstadoFlagEvento(
+	eventoID int64,
+	nuevoEstado int16,
+	usuarioModificacion *int64,
+	fechaModificacion *time.Time,
+) (*model.Evento, error) {
+
+	if eventoID <= 0 {
+		return nil, gorm.ErrInvalidData
+	}
+
+	updates := map[string]any{
+		"estado": nuevoEstado,
+	}
+	if usuarioModificacion != nil {
+		updates["usuario_modificacion"] = *usuarioModificacion
+	}
+	if fechaModificacion != nil {
+		updates["fecha_modificacion"] = *fechaModificacion
+	}
+
+	var ev model.Evento
+	res := e.PostgresqlDB.
+		Model(&ev).
+		Clauses(clause.Returning{}).
+		Where("evento_id = ?", eventoID).
+		Updates(updates)
+
+	if res.Error != nil {
+		e.logger.Errorf("ActualizarEstadoFlagEvento id=%d: %v", eventoID, res.Error)
+		return nil, res.Error
+	}
+	if res.RowsAffected == 0 {
+		return nil, gorm.ErrRecordNotFound
+	}
+	return &ev, nil
+}
+
+// =====================================================
+//  FECHAS (tablas: fecha, evento_fecha)
+//  - Cambiar fecha del calendario (tabla fecha)
+//  - Cambiar hora inicio de un evento_fecha
+//  - Reasignar fecha en un evento_fecha (cambiar fecha_id)
+// =====================================================
+
+// Cambia el valor de fecha_evento (tabla FECHA) para un fecha_id dado.
+// Ojo: este cambio afecta a todos los evento_fecha que referencien ese fecha_id.
+func (e *Evento) ActualizarFechaCalendario(
+	fechaID int64,
+	nuevaFecha time.Time, // usar solo la parte de día acorde a tu diseño
+	usuarioModificacion *int64,
+	fechaModificacion *time.Time,
+) error {
+
+	if fechaID <= 0 {
+		return gorm.ErrInvalidData
+	}
+
+	updates := map[string]any{
+		"fecha_evento": nuevaFecha, // Postgres DATE (GORM hace el cast si tu model.Fecha es time.Time)
+	}
+	// La tabla fecha no tiene campos de auditoría en tu DDL; si luego los agregas, setéalos aquí.
+	if usuarioModificacion != nil {
+		updates["usuario_modificacion"] = *usuarioModificacion
+	}
+	if fechaModificacion != nil {
+		updates["fecha_modificacion"] = *fechaModificacion
+	}
+
+	res := e.PostgresqlDB.
+		Table("fecha").
+		Where("fecha_id = ?", fechaID).
+		Updates(updates)
+
+	if res.Error != nil {
+		e.logger.Errorf("ActualizarFechaCalendario fecha_id=%d: %v", fechaID, res.Error)
+		return res.Error
+	}
+	if res.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
+}
+
+// Cambia la HORA de inicio de un registro evento_fecha (no la fecha).
+func (e *Evento) ActualizarHoraInicioEventoFecha(
+	eventoFechaID int64,
+	nuevaHora time.Time, // usa time con la hora deseada (Postgres TIMESTAMPTZ)
+	usuarioModificacion *int64,
+	fechaModificacion *time.Time,
+) error {
+
+	if eventoFechaID <= 0 {
+		return gorm.ErrInvalidData
+	}
+
+	updates := map[string]any{
+		"hora_inicio": nuevaHora,
+	}
+	if usuarioModificacion != nil {
+		updates["usuario_modificacion"] = *usuarioModificacion
+	}
+	if fechaModificacion != nil {
+		updates["fecha_modificacion"] = *fechaModificacion
+	}
+
+	res := e.PostgresqlDB.
+		Table("evento_fecha").
+		Where("evento_fecha_id = ?", eventoFechaID).
+		Updates(updates)
+
+	if res.Error != nil {
+		e.logger.Errorf("ActualizarHoraInicioEventoFecha evento_fecha_id=%d: %v", eventoFechaID, res.Error)
+		return res.Error
+	}
+	if res.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
+}
+
+// Reasigna la fecha (fecha_id) de un evento_fecha específico.
+// Útil si creas una nueva fecha en 'fecha' y quieres apuntar el evento_fecha a esa nueva fecha.
+func (e *Evento) ReasignarFechaDeEventoFecha(
+	eventoFechaID int64,
+	nuevoFechaID int64,
+	usuarioModificacion *int64,
+	fechaModificacion *time.Time,
+) error {
+
+	if eventoFechaID <= 0 || nuevoFechaID <= 0 {
+		return gorm.ErrInvalidData
+	}
+
+	updates := map[string]any{
+		"fecha_id": nuevoFechaID,
+	}
+	if usuarioModificacion != nil {
+		updates["usuario_modificacion"] = *usuarioModificacion
+	}
+	if fechaModificacion != nil {
+		updates["fecha_modificacion"] = *fechaModificacion
+	}
+
+	res := e.PostgresqlDB.
+		Table("evento_fecha").
+		Where("evento_fecha_id = ?", eventoFechaID).
+		Updates(updates)
+
+	if res.Error != nil {
+		e.logger.Errorf("ReasignarFechaDeEventoFecha evento_fecha_id=%d: %v", eventoFechaID, res.Error)
+		return res.Error
+	}
+	if res.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
 }

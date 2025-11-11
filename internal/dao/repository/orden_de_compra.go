@@ -26,83 +26,21 @@ func NewOrdenDeCompraController(
 	}
 }
 
-// CrearOrdenTemporal inserta una orden en estado_de_orden=0 (TEMPORAL).
-// Requiere: UsuarioID, Fecha, FechaHoraIni, FechaHoraFin (TTL calculado por el BO), Total.
+// CrearOrdenTemporal inserta una nueva orden temporal (estado = TEMPORAL).
 func (c *OrdenDeCompra) CrearOrdenTemporal(orden *model.OrdenDeCompra) error {
 	if orden == nil {
 		return gorm.ErrInvalidData
 	}
-	if orden.FechaHoraFin == nil {
-		c.logger.Errorf("CrearOrdenTemporal: FechaHoraFin es nil (el BO debe setear el TTL)")
-		return gorm.ErrInvalidData
-	}
-	// 0 = TEMPORAL (según tu esquema)
 	orden.EstadoDeOrden = util.OrdenTemporal.Codigo()
 
-	res := c.PostgresqlDB.Create(orden)
-	if res.Error != nil {
-		c.logger.Errorf("CrearOrdenTemporal: %v", res.Error)
-		return res.Error
+	if err := c.PostgresqlDB.Create(orden).Error; err != nil {
+		c.logger.Errorf("CrearOrdenTemporal: %v", err)
+		return err
 	}
 	return nil
 }
 
-// ObtenerMetaTemporal: trae estado_de_orden, fecha_hora_ini, fecha_hora_fin y total.
-func (c *OrdenDeCompra) ObtenerMetaTemporal(orderID int64) (estado int16, ini time.Time, fin *time.Time, total float64, err error) {
-	row := c.PostgresqlDB.
-		Table("orden_de_compra").
-		Where("orden_de_compra_id = ?", orderID).
-		Row()
-
-	scanErr := row.Scan(&estado, &ini, &fin, &total)
-	if scanErr != nil {
-		if scanErr == sql.ErrNoRows {
-			return 0, time.Time{}, nil, 0, gorm.ErrRecordNotFound
-		}
-		c.logger.Errorf("ObtenerMetaTemporal(%d): %v", orderID, scanErr)
-		return 0, time.Time{}, nil, 0, scanErr
-	}
-	return estado, ini, fin, total, nil
-}
-
-// MarcarOrdenConfirmada: cambia a estado_de_orden=1 (CONFIRMADA) si sigue TEMPORAL (0) y no está expirada.
-func (c *OrdenDeCompra) MarcarOrdenConfirmada(orderID int64) error {
-	now := time.Now().UTC()
-	res := c.PostgresqlDB.
-		Table("orden_de_compra").
-		Where(`
-			orden_de_compra_id = ?
-			AND estado_de_orden = 0
-			AND fecha_hora_fin IS NOT NULL
-			AND fecha_hora_fin >= ?
-		`, orderID, now).
-		Update("estado_de_orden", util.OrdenConfirmada.Codigo()) // 1 = CONFIRMADA
-
-	if res.Error != nil {
-		c.logger.Errorf("MarcarOrdenConfirmada(%d): %v", orderID, res.Error)
-		return res.Error
-	}
-	if res.RowsAffected == 0 {
-		return gorm.ErrRecordNotFound
-	}
-	return nil
-}
-
-// CancelarTemporalesVencidas: pone estado_de_orden=2 (CANCELADA) a todas las TEMPORALES (0) vencidas.
-func (c *OrdenDeCompra) CancelarTemporalesVencidas() (int64, error) {
-	now := time.Now().UTC()
-	res := c.PostgresqlDB.
-		Table("orden_de_compra").
-		Where("estado_de_orden = 0 AND fecha_hora_fin IS NOT NULL AND fecha_hora_fin < ?", now).
-		Update("estado_de_orden", util.OrdenCancelada.Codigo()) // 2 = CANCELADA
-	if res.Error != nil {
-		c.logger.Errorf("CancelarTemporalesVencidas: %v", res.Error)
-		return 0, res.Error
-	}
-	return res.RowsAffected, nil
-}
-
-// Ayuda rápida para lecturas básicas por ID (opcional).
+// ObtenerOrdenBasica trae una orden completa por ID.
 func (c *OrdenDeCompra) ObtenerOrdenBasica(orderID int64) (*model.OrdenDeCompra, error) {
 	var o model.OrdenDeCompra
 	if err := c.PostgresqlDB.First(&o, "orden_de_compra_id = ?", orderID).Error; err != nil {
@@ -111,14 +49,71 @@ func (c *OrdenDeCompra) ObtenerOrdenBasica(orderID int64) (*model.OrdenDeCompra,
 	return &o, nil
 }
 
-// Lock de una orden temporal (FOR UPDATE), útil si el BO necesita coordinar otras acciones.
+// CerrarOrdenTemporal aplica un lock de escritura (FOR UPDATE) sobre una orden temporal.
 func (c *OrdenDeCompra) CerrarOrdenTemporal(orderID int64) (*model.OrdenDeCompra, error) {
 	var o model.OrdenDeCompra
 	if err := c.PostgresqlDB.
 		Clauses(clause.Locking{Strength: "UPDATE"}).
-		Where("orden_de_compra_id = ? AND estado_de_orden = ?", orderID, util.OrdenTemporal.Codigo()). // 0 = TEMPORAL
+		Where("orden_de_compra_id = ? AND estado_de_orden = ?", orderID, util.OrdenTemporal.Codigo()).
 		First(&o).Error; err != nil {
 		return nil, err
 	}
 	return &o, nil
+}
+
+// ObtenerMetaTemporal devuelve (estado como enum), ini, fin, total.
+func (c *OrdenDeCompra) ObtenerMetaTemporal(orderID int64) (estado util.EstadoOrden, ini time.Time, fin *time.Time, total float64, err error) {
+	var estInt int16
+	row := c.PostgresqlDB.
+		Table("orden_de_compra").
+		Select("estado_de_orden, fecha_hora_ini, fecha_hora_fin, total").
+		Where("orden_de_compra_id = ?", orderID).
+		Row()
+
+	scanErr := row.Scan(&estInt, &ini, &fin, &total)
+	if scanErr != nil {
+		if scanErr == sql.ErrNoRows {
+			return 0, time.Time{}, nil, 0, gorm.ErrRecordNotFound
+		}
+		c.logger.Errorf("ObtenerMetaTemporal(%d): %v", orderID, scanErr)
+		return 0, time.Time{}, nil, 0, scanErr
+	}
+	estado = util.EstadoOrden(estInt) // casteo al enum
+	return estado, ini, fin, total, nil
+}
+
+// VerificarOrdenExisteYEstado valida si la orden existe y está en un estado específico (enum).
+func (c *OrdenDeCompra) VerificarOrdenExisteYEstado(orderID int64, estadoEsperado util.EstadoOrden) (bool, error) {
+	var estInt int16
+	row := c.PostgresqlDB.
+		Table("orden_de_compra").
+		Select("estado_de_orden").
+		Where("orden_de_compra_id = ?", orderID).
+		Row()
+
+	if err := row.Scan(&estInt); err != nil {
+		if err == sql.ErrNoRows {
+			return false, gorm.ErrRecordNotFound
+		}
+		c.logger.Errorf("VerificarOrdenExisteYEstado(%d): %v", orderID, err)
+		return false, err
+	}
+	return util.EstadoOrden(estInt) == estadoEsperado, nil
+}
+
+// ActualizarEstadoOrden cambia el estado de la orden usando enum.
+func (c *OrdenDeCompra) ActualizarEstadoOrden(orderID int64, nuevo util.EstadoOrden) error {
+	res := c.PostgresqlDB.
+		Table("orden_de_compra").
+		Where("orden_de_compra_id = ?", orderID).
+		Update("estado_de_orden", nuevo.Codigo())
+
+	if res.Error != nil {
+		c.logger.Errorf("ActualizarEstadoOrden(%d): %v", orderID, res.Error)
+		return res.Error
+	}
+	if res.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
 }

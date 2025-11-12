@@ -23,25 +23,30 @@ func (e *EventoSQL) CrearEvento(Evento *model.Evento) error {
 }
 
 func (e *EventoSQL) ObtenerEventosDisponiblesSinFiltros() ([]*model.Evento, error) {
-	var categoriaID *int64
-	var titulo *string
-	var descripcion *string
-	var lugar *string
-	var fecha *time.Time
-	var horaInicio *time.Time
-
-	eventos, respuesta := e.ObtenerEventosDisponiblesConFiltros(
-		categoriaID, titulo, descripcion, lugar, fecha, horaInicio,
-	)
-	if respuesta != nil {
-		return nil, respuesta
+	// var categoriaID *uint64
+	// var titulo *string
+	// var descripcion *string
+	// var lugar *string
+	// var fecha *time.Time
+	// var horaInicio *time.Time
+	var eventos []*model.Evento
+	respuesta := e.DB.Find(&eventos)
+	if respuesta.Error != nil {
+		return nil, respuesta.Error
 	}
+
+	// eventos, respuesta := e.ObtenerEventosDisponiblesConFiltros(
+	// 	categoriaID, titulo, descripcion, lugar, fecha, horaInicio,
+	// )
+	// if respuesta != nil {
+	// 	return nil, respuesta
+	// }
 
 	return eventos, nil
 }
 
 func (e *EventoSQL) ObtenerEventosDisponiblesConFiltros(
-	categoriaID *int64,
+	categoriaID *uint64,
 	titulo *string,
 	descripcion *string,
 	lugar *string,
@@ -56,8 +61,8 @@ func (e *EventoSQL) ObtenerEventosDisponiblesConFiltros(
 		Joins("JOIN fecha f ON f.fecha_id = ef.fecha_id").
 		Where("evento.evento_estado = 1 AND f.fecha_evento > NOW()")
 
-	// Aplicar filtros dinámicamente
-	if categoriaID != nil {
+	//Aplicar filtros dinámicamente
+	if categoriaID != nil && *categoriaID != 0 {
 		query = query.Where("evento.categoria_id = ?", *categoriaID)
 	}
 	if fecha != nil {

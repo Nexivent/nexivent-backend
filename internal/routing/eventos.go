@@ -3,12 +3,14 @@ package routing
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/Nexivent/nexivent-backend/internal"
 	"github.com/Nexivent/nexivent-backend/internal/context"
 	"github.com/Nexivent/nexivent-backend/internal/data/model"
-	"github.com/Nexivent/nexivent-backend/internal/data/util"
+	"github.com/Nexivent/nexivent-backend/internal/util"
 	"github.com/Nexivent/nexivent-backend/internal/validator"
+	"gorm.io/gorm"
 )
 
 func getEvento(w http.ResponseWriter, r *http.Request) {
@@ -63,7 +65,27 @@ func postEvento(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = app.Repository.Eventos.CrearEvento(&evento)
+	// Usar una transacción para todas las operaciones
+	err = app.Repository.DB.Transaction(func(tx *gorm.DB) error {
+		txRepo := app.Repository.WithTx(tx)
+
+		for i := range evento.Fechas {
+			fecha := model.Fecha{
+				FechaEvento: evento.Fechas[i].HoraInicio.Truncate(24 * time.Hour),
+			}
+			if err := txRepo.Fechas.CrearFecha(&fecha); err != nil {
+				return err
+			}
+			evento.Fechas[i].FechaID = fecha.ID
+		}
+
+		if err := txRepo.Eventos.CrearEvento(&evento); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
 	if err != nil {
 		app.ServerErrorResponse(w, r, err)
 		return
@@ -205,26 +227,42 @@ func getEventos(w http.ResponseWriter, r *http.Request) {
 	// Use our helpers to extract the title and genres query string values, falling back
 	// to defaults of an empty string and an empty slice respectively if they are not
 	// provided by the client.
-	input.Titulo = internal.ReadString(qs, "title", "")
+	input.Titulo = internal.ReadString(qs, "titulo", "")
 
-	// Get the page and page_size query string values as integers. Notice that we set
-	// the default page value to 1 and default page_size to 20, and that we pass the
-	// validator instance as the final argument here.
+	input.Filters.CategoriaID = uint64(internal.ReadInt(qs, "categoria_id", 0, v))
+	input.Filters.Lugar = internal.ReadString(qs, "lugar", "")
+	input.Filters.Fecha = internal.ReadTime(qs, time.Time{}, v)
+	input.Filters.Descripcion = internal.ReadString(qs, "descripcion", "")
+
 	input.Filters.Page = uint64(internal.ReadInt(qs, "page", 1, v))
 	input.Filters.PageSize = uint64(internal.ReadInt(qs, "page_size", 20, v))
-
-	// Extract the sort query string value, falling back to "id" if it is not provided
-	// by the client (which will imply a ascending sort on movie ID).
 	input.Filters.Sort = internal.ReadString(qs, "sort", "id")
-	input.Filters.SortSafeList = []string{"id", "title", "year", "-id", "-title", "-year"}
+	input.Filters.SortSafeList = []string{"id", "title", "time", "-id", "-title", "-time"}
 
 	// Check the Validator instance for any errors and use the failedValidationResponse()
 	// helper to send the client a response if necessary.
-	if !v.Valid() {
+	if util.ValidateFilters(v, input.Filters); !v.Valid() {
 		app.FailedValidationResponse(w, r, v.Errors)
 		return
 	}
 
-	// Dump the contents of the input struct in a HTTP response.
-	fmt.Fprintf(w, "%+v\n", input)
+	eventos, err := app.Repository.Eventos.ObtenerEventosDisponiblesConFiltros(
+		&input.Filters.CategoriaID,
+		&input.Titulo,
+		&input.Descripcion,
+		&input.Lugar,
+		nil,
+		nil,
+	)
+
+	if err != nil {
+		app.ServerErrorResponse(w, r, err)
+		return
+	}
+
+	err = internal.WriteJSON(w, http.StatusOK, internal.Envelope{"eventos": eventos}, nil)
+	if err != nil {
+		app.ServerErrorResponse(w, r, err)
+		return
+	}
 }

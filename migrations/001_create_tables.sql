@@ -58,8 +58,8 @@ CREATE TABLE categoria (
     categoria_id BIGSERIAL PRIMARY KEY,
     nombre TEXT NOT NULL UNIQUE,
     descripcion TEXT NOT NULL DEFAULT '',
-    estado SMALLINT NOT NULL DEFAULT 1,
-    CONSTRAINT chk_categoria_estado CHECK (estado IN (0, 1))
+    estado SMALLINT NOT NULL DEFAULT 1
+    -- CONSTRAINT chk_categoria_estado CHECK (estado IN (0, 1))
 );
 
 CREATE TABLE evento (
@@ -102,10 +102,10 @@ CREATE TABLE comentario (
     evento_id BIGINT NOT NULL,
     descripcion TEXT NOT NULL,
     fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    estado SMALLINT NOT NULL DEFAULT 1,
-    CONSTRAINT fk_comentario_usuario FOREIGN KEY (usuario_id) REFERENCES usuario(usuario_id) ON DELETE RESTRICT,
-    CONSTRAINT fk_comentario_evento FOREIGN KEY (evento_id) REFERENCES evento(evento_id) ON DELETE RESTRICT,
-    CONSTRAINT chk_comentario_estado CHECK (estado IN (0, 1))
+    estado SMALLINT NOT NULL DEFAULT 1
+    -- CONSTRAINT fk_comentario_usuario FOREIGN KEY (usuario_id) REFERENCES usuario(usuario_id) ON DELETE RESTRICT,
+    -- CONSTRAINT fk_comentario_evento FOREIGN KEY (evento_id) REFERENCES evento(evento_id) ON DELETE RESTRICT,
+    -- CONSTRAINT chk_comentario_estado CHECK (estado IN (0, 1))
 );
 
 CREATE TABLE sector (
@@ -118,15 +118,15 @@ CREATE TABLE sector (
     usuario_creacion BIGINT,
     fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     usuario_modificacion BIGINT,
-    fecha_modificacion TIMESTAMPTZ,
-    CONSTRAINT fk_sector_evento FOREIGN KEY (evento_id) REFERENCES evento(evento_id) ON DELETE RESTRICT,
-    CONSTRAINT uq_sector_tipo UNIQUE (evento_id, sector_tipo),
-    CONSTRAINT chk_sector_estado CHECK (estado IN (0, 1)),
-    CONSTRAINT chk_sector_capacidad CHECK (
-        total_entradas > 0
-        AND cant_vendidas >= 0
-        AND cant_vendidas <= total_entradas
-    )
+    fecha_modificacion TIMESTAMPTZ
+    -- CONSTRAINT fk_sector_evento FOREIGN KEY (evento_id) REFERENCES evento(evento_id) ON DELETE RESTRICT,
+    -- CONSTRAINT uq_sector_tipo UNIQUE (evento_id, sector_tipo),
+    -- CONSTRAINT chk_sector_estado CHECK (estado IN (0, 1)),
+    -- CONSTRAINT chk_sector_capacidad CHECK (
+    --     total_entradas > 0
+    --     AND cant_vendidas >= 0
+    --     AND cant_vendidas <= total_entradas
+    -- )
 );
 
 CREATE TABLE tipo_de_ticket (
@@ -139,11 +139,11 @@ CREATE TABLE tipo_de_ticket (
     usuario_creacion BIGINT,
     fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     usuario_modificacion BIGINT,
-    fecha_modificacion TIMESTAMPTZ,
-    CONSTRAINT fk_tipo_de_ticket_evento FOREIGN KEY (evento_id) REFERENCES evento(evento_id) ON DELETE RESTRICT,
-    CONSTRAINT uq_tipo_ticket_nombre UNIQUE (evento_id, nombre),
-    CONSTRAINT chk_tipo_de_ticket_estado CHECK (estado IN (0, 1)),
-    CONSTRAINT chk_tipo_de_ticket_rango CHECK (fecha_fin >= fecha_ini)
+    fecha_modificacion TIMESTAMPTZ
+    -- CONSTRAINT fk_tipo_de_ticket_evento FOREIGN KEY (evento_id) REFERENCES evento(evento_id) ON DELETE RESTRICT,
+    -- CONSTRAINT uq_tipo_ticket_nombre UNIQUE (evento_id, nombre),
+    -- CONSTRAINT chk_tipo_de_ticket_estado CHECK (estado IN (0, 1)),
+    -- CONSTRAINT chk_tipo_de_ticket_rango CHECK (fecha_fin >= fecha_ini)
 );
 
 CREATE TABLE perfil_de_persona (
@@ -154,10 +154,10 @@ CREATE TABLE perfil_de_persona (
     usuario_creacion BIGINT,
     fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     usuario_modificacion BIGINT,
-    fecha_modificacion TIMESTAMPTZ,
-    CONSTRAINT fk_perfil_de_persona_evento FOREIGN KEY (evento_id) REFERENCES evento(evento_id) ON DELETE RESTRICT,
-    CONSTRAINT uq_perfil_de_persona_nombre UNIQUE (evento_id, nombre),
-    CONSTRAINT chk_perfil_de_persona_estado CHECK (estado IN (0, 1))
+    fecha_modificacion TIMESTAMPTZ
+    -- CONSTRAINT fk_perfil_de_persona_evento FOREIGN KEY (evento_id) REFERENCES evento(evento_id) ON DELETE RESTRICT,
+    -- CONSTRAINT uq_perfil_de_persona_nombre UNIQUE (evento_id, nombre),
+    -- CONSTRAINT chk_perfil_de_persona_estado CHECK (estado IN (0, 1))
 );
 
 CREATE TABLE tarifa (
@@ -170,19 +170,19 @@ CREATE TABLE tarifa (
     usuario_creacion BIGINT,
     fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     usuario_modificacion BIGINT,
-    fecha_modificacion TIMESTAMPTZ,
-    CONSTRAINT fk_tarifa_sector FOREIGN KEY (sector_id) REFERENCES sector(sector_id) ON DELETE RESTRICT,
-    CONSTRAINT fk_tarifa_tipo_de_ticket FOREIGN KEY (tipo_de_ticket_id) REFERENCES tipo_de_ticket(tipo_de_ticket_id) ON DELETE RESTRICT,
-    CONSTRAINT fk_tarifa_perfil_de_persona FOREIGN KEY (perfil_de_persona_id) REFERENCES perfil_de_persona(perfil_de_persona_id) ON DELETE RESTRICT,
-    CONSTRAINT chk_tarifa_estado CHECK (estado IN (0, 1)),
-    CONSTRAINT chk_tarifa_precio_nn CHECK (precio >= 0)
+    fecha_modificacion TIMESTAMPTZ
+    -- CONSTRAINT fk_tarifa_sector FOREIGN KEY (sector_id) REFERENCES sector(sector_id) ON DELETE RESTRICT,
+    -- CONSTRAINT fk_tarifa_tipo_de_ticket FOREIGN KEY (tipo_de_ticket_id) REFERENCES tipo_de_ticket(tipo_de_ticket_id) ON DELETE RESTRICT,
+    -- CONSTRAINT fk_tarifa_perfil_de_persona FOREIGN KEY (perfil_de_persona_id) REFERENCES perfil_de_persona(perfil_de_persona_id) ON DELETE RESTRICT,
+    -- CONSTRAINT chk_tarifa_estado CHECK (estado IN (0, 1)),
+    -- CONSTRAINT chk_tarifa_precio_nn CHECK (precio >= 0)
 );
 
 CREATE TABLE metodo_de_pago (
     metodo_de_pago_id BIGSERIAL PRIMARY KEY,
     tipo tipo_metodo_pago_enum NOT NULL,
-    estado SMALLINT NOT NULL DEFAULT 1,
-    CONSTRAINT chk_metodo_de_pago_estado CHECK (estado IN (0, 1))
+    estado SMALLINT NOT NULL DEFAULT 1
+    -- CONSTRAINT chk_metodo_de_pago_estado CHECK (estado IN (0, 1))
 );
 
 CREATE TABLE orden_de_compra(
@@ -194,18 +194,18 @@ CREATE TABLE orden_de_compra(
     fecha_hora_fin TIMESTAMPTZ,
     total NUMERIC(12, 2) NOT NULL,
     monto_fee_servicio NUMERIC(12, 2) NOT NULL,
-    estado_de_orden SMALLINT NOT NULL DEFAULT 0,
-    CONSTRAINT fk_orden_de_compra_usuario FOREIGN KEY (usuario_id) REFERENCES usuario(usuario_id),
-    CONSTRAINT fk_orden_de_compra_pago FOREIGN KEY (metodo_de_pago_id) REFERENCES metodo_de_pago(metodo_de_pago_id),
-    CONSTRAINT chk_orden_de_compra_estado CHECK (estado_de_orden IN (0, 1, 2)),
-    CONSTRAINT chk_orden_de_compra_rango CHECK (
-        fecha_hora_fin IS NULL
-        OR fecha_hora_fin >= fecha_hora_ini
-    ),
-    CONSTRAINT chk_orden_de_compra_montos CHECK (
-        total >= 0
-        AND monto_fee_servicio >= 0
-    )
+    estado_de_orden SMALLINT NOT NULL DEFAULT 0
+    -- CONSTRAINT fk_orden_de_compra_usuario FOREIGN KEY (usuario_id) REFERENCES usuario(usuario_id),
+    -- CONSTRAINT fk_orden_de_compra_pago FOREIGN KEY (metodo_de_pago_id) REFERENCES metodo_de_pago(metodo_de_pago_id),
+    -- CONSTRAINT chk_orden_de_compra_estado CHECK (estado_de_orden IN (0, 1, 2)),
+    -- CONSTRAINT chk_orden_de_compra_rango CHECK (
+    --     fecha_hora_fin IS NULL
+    --     OR fecha_hora_fin >= fecha_hora_ini
+    -- ),
+    -- CONSTRAINT chk_orden_de_compra_montos CHECK (
+    --     total >= 0
+    --     AND monto_fee_servicio >= 0
+    -- )
 );
 
 CREATE TABLE fecha (
@@ -222,11 +222,11 @@ CREATE TABLE evento_fecha (
     usuario_creacion BIGINT,
     fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     usuario_modificacion BIGINT,
-    fecha_modificacion TIMESTAMPTZ,
-    CONSTRAINT fk_evento_fecha_evento FOREIGN KEY (evento_id) REFERENCES evento(evento_id) ON DELETE RESTRICT,
-    CONSTRAINT fk_evento_fecha_fecha FOREIGN KEY (fecha_id) REFERENCES fecha(fecha_id) ON DELETE RESTRICT,
-    CONSTRAINT uq_evento_fecha UNIQUE (evento_id, fecha_id, hora_inicio),
-    CONSTRAINT chk_evento_fecha_estado CHECK (estado IN (0, 1))
+    fecha_modificacion TIMESTAMPTZ
+    -- CONSTRAINT fk_evento_fecha_evento FOREIGN KEY (evento_id) REFERENCES evento(evento_id) ON DELETE RESTRICT,
+    -- CONSTRAINT fk_evento_fecha_fecha FOREIGN KEY (fecha_id) REFERENCES fecha(fecha_id) ON DELETE RESTRICT,
+    -- CONSTRAINT uq_evento_fecha UNIQUE (evento_id, fecha_id, hora_inicio),
+    -- CONSTRAINT chk_evento_fecha_estado CHECK (estado IN (0, 1))
 );
 
 CREATE TABLE ticket (
@@ -235,12 +235,12 @@ CREATE TABLE ticket (
     evento_fecha_id BIGINT NOT NULL,
     tarifa_id BIGINT NOT NULL,
     codigo_qr TEXT NOT NULL,
-    estado_de_ticket SMALLINT NOT NULL DEFAULT 0,
-    CONSTRAINT fk_ticket_orden FOREIGN KEY (orden_de_compra_id) REFERENCES orden_de_compra(orden_de_compra_id),
-    CONSTRAINT fk_ticket_fecha FOREIGN KEY (evento_fecha_id) REFERENCES evento_fecha(evento_fecha_id),
-    CONSTRAINT fk_ticket_tarifa FOREIGN KEY (tarifa_id) REFERENCES tarifa(tarifa_id),
-    CONSTRAINT chk_ticket_estado CHECK (estado_de_ticket IN (0, 1, 2, 3)),
-    CONSTRAINT uq_ticket_qr UNIQUE (codigo_qr)
+    estado_de_ticket SMALLINT NOT NULL DEFAULT 0
+    -- CONSTRAINT fk_ticket_orden FOREIGN KEY (orden_de_compra_id) REFERENCES orden_de_compra(orden_de_compra_id),
+    -- CONSTRAINT fk_ticket_fecha FOREIGN KEY (evento_fecha_id) REFERENCES evento_fecha(evento_fecha_id),
+    -- CONSTRAINT fk_ticket_tarifa FOREIGN KEY (tarifa_id) REFERENCES tarifa(tarifa_id),
+    -- CONSTRAINT chk_ticket_estado CHECK (estado_de_ticket IN (0, 1, 2, 3)),
+    -- CONSTRAINT uq_ticket_qr UNIQUE (codigo_qr)
 );
 
 CREATE TABLE cupon (
@@ -255,14 +255,14 @@ CREATE TABLE cupon (
     usuario_creacion BIGINT,
     fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     usuario_modificacion BIGINT,
-    fecha_modificacion TIMESTAMPTZ,
-    CONSTRAINT uq_cupon_codigo UNIQUE (codigo),
-    CONSTRAINT chk_cupon_estado CHECK (estado_cupon IN (0, 1)),
-    CONSTRAINT chk_cupon_valor_nn CHECK (valor >= 0),
-    CONSTRAINT chk_cupon_usos_nn CHECK (
-        uso_por_usuario >= 0
-        AND uso_realizados >= 0
-    )
+    fecha_modificacion TIMESTAMPTZ
+    -- CONSTRAINT uq_cupon_codigo UNIQUE (codigo),
+    -- CONSTRAINT chk_cupon_estado CHECK (estado_cupon IN (0, 1)),
+    -- CONSTRAINT chk_cupon_valor_nn CHECK (valor >= 0),
+    -- CONSTRAINT chk_cupon_usos_nn CHECK (
+    --     uso_por_usuario >= 0
+    --     AND uso_realizados >= 0
+    -- )
 );
 
 CREATE TABLE evento_cupon (
@@ -274,22 +274,22 @@ CREATE TABLE evento_cupon (
     usuario_creacion BIGINT,
     fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     usuario_modificacion BIGINT,
-    fecha_modificacion TIMESTAMPTZ,
-    CONSTRAINT pk_evento_cupon PRIMARY KEY (evento_id, cupon_id),
-    CONSTRAINT fk_evento_cupon_evento FOREIGN KEY (evento_id) REFERENCES evento(evento_id) ON DELETE RESTRICT,
-    CONSTRAINT fk_evento_cupon_cupon FOREIGN KEY (cupon_id) REFERENCES cupon(cupon_id) ON DELETE RESTRICT,
-    CONSTRAINT chk_evento_cupon_rango CHECK (fecha_fin >= fecha_ini),
-    CONSTRAINT chk_evento_cupon_cnt CHECK (cant_cupones > 0)
+    fecha_modificacion TIMESTAMPTZ
+    -- CONSTRAINT pk_evento_cupon PRIMARY KEY (evento_id, cupon_id),
+    -- CONSTRAINT fk_evento_cupon_evento FOREIGN KEY (evento_id) REFERENCES evento(evento_id) ON DELETE RESTRICT,
+    -- CONSTRAINT fk_evento_cupon_cupon FOREIGN KEY (cupon_id) REFERENCES cupon(cupon_id) ON DELETE RESTRICT,
+    -- CONSTRAINT chk_evento_cupon_rango CHECK (fecha_fin >= fecha_ini),
+    -- CONSTRAINT chk_evento_cupon_cnt CHECK (cant_cupones > 0)
 );
 
 CREATE TABLE usuario_cupon (
     cupon_id BIGINT NOT NULL,
     usuario_id BIGINT NOT NULL,
-    cant_usada BIGINT NOT NULL DEFAULT 0,
-    CONSTRAINT pk_usuario_cupon PRIMARY KEY (cupon_id, usuario_id),
-    CONSTRAINT fk_usuario_cupon_usuario FOREIGN KEY (usuario_id) REFERENCES usuario(usuario_id) ON DELETE RESTRICT,
-    CONSTRAINT fk_usuario_cupon_cupon FOREIGN KEY (cupon_id) REFERENCES cupon(cupon_id) ON DELETE RESTRICT,
-    CONSTRAINT chk_usuario_cupon_usada CHECK (cant_usada >= 0)
+    cant_usada BIGINT NOT NULL DEFAULT 0
+    -- CONSTRAINT pk_usuario_cupon PRIMARY KEY (cupon_id, usuario_id),
+    -- CONSTRAINT fk_usuario_cupon_usuario FOREIGN KEY (usuario_id) REFERENCES usuario(usuario_id) ON DELETE RESTRICT,
+    -- CONSTRAINT fk_usuario_cupon_cupon FOREIGN KEY (cupon_id) REFERENCES cupon(cupon_id) ON DELETE RESTRICT,
+    -- CONSTRAINT chk_usuario_cupon_usada CHECK (cant_usada >= 0)
 );
 
 CREATE TABLE comprobante_de_pago (
@@ -300,9 +300,9 @@ CREATE TABLE comprobante_de_pago (
     numero TEXT NOT NULL,
     fecha_emision TIMESTAMPTZ NOT NULL,
     ruc TEXT,
-    direccion_fiscal TEXT,
-    CONSTRAINT fk_comprobante_de_pago_orden FOREIGN KEY (orden_de_compra_id) REFERENCES orden_de_compra(orden_de_compra_id) ON DELETE RESTRICT,
-    CONSTRAINT chk_comprobante_de_pago_tipo CHECK (tipo_de_comprobante IN (0, 1))
+    direccion_fiscal TEXT
+    -- CONSTRAINT fk_comprobante_de_pago_orden FOREIGN KEY (orden_de_compra_id) REFERENCES orden_de_compra(orden_de_compra_id) ON DELETE RESTRICT,
+    -- CONSTRAINT chk_comprobante_de_pago_tipo CHECK (tipo_de_comprobante IN (0, 1))
 );
 
 CREATE TABLE rol (
@@ -311,8 +311,8 @@ CREATE TABLE rol (
     usuario_creacion BIGINT,
     fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     usuario_modificacion BIGINT,
-    fecha_modificacion TIMESTAMPTZ,
-    CONSTRAINT uq_rol_nombre UNIQUE (nombre)
+    fecha_modificacion TIMESTAMPTZ
+    -- CONSTRAINT uq_rol_nombre UNIQUE (nombre)
 );
 
 -- Relación usuario-rol con soft revoke
@@ -324,11 +324,11 @@ CREATE TABLE rol_usuario (
     fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     usuario_modificacion BIGINT,
     fecha_modificacion TIMESTAMPTZ,
-    estado SMALLINT NOT NULL DEFAULT 1,
-    CONSTRAINT fk_rol_usuario_rol FOREIGN KEY (rol_id) REFERENCES rol(rol_id),
-    CONSTRAINT fk_rol_usuario_usuario FOREIGN KEY (usuario_id) REFERENCES usuario(usuario_id),
-    CONSTRAINT uq_rol_usuario UNIQUE (usuario_id, rol_id),
-    CONSTRAINT chk_rol_usuario_estado CHECK (estado IN (0, 1))
+    estado SMALLINT NOT NULL DEFAULT 1
+    -- CONSTRAINT fk_rol_usuario_rol FOREIGN KEY (rol_id) REFERENCES rol(rol_id),
+    -- CONSTRAINT fk_rol_usuario_usuario FOREIGN KEY (usuario_id) REFERENCES usuario(usuario_id),
+    -- CONSTRAINT uq_rol_usuario UNIQUE (usuario_id, rol_id),
+    -- CONSTRAINT chk_rol_usuario_estado CHECK (estado IN (0, 1))
 );
 
 CREATE TABLE notificacion (
@@ -336,6 +336,6 @@ CREATE TABLE notificacion (
     mensaje TEXT NOT NULL,
     canal TEXT NOT NULL,
     fecha_envio TIMESTAMPTZ NOT NULL,
-    estado_notificacion SMALLINT NOT NULL,
-    CONSTRAINT chk_notificacion CHECK (estado_notificacion IN (0, 1, 2))
+    estado_notificacion SMALLINT NOT NULL
+    -- CONSTRAINT chk_notificacion CHECK (estado_notificacion IN (0, 1, 2))
 );

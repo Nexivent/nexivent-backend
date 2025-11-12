@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/Nexivent/nexivent-backend/internal/validator"
 	"github.com/julienschmidt/httprouter"
@@ -182,4 +183,17 @@ func ReadCSV(qs url.Values, key string, defaultValue []string) []string {
 	}
 	// Otherwise parse the value into a []string slice and return it.
 	return strings.Split(csv, ",")
+}
+
+func ReadTime(qs url.Values, defaultValue time.Time, v *validator.Validator) time.Time {
+	day := ReadInt(qs, "day", 31, v)
+	month := ReadInt(qs, "month", 12, v)
+	year := ReadInt(qs, "year", time.Now().Year(), v)
+
+	fecha, err := time.Parse("2006-01-02T15:04:05Z07:00", fmt.Sprintf("%04d-%02d-%02dT23:59:59-05:00", year, month, day))
+	if err != nil {
+		v.AddError("fecha", "error parsing date")
+		return defaultValue
+	}
+	return fecha
 }

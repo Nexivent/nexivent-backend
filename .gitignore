@@ -8,3 +8,4 @@ CONTEXT_QUICKSTART.md
 .pgpass
 compose.yaml
 bin/
+test.json

@@ -92,3 +92,15 @@ func (r *PerfilDePersona) ModificarPerfilDePersonaPorCampos(
 	}
 	return &p, nil
 }
+
+// ListarPerfilPersonaPorEventoID: devuelve TODAS las filas por evento_id (sin filtrar estado)
+func (pd *PerfilDePersona) ListarPerfilPersonaPorEventoID(eventoID int64) ([]model.PerfilDePersona, error) {
+	var list []model.PerfilDePersona
+	if err := pd.PostgresqlDB.
+		Where("evento_id = ?", eventoID).
+		Find(&list).Error; err != nil {
+		pd.logger.Errorf("ListarPerfilPersonaPorEventoID(%d): %v", eventoID, err)
+		return nil, err
+	}
+	return list, nil
+}

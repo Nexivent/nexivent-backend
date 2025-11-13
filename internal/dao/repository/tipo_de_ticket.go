@@ -40,3 +40,15 @@ func (t *TipoDeTicket) ActualizarTipoDeTicketr(TipoDeTicket *model.TipoDeTicket)
 
 	return nil
 }
+
+// ListarTipoTicketPorEventoID: devuelve TODAS las filas por evento_id (sin filtrar estado)
+func (t *TipoDeTicket) ListarTipoTicketPorEventoID(eventoID int64) ([]model.TipoDeTicket, error) {
+	var list []model.TipoDeTicket
+	if err := t.PostgresqlDB.
+		Where("evento_id = ?", eventoID).
+		Find(&list).Error; err != nil {
+		t.logger.Errorf("ListarTipoTicketPorEventoID(%d): %v", eventoID, err)
+		return nil, err
+	}
+	return list, nil
+}

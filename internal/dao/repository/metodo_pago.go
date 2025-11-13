@@ -25,12 +25,6 @@ func NewMetodoDePagoController(
 	}
 }
 
-//
-// ===============
-//   CRUD básicos
-// ===============
-//
-
 func (r *MetodoDePago) CrearMetodoDePago(m *model.MetodoDePago) error {
 	if m == nil {
 		return gorm.ErrInvalidData
@@ -89,7 +83,7 @@ func (r *MetodoDePago) DesactivarMetodoDePago(id int64) error {
 	res := r.PostgresqlDB.
 		Table("metodo_de_pago").
 		Where("metodo_de_pago_id = ? AND estado = 1", id).
-		Update("estado", int16(0))
+		Update("estado", util.Inactivo)
 	if res.Error != nil {
 		r.logger.Errorf("DesactivarMetodoDePago(%d): %v", id, res.Error)
 		return res.Error
@@ -118,12 +112,6 @@ func (r *MetodoDePago) ListarMetodosActivos() ([]model.MetodoDePago, error) {
 	}
 	return list, nil
 }
-
-//
-// =====================================
-//  Verificaciones para /payments/intent
-// =====================================
-//
 
 // true si existe y está activo (estado=1)
 func (r *MetodoDePago) VerificarMetodoDePagoActivo(id int64) (bool, error) {

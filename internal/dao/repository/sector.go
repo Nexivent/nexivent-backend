@@ -102,3 +102,13 @@ func (r *Sector) ModificarSectorPorCampos(
 	}
 	return &s, nil
 }
+
+func (s *Sector) ListarSectorePorIdEvento(eventoID int64) ([]*model.Sector, error) {
+	var sectores []*model.Sector
+	respuesta := s.PostgresqlDB.Where("evento_id = ?", eventoID).
+		Find(&sectores)
+	if respuesta.Error != nil {
+		return nil, respuesta.Error
+	}
+	return sectores, nil
+}

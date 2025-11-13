@@ -184,3 +184,13 @@ func (r *Comentario) VerificarUsuarioExiste(usuarioID int64) (bool, error) {
 	}
 	return count == 1, nil
 }
+
+func (c *Comentario) ListarComentariosPorIdEvento(eventoID int64) ([]*model.Comentario, error) {
+	var comentarios []*model.Comentario
+	respuesta := c.PostgresqlDB.Where("evento_id = ?", eventoID).
+		Find(&comentarios)
+	if respuesta.Error != nil {
+		return nil, respuesta.Error
+	}
+	return comentarios, nil
+}

@@ -8,8 +8,8 @@ import (
 type Estado int16
 
 const (
-	Activo  Estado = iota // 0
-	Inactivo                        // 1
+	Inactivo Estado = iota // 0
+	Activo                 // 1
 )
 
 func (t Estado) Codigo() int16 { return int16(t) }

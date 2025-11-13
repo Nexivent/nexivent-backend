@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/Loui27/nexivent-backend/internal/dao/model"
+	util "github.com/Loui27/nexivent-backend/internal/dao/model/util"
 	"github.com/Loui27/nexivent-backend/logging"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -67,7 +68,7 @@ func (r *RolUsuarioRepo) QuitarRolDeUsuario(
 		Model(&model.RolUsuario{}).
 		Where("usuario_id = ? AND rol_id = ? AND estado = 1", usuarioID, rolID).
 		Updates(map[string]any{
-			"estado":               int16(0),
+			"estado":               util.Inactivo,
 			"usuario_modificacion": updatedBy,
 			"fecha_modificacion":   time.Now(),
 		})

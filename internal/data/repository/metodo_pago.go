@@ -68,7 +68,7 @@ func (r *MetodoDePago) DesactivarMetodoDePago(id int64) error {
 	res := r.DB.
 		Table("metodo_de_pago").
 		Where("metodo_de_pago_id = ? AND estado = 1", id).
-		Update("estado", int16(0))
+		Update("estado", util.Inactivo)
 	if res.Error != nil {
 		return res.Error
 	}

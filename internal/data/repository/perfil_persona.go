@@ -78,3 +78,13 @@ func (r *PerfilDePersona) ModificarPerfilDePersonaPorCampos(
 	}
 	return &p, nil
 }
+
+func (pd *PerfilDePersona) ListarPerfilPersonaPorEventoID(eventoID uint64) ([]model.PerfilDePersona, error) {
+	var list []model.PerfilDePersona
+	if err := pd.DB.
+		Where("evento_id = ?", eventoID).
+		Find(&list).Error; err != nil {
+		return nil, err
+	}
+	return list, nil
+}

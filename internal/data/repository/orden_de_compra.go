@@ -19,7 +19,7 @@ func (c *OrdenDeCompra) CrearOrdenTemporal(orden *model.OrdenDeCompra) error {
 	if orden == nil {
 		return gorm.ErrInvalidData
 	}
-	orden.EstadoDeOrden = util.OrdenTemporal.Codigo()
+	orden.EstadoDeOrden = util.OrdenTemporal
 
 	if err := c.DB.Create(orden).Error; err != nil {
 		return err

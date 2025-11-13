@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/Nexivent/nexivent-backend/internal/data/model"
+	"github.com/Nexivent/nexivent-backend/internal/data/util"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -35,7 +36,7 @@ func (r *RolUsuarioRepo) AsignarRolAUsuario(
 		Clauses(clause.OnConflict{
 			Columns: []clause.Column{{Name: "usuario_id"}, {Name: "rol_id"}},
 			DoUpdates: clause.Assignments(map[string]any{
-				"estado":               int16(1),
+				"estado":               util.Inactivo,
 				"usuario_modificacion": createdBy,
 				"fecha_modificacion":   now,
 			}),
@@ -72,8 +73,8 @@ func (r *RolUsuarioRepo) QuitarRolDeUsuario(
 }
 
 // Listar roles activos de un usuario (con preload del Rol)
-func (r *RolUsuarioRepo) ListarRolesDeUsuario(usuarioID int64) ([]*model.RolUsuario, error) {
-	asignaciones := []*model.RolUsuario{}
+func (r *RolUsuarioRepo) ListarRolesDeUsuario(usuarioID uint64) ([]model.RolUsuario, error) {
+	asignaciones := []model.RolUsuario{}
 	result := r.DB.
 		Preload("Rol").
 		Where("usuario_id = ? AND estado = 1", usuarioID).

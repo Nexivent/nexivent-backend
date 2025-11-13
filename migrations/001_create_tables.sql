@@ -38,7 +38,7 @@ CREATE TABLE usuario (
     tipo_documento tipo_documento_enum NOT NULL,
     num_documento TEXT NOT NULL,
     correo TEXT NOT NULL UNIQUE,
-    contrasenha TEXT NOT NULL,
+    password BYTEA NOT NULL,
     telefono TEXT,
     estado_de_cuenta SMALLINT NOT NULL DEFAULT 0,
     codigo_verificacion TEXT,
@@ -68,6 +68,7 @@ CREATE TABLE evento (
     categoria_id BIGINT NOT NULL,
     titulo TEXT NOT NULL,
     descripcion TEXT NOT NULL,
+    descripcion_artista TEXT NOT NULL,
     lugar TEXT NOT NULL,
     evento_estado SMALLINT NOT NULL DEFAULT 0,
     cant_me_gusta INT NOT NULL DEFAULT 0,
@@ -255,8 +256,10 @@ CREATE TABLE cupon (
     usuario_creacion BIGINT,
     fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     usuario_modificacion BIGINT,
-    fecha_modificacion TIMESTAMPTZ
-    -- CONSTRAINT uq_cupon_codigo UNIQUE (codigo),
+    fecha_modificacion TIMESTAMPTZ,
+    evento_id BIGINT,
+    CONSTRAINT fk_cupon_evento FOREIGN KEY (evento_id) REFERENCES evento(evento_id) ON DELETE RESTRICT,
+    CONSTRAINT uq_cupon_codigo UNIQUE (codigo)
     -- CONSTRAINT chk_cupon_estado CHECK (estado_cupon IN (0, 1)),
     -- CONSTRAINT chk_cupon_valor_nn CHECK (valor >= 0),
     -- CONSTRAINT chk_cupon_usos_nn CHECK (

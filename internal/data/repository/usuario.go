@@ -164,7 +164,7 @@ func (u *Usuario) ObtenerUsuarioPorCorreo(correo string) (*model.Usuario, error)
 // 	return count > 0, nil
 // }
 
-func (u *Usuario) ObtenerUsuarioBasicoPorID(id int64) (*model.Usuario, error) {
+func (u *Usuario) ObtenerUsuarioBasicoPorID(id uint64) (*model.Usuario, error) {
 	var user model.Usuario
 	result := u.DB.
 		First(&user, "usuario_id = ?", id)
@@ -176,7 +176,7 @@ func (u *Usuario) ObtenerUsuarioBasicoPorID(id int64) (*model.Usuario, error) {
 
 //Funcion para obtener los usuarios que tienen un rol específico por id de rol
 
-func (c *Usuario) ObtenerUsuariosPorRolID(rolID int64) ([]*model.Usuario, error) {
+func (c *Usuario) ObtenerUsuariosPorRolID(rolID uint64) ([]*model.Usuario, error) {
 	usuarios := []*model.Usuario{}
 
 	result := c.DB.

@@ -28,3 +28,13 @@ func (t *TipoDeTicket) ActualizarTipoDeTicketr(TipoDeTicket *model.TipoDeTicket)
 
 	return nil
 }
+
+func (t *TipoDeTicket) ListarTipoTicketPorEventoID(eventoID uint64) ([]model.TipoDeTicket, error) {
+	var list []model.TipoDeTicket
+	if err := t.DB.
+		Where("evento_id = ?", eventoID).
+		Find(&list).Error; err != nil {
+		return nil, err
+	}
+	return list, nil
+}

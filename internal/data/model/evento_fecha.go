@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/Nexivent/nexivent-backend/internal/data/util"
+	"github.com/Nexivent/nexivent-backend/internal/validator"
 )
 
 type EventoFecha struct {
@@ -17,7 +18,16 @@ type EventoFecha struct {
 	UsuarioModificacion *uint64     `gorm:"column:usuario_modificacion" json:"-"`
 	FechaModificacion   *time.Time  `gorm:"column:fecha_modificacion" json:"-"`
 
-	Tickets []Ticket `json:"-"`
+	Tickets []Ticket `json:"tickets,omitempty"`
 }
 
 func (EventoFecha) TableName() string { return "evento_fecha" }
+
+func ValidateEventoFecha(v *validator.Validator, eventoFecha *EventoFecha) {
+	// Validar IDs
+	v.Check(eventoFecha.EventoID != 0, "eventoId", "el ID del evento es obligatorio")
+	v.Check(eventoFecha.FechaID != 0, "fechaId", "el ID de la fecha es obligatorio")
+
+	// Validar HoraInicio
+	v.Check(!eventoFecha.HoraInicio.IsZero(), "horaInicio", "la hora de inicio es obligatoria")
+}

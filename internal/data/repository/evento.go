@@ -50,7 +50,8 @@ func (e *EventoSQL) ObtenerEventosDisponiblesConFiltros(
 	titulo *string,
 	descripcion *string,
 	lugar *string,
-	fecha *time.Time,
+	month *int,
+	year *int,
 	horaInicio *time.Time,
 ) ([]*model.Evento, error) {
 	var eventos []*model.Evento
@@ -59,15 +60,19 @@ func (e *EventoSQL) ObtenerEventosDisponiblesConFiltros(
 	query := e.DB.
 		Joins("JOIN evento_fecha ef ON ef.evento_id = evento.evento_id").
 		Joins("JOIN fecha f ON f.fecha_id = ef.fecha_id").
-		Where("evento.evento_estado = 1 AND f.fecha_evento > NOW()")
+		Where("evento.evento_estado = 1 AND f.fecha_evento >= NOW()")
 
 	//Aplicar filtros dinámicamente
 	if categoriaID != nil && *categoriaID != 0 {
 		query = query.Where("evento.categoria_id = ?", *categoriaID)
 	}
-	if fecha != nil {
-		query = query.Where("f.fecha_evento = ?", *fecha)
+	if month != nil && *month != 0 {
+		query = query.Where("EXTRACT(MONTH FROM f.fecha_evento) <= ?", *month)
 	}
+	if year != nil && *year != 0 {
+		query = query.Where("EXTRACT(YEAR FROM f.fecha_evento) <= ?", *year)
+	}
+
 	if horaInicio != nil {
 		query = query.Where("ef.hora_inicio = ?", *horaInicio)
 	}

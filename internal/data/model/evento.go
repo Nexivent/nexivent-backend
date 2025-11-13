@@ -14,6 +14,7 @@ type Evento struct {
 	CategoriaID         uint64            `gorm:"column:categoria_id" json:"categoriaId"`
 	Titulo              string            `gorm:"column:titulo" json:"titulo"`
 	Descripcion         string            `gorm:"column:descripcion" json:"descripcion"`
+	DescripcionArtista  string            `gorm:"column:descripcion_artista" json:"descripcionArtista"`
 	Lugar               string            `gorm:"column:lugar" json:"lugar"`
 	EventoEstado        util.EstadoEvento `gorm:"column:evento_estado" json:"eventoEstado"`
 	CantMeGusta         int               `gorm:"column:cant_me_gusta" json:"cantMeGusta"`
@@ -46,6 +47,11 @@ func ValidateEvento(v *validator.Validator, evento *Evento) {
 
 	// Validar Descripcion
 	v.Check(evento.Descripcion != "", "descripcion", "la descripción es obligatoria")
+	v.Check(len(evento.Descripcion) <= 5000, "descripcion", "la descripción no debe exceder 5000 caracteres")
+
+	// Validar DescripcionArtista
+	v.Check(evento.DescripcionArtista != "", "descripcion_artista", "la descripción del artista es obligatoria")
+	v.Check(len(evento.DescripcionArtista) <= 5000, "descripcion_artista", "la descripción del artista no debe exceder 5000 caracteres")
 
 	// Validar Lugar
 	v.Check(evento.Lugar != "", "lugar", "el lugar es obligatorio")

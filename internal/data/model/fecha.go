@@ -2,6 +2,8 @@ package model
 
 import (
 	"time"
+
+	"github.com/Nexivent/nexivent-backend/internal/validator"
 )
 
 type Fecha struct {
@@ -12,3 +14,8 @@ type Fecha struct {
 }
 
 func (Fecha) TableName() string { return "fecha" }
+
+func ValidateFecha(v *validator.Validator, fecha *Fecha) {
+	// Validar FechaEvento
+	v.Check(!fecha.FechaEvento.IsZero(), "fechaEvento", "la fecha del evento es obligatoria")
+}

@@ -83,8 +83,8 @@ func (r *Rol) ObtenerRolPorNombre(nombre string) (*model.Rol, error) {
 	return &rol, nil
 }
 
-func (r *Rol) ObtenerRolesDeUsuario(usuarioID int64) ([]*model.Rol, error) {
-	var roles []*model.Rol
+func (r *Rol) ObtenerRolesDeUsuario(usuarioID uint64) ([]model.Rol, error) {
+	var roles []model.Rol
 	res := r.DB.
 		Select("rol.*").
 		Joins("JOIN rol_usuario ru ON ru.rol_id = rol.rol_id AND ru.estado = 1").

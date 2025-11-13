@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/Loui27/nexivent-backend/internal/dao/model"
+	util "github.com/Loui27/nexivent-backend/internal/dao/model/util"
 	"github.com/Loui27/nexivent-backend/logging"
 	"gorm.io/gorm"
 )
@@ -96,7 +97,7 @@ func (r *Comentario) DesactivarComentario(
 	}
 
 	updates := map[string]any{
-		"estado": int16(0),
+		"estado": util.Inactivo,
 	}
 	if usuarioModificacion != nil {
 		updates["usuario_modificacion"] = *usuarioModificacion

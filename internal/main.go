@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/Loui27/nexivent-backend/internal/api"
+	_ "github.com/Loui27/nexivent-backend/internal/api/docs"
 	"github.com/Loui27/nexivent-backend/internal/config"
 	"github.com/Loui27/nexivent-backend/logging"
 )

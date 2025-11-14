@@ -41,7 +41,7 @@ func NuevoConfigEnv(logger logging.Logger) *ConfigEnv {
 
 	enableSwagger, err := strconv.ParseBool(os.Getenv("ENABLE_SWAGGER"))
 	if err != nil {
-		enableSwagger = false
+		enableSwagger = true
 	}
 
 	mainPort := os.Getenv("MAIN_PORT")

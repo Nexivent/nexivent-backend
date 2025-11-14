@@ -31,6 +31,11 @@ func (ec *EventoController) CreateEvento(
 	return ec.EventoAdapter.CreatePostgresqlEvento(&eventoReq, usuarioCreacion)
 }
 
+// FetchEventos retrieves the list of available events
+func (ec *EventoController) FetchEventos() (*schemas.EventosPaginados, *errors.Error) {
+	return ec.EventoAdapter.FetchPostgresqlEventos()
+}
+
 // GetEventoById retrieves an event by its ID with all related entities
 func (ec *EventoController) GetEventoById(eventoID int64) (*schemas.EventoResponse, *errors.Error) {
 	return ec.EventoAdapter.GetPostgresqlEventoById(eventoID)

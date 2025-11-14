@@ -48,22 +48,22 @@ func (e *Evento) CreatePostgresqlEvento(eventoReq *schemas.EventoRequest, usuari
 
 	// Create the main event model
 	eventoModel := &model.Evento{
-		OrganizadorID:       eventoReq.IdOrganizador,
-		CategoriaID:         eventoReq.IdCategoria,
-		Titulo:              eventoReq.Titulo,
-		Descripcion:         eventoReq.Descripcion,
-		Lugar:               eventoReq.Lugar,
-		EventoEstado:        convert.MapEstadoToInt16(eventoReq.Estado),
-		CantMeGusta:         eventoReq.Likes,
-		CantNoInteresa:      eventoReq.NoInteres,
-		CantVendidoTotal:    eventoReq.CantVendidasTotal,
-		ImagenPortada:       eventoReq.ImagenPortada,
-		ImagenEscenario:     eventoReq.ImagenLugar,
-		VideoPresentacion:   eventoReq.VideoUrl,
-		TotalRecaudado:      eventoReq.TotalRecaudado,
-		Estado:              1, // Active by default
-		UsuarioCreacion:     &usuarioCreacion,
-		FechaCreacion:       now,
+		OrganizadorID:     eventoReq.IdOrganizador,
+		CategoriaID:       eventoReq.IdCategoria,
+		Titulo:            eventoReq.Titulo,
+		Descripcion:       eventoReq.Descripcion,
+		Lugar:             eventoReq.Lugar,
+		EventoEstado:      convert.MapEstadoToInt16(eventoReq.Estado),
+		CantMeGusta:       eventoReq.Likes,
+		CantNoInteresa:    eventoReq.NoInteres,
+		CantVendidoTotal:  eventoReq.CantVendidasTotal,
+		ImagenPortada:     eventoReq.ImagenPortada,
+		ImagenEscenario:   eventoReq.ImagenLugar,
+		VideoPresentacion: eventoReq.VideoUrl,
+		TotalRecaudado:    eventoReq.TotalRecaudado,
+		Estado:            1, // Active by default
+		UsuarioCreacion:   &usuarioCreacion,
+		FechaCreacion:     now,
 	}
 
 	// Create the event
@@ -300,6 +300,28 @@ func (e *Evento) CreatePostgresqlEvento(eventoReq *schemas.EventoRequest, usuari
 	}
 
 	return response, nil
+}
+
+// FetchPostgresqlEventos retrieves the upcoming events without filters
+func (e *Evento) FetchPostgresqlEventos() (*schemas.EventosPaginados, *errors.Error) {
+	eventos, err := e.DaoPostgresql.Evento.ObtenerEventosDisponiblesSinFiltros()
+	if err != nil {
+		e.logger.Errorf("Failed to fetch eventos: %v", err)
+		return nil, &errors.BadRequestError.EventoNotFound
+	}
+
+	total := int64(len(eventos))
+	totalPaginas := 0
+	if total > 0 {
+		totalPaginas = 1
+	}
+
+	return &schemas.EventosPaginados{
+		Eventos:      eventos,
+		Total:        total,
+		PaginaActual: 1,
+		TotalPaginas: totalPaginas,
+	}, nil
 }
 
 // GetPostgresqlEventoById gets an event by ID

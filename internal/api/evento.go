@@ -48,14 +48,12 @@ func (a *Api) GetEvento(c echo.Context) error {
 // @Failure 			500 {object} errors.Error "Internal Server Error"
 // @Router 				/evento/ [get]
 func (a *Api) FetchEventos(c echo.Context) error {
-	// TODO: Implement fetch all eventos with the adapter method
-	// For now, return an empty response
-	return c.JSON(http.StatusOK, schemas.EventosPaginados{
-		Eventos:      nil,
-		Total:        0,
-		PaginaActual: 1,
-		TotalPaginas: 0,
-	})
+	response, err := a.BllController.Evento.FetchEventos()
+	if err != nil {
+		return errors.HandleError(*err, c)
+	}
+
+	return c.JSON(http.StatusOK, response)
 }
 
 // @Summary 			Create Evento.

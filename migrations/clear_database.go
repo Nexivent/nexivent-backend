@@ -39,7 +39,7 @@ func main() {
 
 	entidad.Categoria.CrearCategoria(categoria)
 
-	// 🔹 Crear un evento de prueba
+	// 🔹 Crear un evento de prueba con relaciones mínimas para que GET /evento funcione
 	createdBy := int64(1)
 	now := time.Now()
 	evento := model.Evento{
@@ -49,6 +49,9 @@ func main() {
 		FechaCreacion:   now,
 		UsuarioCreacion: &usuario.ID,
 		Estado:          1,
+		EventoEstado:    1,
+		Lugar:           "Estadio Nacional",
+		Descripcion:     "Evento semilla para pruebas",
 
 		Sectores: []model.Sector{
 			{SectorTipo: "VIP", TotalEntradas: 1000, Estado: 1, UsuarioCreacion: &usuario.ID, FechaCreacion: now},
@@ -65,8 +68,30 @@ func main() {
 		},
 	}
 
-	entidad.Evento.CrearEvento(&evento)
-	//falta crear tabla de fechas y + para que funcione
+	if err := entidad.Evento.CrearEvento(&evento); err != nil {
+		log.Fatalf("❌ Error creando evento seed: %v", err)
+	}
+
+	// Crear una fecha futura y vincularla con el evento para que el listado encuentre registros
+	fechaEvento := now.AddDate(0, 0, 7)
+	fecha := &model.Fecha{FechaEvento: fechaEvento}
+	if err := nexiventPsqlDB.Create(fecha).Error; err != nil {
+		log.Fatalf("❌ Error creando fecha seed: %v", err)
+	}
+
+	horaInicio := time.Date(fechaEvento.Year(), fechaEvento.Month(), fechaEvento.Day(), 20, 0, 0, 0, fechaEvento.Location())
+	eventoFecha := &model.EventoFecha{
+		EventoID:        evento.ID,
+		FechaID:         fecha.ID,
+		HoraInicio:      horaInicio,
+		Estado:          1,
+		UsuarioCreacion: &createdBy,
+		FechaCreacion:   now,
+	}
+	if err := nexiventPsqlDB.Create(eventoFecha).Error; err != nil {
+		log.Fatalf("❌ Error creando evento_fecha seed: %v", err)
+	}
+
 	eventos, err := entidad.Evento.ObtenerEventosDisponiblesSinFiltros()
 	if err != nil {
 		log.Fatalf("❌ Error al obtener eventos: %v", err)

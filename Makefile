@@ -9,9 +9,8 @@ set-up-db:
 	go run migrations/clear_database.go
 # Runners
 run:
-	cd src/server && go run main.go
-
+	cd internal && go run main.go
 # Swagger documentation
 swag-docs:
-	cd nexivent-backend/internal/api && swag init -g server.go --instanceName server --parseDependency --parseDepth 1
+	cd internal/api && swag init -g server.go --instanceName server --parseDependency --parseDepth 1
 	

@@ -1,0 +1,1303 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "Nexivent Event Management API",
+        "title": "Nexivent API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "basePath": "/",
+    "paths": {
+        "/evento/": {
+            "get": {
+                "description": "Fetches all available events.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Evento"
+                ],
+                "summary": "Fetch Eventos.",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.EventosPaginados"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/errors.Error"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/errors.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/errors.Error"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new event with all related entities.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Evento"
+                ],
+                "summary": "Create Evento.",
+                "parameters": [
+                    {
+                        "description": "Create Evento Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/schemas.EventoRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.EventoResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/errors.Error"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/errors.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/errors.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/evento/{eventoId}/": {
+            "get": {
+                "description": "Gets an event given its id.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Evento"
+                ],
+                "summary": "Get Evento.",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Evento ID",
+                        "name": "eventoId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.EventoResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/errors.Error"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/errors.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/errors.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/health-check/": {
+            "get": {
+                "description": "Check the health status of the API",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Health"
+                ],
+                "summary": "Health Check",
+                "responses": {
+                    "200": {
+                        "description": "API is healthy",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "errors.Error": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.Categoria": {
+            "type": "object",
+            "properties": {
+                "descripcion": {
+                    "type": "string"
+                },
+                "estado": {
+                    "type": "integer"
+                },
+                "eventos": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Evento"
+                    }
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "nombre": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.Comentario": {
+            "type": "object",
+            "properties": {
+                "descripcion": {
+                    "type": "string"
+                },
+                "estado": {
+                    "type": "integer"
+                },
+                "evento": {
+                    "$ref": "#/definitions/model.Evento"
+                },
+                "eventoID": {
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "fechaCreacion": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "usuario": {
+                    "$ref": "#/definitions/model.Usuario"
+                },
+                "usuarioID": {
+                    "type": "integer",
+                    "format": "int64"
+                }
+            }
+        },
+        "model.ComprobanteDePago": {
+            "type": "object",
+            "properties": {
+                "direccionFiscal": {
+                    "type": "string"
+                },
+                "fechaEmision": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "numero": {
+                    "type": "string"
+                },
+                "ordenDeCompra": {
+                    "$ref": "#/definitions/model.OrdenDeCompra"
+                },
+                "ordenDeCompraID": {
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "ruc": {
+                    "type": "string"
+                },
+                "tipoDeComprobante": {
+                    "type": "integer"
+                }
+            }
+        },
+        "model.Cupon": {
+            "type": "object",
+            "properties": {
+                "codigo": {
+                    "description": "único global; si quieres por evento, usa uniqueIndex combinado",
+                    "type": "string"
+                },
+                "descripcion": {
+                    "type": "string"
+                },
+                "estadoCupon": {
+                    "type": "integer"
+                },
+                "evento": {
+                    "$ref": "#/definitions/model.Evento"
+                },
+                "eventoID": {
+                    "description": "FK al evento (muchos cupones pertenecen a un evento)",
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "fechaCreacion": {
+                    "type": "string"
+                },
+                "fechaModificacion": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "tipo": {
+                    "type": "string"
+                },
+                "usoPorUsuario": {
+                    "type": "integer"
+                },
+                "usoRealizados": {
+                    "type": "integer"
+                },
+                "usuarioCreacion": {
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "usuarioModificacion": {
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "usuarios": {
+                    "description": "Mantienes tu relación con usuarios",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.UsuarioCupon"
+                    }
+                },
+                "valor": {
+                    "type": "number",
+                    "format": "float64"
+                }
+            }
+        },
+        "model.Evento": {
+            "type": "object",
+            "properties": {
+                "cantMeGusta": {
+                    "type": "integer"
+                },
+                "cantNoInteresa": {
+                    "type": "integer"
+                },
+                "cantVendidoTotal": {
+                    "type": "integer"
+                },
+                "categoria": {
+                    "$ref": "#/definitions/model.Categoria"
+                },
+                "categoriaID": {
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "comentarios": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Comentario"
+                    }
+                },
+                "cupones": {
+                    "description": "RELACIÓN 1–N: un evento tiene muchos cupones",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Cupon"
+                    }
+                },
+                "descripcion": {
+                    "type": "string"
+                },
+                "estado": {
+                    "type": "integer"
+                },
+                "eventoEstado": {
+                    "type": "integer"
+                },
+                "fechaCreacion": {
+                    "type": "string"
+                },
+                "fechaModificacion": {
+                    "type": "string"
+                },
+                "fechas": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.EventoFecha"
+                    }
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "imagenDescripcion": {
+                    "type": "string"
+                },
+                "imagenEscenario": {
+                    "type": "string"
+                },
+                "imagenPortada": {
+                    "type": "string"
+                },
+                "lugar": {
+                    "type": "string"
+                },
+                "organizador": {
+                    "$ref": "#/definitions/model.Usuario"
+                },
+                "organizadorID": {
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "perfiles": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.PerfilDePersona"
+                    }
+                },
+                "sectores": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Sector"
+                    }
+                },
+                "tiposTicket": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.TipoDeTicket"
+                    }
+                },
+                "titulo": {
+                    "type": "string"
+                },
+                "totalRecaudado": {
+                    "type": "number",
+                    "format": "float64"
+                },
+                "usuarioCreacion": {
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "usuarioModificacion": {
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "videoPresentacion": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.EventoFecha": {
+            "type": "object",
+            "properties": {
+                "estado": {
+                    "type": "integer"
+                },
+                "evento": {
+                    "$ref": "#/definitions/model.Evento"
+                },
+                "eventoID": {
+                    "type": "integer"
+                },
+                "fecha": {
+                    "$ref": "#/definitions/model.Fecha"
+                },
+                "fechaCreacion": {
+                    "type": "string"
+                },
+                "fechaID": {
+                    "type": "integer"
+                },
+                "fechaModificacion": {
+                    "type": "string"
+                },
+                "horaInicio": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "tickets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Ticket"
+                    }
+                },
+                "usuarioCreacion": {
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "usuarioModificacion": {
+                    "type": "integer",
+                    "format": "int64"
+                }
+            }
+        },
+        "model.Fecha": {
+            "type": "object",
+            "properties": {
+                "eventoFechas": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.EventoFecha"
+                    }
+                },
+                "fechaEvento": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "model.MetodoDePago": {
+            "type": "object",
+            "properties": {
+                "estado": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "ordenes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.OrdenDeCompra"
+                    }
+                },
+                "tipo": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.OrdenDeCompra": {
+            "type": "object",
+            "properties": {
+                "comprobantesPago": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.ComprobanteDePago"
+                    }
+                },
+                "estadoDeOrden": {
+                    "type": "integer"
+                },
+                "fecha": {
+                    "type": "string"
+                },
+                "fechaHoraFin": {
+                    "type": "string"
+                },
+                "fechaHoraIni": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "metodoDePago": {
+                    "$ref": "#/definitions/model.MetodoDePago"
+                },
+                "metodoDePagoID": {
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "montoFeeServicio": {
+                    "type": "number",
+                    "format": "float64"
+                },
+                "tickets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Ticket"
+                    }
+                },
+                "total": {
+                    "type": "number",
+                    "format": "float64"
+                },
+                "usuario": {
+                    "$ref": "#/definitions/model.Usuario"
+                },
+                "usuarioID": {
+                    "type": "integer",
+                    "format": "int64"
+                }
+            }
+        },
+        "model.PerfilDePersona": {
+            "type": "object",
+            "properties": {
+                "estado": {
+                    "type": "integer"
+                },
+                "evento": {
+                    "$ref": "#/definitions/model.Evento"
+                },
+                "eventoID": {
+                    "type": "integer"
+                },
+                "fechaCreacion": {
+                    "type": "string"
+                },
+                "fechaModificacion": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "nombre": {
+                    "type": "string"
+                },
+                "usuarioCreacion": {
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "usuarioModificacion": {
+                    "type": "integer",
+                    "format": "int64"
+                }
+            }
+        },
+        "model.Rol": {
+            "type": "object",
+            "properties": {
+                "fechaCreacion": {
+                    "type": "string"
+                },
+                "fechaModificacion": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "nombre": {
+                    "type": "string"
+                },
+                "usuarioCreacion": {
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "usuarioModificacion": {
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "usuarios": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.RolUsuario"
+                    }
+                }
+            }
+        },
+        "model.RolUsuario": {
+            "type": "object",
+            "properties": {
+                "estado": {
+                    "type": "integer"
+                },
+                "fechaCreacion": {
+                    "type": "string"
+                },
+                "fechaModificacion": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "rol": {
+                    "$ref": "#/definitions/model.Rol"
+                },
+                "rolID": {
+                    "type": "integer"
+                },
+                "usuario": {
+                    "$ref": "#/definitions/model.Usuario"
+                },
+                "usuarioCreacion": {
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "usuarioID": {
+                    "type": "integer"
+                },
+                "usuarioModificacion": {
+                    "type": "integer",
+                    "format": "int64"
+                }
+            }
+        },
+        "model.Sector": {
+            "type": "object",
+            "properties": {
+                "cantVendidas": {
+                    "type": "integer"
+                },
+                "estado": {
+                    "type": "integer"
+                },
+                "evento": {
+                    "$ref": "#/definitions/model.Evento"
+                },
+                "eventoID": {
+                    "type": "integer"
+                },
+                "fechaCreacion": {
+                    "type": "string"
+                },
+                "fechaModificacion": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "sectorTipo": {
+                    "type": "string"
+                },
+                "totalEntradas": {
+                    "type": "integer"
+                },
+                "usuarioCreacion": {
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "usuarioModificacion": {
+                    "type": "integer",
+                    "format": "int64"
+                }
+            }
+        },
+        "model.Tarifa": {
+            "type": "object",
+            "properties": {
+                "estado": {
+                    "type": "integer"
+                },
+                "fechaCreacion": {
+                    "type": "string"
+                },
+                "fechaModificacion": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "perfilDePersonaID": {
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "perfilPersona": {
+                    "$ref": "#/definitions/model.PerfilDePersona"
+                },
+                "precio": {
+                    "type": "number",
+                    "format": "float64"
+                },
+                "sector": {
+                    "$ref": "#/definitions/model.Sector"
+                },
+                "sectorID": {
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "tipoDeTicket": {
+                    "$ref": "#/definitions/model.TipoDeTicket"
+                },
+                "tipoDeTicketID": {
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "usuarioCreacion": {
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "usuarioModificacion": {
+                    "type": "integer",
+                    "format": "int64"
+                }
+            }
+        },
+        "model.Ticket": {
+            "type": "object",
+            "properties": {
+                "codigoQR": {
+                    "type": "string"
+                },
+                "estadoDeTicket": {
+                    "type": "integer"
+                },
+                "eventoFecha": {
+                    "$ref": "#/definitions/model.EventoFecha"
+                },
+                "eventoFechaID": {
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "ordenDeCompra": {
+                    "$ref": "#/definitions/model.OrdenDeCompra"
+                },
+                "ordenDeCompraID": {
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "tarifa": {
+                    "$ref": "#/definitions/model.Tarifa"
+                },
+                "tarifaID": {
+                    "type": "integer",
+                    "format": "int64"
+                }
+            }
+        },
+        "model.TipoDeTicket": {
+            "type": "object",
+            "properties": {
+                "estado": {
+                    "type": "integer"
+                },
+                "evento": {
+                    "$ref": "#/definitions/model.Evento"
+                },
+                "eventoID": {
+                    "type": "integer"
+                },
+                "fechaCreacion": {
+                    "type": "string"
+                },
+                "fechaFin": {
+                    "type": "string"
+                },
+                "fechaIni": {
+                    "type": "string"
+                },
+                "fechaModificacion": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "nombre": {
+                    "type": "string"
+                },
+                "usuarioCreacion": {
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "usuarioModificacion": {
+                    "type": "integer",
+                    "format": "int64"
+                }
+            }
+        },
+        "model.Usuario": {
+            "type": "object",
+            "properties": {
+                "codigoVerificacion": {
+                    "type": "string"
+                },
+                "comentarios": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Comentario"
+                    }
+                },
+                "contrasenha": {
+                    "type": "string"
+                },
+                "correo": {
+                    "type": "string"
+                },
+                "cupones": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.UsuarioCupon"
+                    }
+                },
+                "estado": {
+                    "type": "integer"
+                },
+                "estadoDeCuenta": {
+                    "type": "integer"
+                },
+                "fechaCreacion": {
+                    "type": "string"
+                },
+                "fechaExpiracionCodigo": {
+                    "type": "string"
+                },
+                "fechaModificacion": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "nombre": {
+                    "type": "string"
+                },
+                "numDocumento": {
+                    "type": "string"
+                },
+                "ordenes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.OrdenDeCompra"
+                    }
+                },
+                "rolesAsignados": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.RolUsuario"
+                    }
+                },
+                "telefono": {
+                    "type": "string"
+                },
+                "tipoDocumento": {
+                    "type": "string"
+                },
+                "usuarioCreacion": {
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "usuarioModificacion": {
+                    "type": "integer",
+                    "format": "int64"
+                }
+            }
+        },
+        "model.UsuarioCupon": {
+            "type": "object",
+            "properties": {
+                "cantUsada": {
+                    "type": "integer"
+                },
+                "cupon": {
+                    "$ref": "#/definitions/model.Cupon"
+                },
+                "cuponID": {
+                    "type": "integer"
+                },
+                "usuario": {
+                    "$ref": "#/definitions/model.Usuario"
+                },
+                "usuarioID": {
+                    "type": "integer"
+                }
+            }
+        },
+        "schemas.EventDateRequest": {
+            "type": "object",
+            "properties": {
+                "fecha": {
+                    "type": "string"
+                },
+                "horaFin": {
+                    "type": "string"
+                },
+                "horaInicio": {
+                    "type": "string"
+                },
+                "idFecha": {
+                    "type": "integer"
+                },
+                "idFechaEvento": {
+                    "type": "integer"
+                }
+            }
+        },
+        "schemas.EventDateResponse": {
+            "type": "object",
+            "properties": {
+                "fecha": {
+                    "type": "string"
+                },
+                "horaFin": {
+                    "type": "string"
+                },
+                "horaInicio": {
+                    "type": "string"
+                },
+                "idFecha": {
+                    "type": "integer"
+                },
+                "idFechaEvento": {
+                    "type": "integer"
+                }
+            }
+        },
+        "schemas.EventoRequest": {
+            "type": "object",
+            "properties": {
+                "cantVendidasTotal": {
+                    "type": "integer"
+                },
+                "descripcion": {
+                    "type": "string"
+                },
+                "estado": {
+                    "type": "string"
+                },
+                "eventDates": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.EventDateRequest"
+                    }
+                },
+                "idCategoria": {
+                    "type": "integer"
+                },
+                "idOrganizador": {
+                    "type": "integer"
+                },
+                "imagenLugar": {
+                    "type": "string"
+                },
+                "imagenPortada": {
+                    "type": "string"
+                },
+                "likes": {
+                    "type": "integer"
+                },
+                "lugar": {
+                    "type": "string"
+                },
+                "metadata": {
+                    "$ref": "#/definitions/schemas.MetadataRequest"
+                },
+                "noInteres": {
+                    "type": "integer"
+                },
+                "perfiles": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.PerfilRequest"
+                    }
+                },
+                "precios": {
+                    "$ref": "#/definitions/schemas.PreciosSector"
+                },
+                "sectores": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.SectorRequest"
+                    }
+                },
+                "tiposTicket": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.TipoTicketRequest"
+                    }
+                },
+                "titulo": {
+                    "type": "string"
+                },
+                "totalRecaudado": {
+                    "type": "number"
+                },
+                "videoUrl": {
+                    "type": "string"
+                }
+            }
+        },
+        "schemas.EventoResponse": {
+            "type": "object",
+            "properties": {
+                "cantVendidasTotal": {
+                    "type": "integer"
+                },
+                "descripcion": {
+                    "type": "string"
+                },
+                "estado": {
+                    "type": "string"
+                },
+                "eventDates": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.EventDateResponse"
+                    }
+                },
+                "idCategoria": {
+                    "type": "integer"
+                },
+                "idEvento": {
+                    "type": "integer"
+                },
+                "idOrganizador": {
+                    "type": "integer"
+                },
+                "imagenLugar": {
+                    "type": "string"
+                },
+                "imagenPortada": {
+                    "type": "string"
+                },
+                "likes": {
+                    "type": "integer"
+                },
+                "lugar": {
+                    "type": "string"
+                },
+                "metadata": {
+                    "$ref": "#/definitions/schemas.MetadataResponse"
+                },
+                "noInteres": {
+                    "type": "integer"
+                },
+                "perfiles": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.PerfilResponse"
+                    }
+                },
+                "precios": {
+                    "$ref": "#/definitions/schemas.PreciosSector"
+                },
+                "sectores": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.SectorResponse"
+                    }
+                },
+                "tiposTicket": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.TipoTicketResponse"
+                    }
+                },
+                "titulo": {
+                    "type": "string"
+                },
+                "totalRecaudado": {
+                    "type": "number"
+                },
+                "videoUrl": {
+                    "type": "string"
+                }
+            }
+        },
+        "schemas.EventosPaginados": {
+            "type": "object",
+            "properties": {
+                "eventos": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Evento"
+                    }
+                },
+                "pagina_actual": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                },
+                "total_paginas": {
+                    "type": "integer"
+                }
+            }
+        },
+        "schemas.MetadataRequest": {
+            "type": "object",
+            "properties": {
+                "creadoPor": {
+                    "type": "string"
+                },
+                "fechaCreacion": {
+                    "type": "string"
+                },
+                "ultimaActualizacion": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "integer"
+                }
+            }
+        },
+        "schemas.MetadataResponse": {
+            "type": "object",
+            "properties": {
+                "creadoPor": {
+                    "type": "string"
+                },
+                "fechaCreacion": {
+                    "type": "string"
+                },
+                "ultimaActualizacion": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "integer"
+                }
+            }
+        },
+        "schemas.PerfilRequest": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "label": {
+                    "type": "string"
+                }
+            }
+        },
+        "schemas.PerfilResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "label": {
+                    "type": "string"
+                }
+            }
+        },
+        "schemas.PrecioDetalle": {
+            "type": "object",
+            "additionalProperties": {
+                "type": "number",
+                "format": "float64"
+            }
+        },
+        "schemas.PreciosPerfil": {
+            "type": "object",
+            "additionalProperties": {
+                "$ref": "#/definitions/schemas.PrecioDetalle"
+            }
+        },
+        "schemas.PreciosSector": {
+            "type": "object",
+            "additionalProperties": {
+                "$ref": "#/definitions/schemas.PreciosPerfil"
+            }
+        },
+        "schemas.SectorRequest": {
+            "type": "object",
+            "properties": {
+                "capacidad": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "nombre": {
+                    "type": "string"
+                }
+            }
+        },
+        "schemas.SectorResponse": {
+            "type": "object",
+            "properties": {
+                "capacidad": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "nombre": {
+                    "type": "string"
+                }
+            }
+        },
+        "schemas.TipoTicketRequest": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "label": {
+                    "type": "string"
+                }
+            }
+        },
+        "schemas.TipoTicketResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "label": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

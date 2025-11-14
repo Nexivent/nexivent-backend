@@ -1,8 +1,6 @@
 package schemas
 
 import (
-	"time"
-
 	"github.com/Loui27/nexivent-backend/internal/dao/model"
 )
 
@@ -13,35 +11,26 @@ type EventosPaginados struct {
 	TotalPaginas int             `json:"total_paginas"`
 }
 
-type EventoSchema struct {
-	OrganizadorID    int64
-	CategoriaID      int64
-	Titulo           string
-	Descripcion      string
-	Lugar            string
-	EventoEstado     int16 `gorm:"default:0"`
-	CantMeGusta      int   `gorm:"default:0"`
-	CantNoInteresa   int   `gorm:"default:0"`
-	CantVendidoTotal int   `gorm:"default:0"`
-	//ImagenDescripcion   string
-	ImagenPortada       string
-	VideoPresentacion   string
-	ImagenEscenario     string
-	TotalRecaudado      float64
-	Estado              int16 `gorm:"default:1"`
-	UsuarioCreacion     *int64
-	FechaCreacion       time.Time `gorm:"default:now()"`
-	UsuarioModificacion *int64
-	FechaModificacion   *time.Time
+type EventRequest struct {
+	IdOrganizador     int     `json:"idOrganizador"`
+	IdCategoria       int     `json:"idCategoria"`
+	Titulo            string  `json:"titulo"`
+	Descripcion       string  `json:"descripcion"`
+	Lugar             string  `json:"lugar"`
+	Estado            string  `json:"estado"`
+	Likes             int     `json:"likes"`
+	NoInteres         int     `json:"noInteres"`
+	CantVendidasTotal int     `json:"cantVendidasTotal"`
+	TotalRecaudado    float64 `json:"totalRecaudado"`
+	ImagenPortada     string  `json:"imagenPortada"`
+	ImagenLugar       string  `json:"imagenLugar"`
+	VideoUrl          string  `json:"videoUrl"`
 
-	Organizador *Usuario   `gorm:"foreignKey:OrganizadorID;references:ID"`
-	Categoria   *Categoria `gorm:"foreignKey:CategoriaID;references:ID"`
-
-	Comentarios []Comentario
-	Sectores    []Sector          `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
-	TiposTicket []TipoDeTicket    `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
-	Perfiles    []PerfilDePersona `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
-	Fechas      []EventoFecha     `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	Fechas      []EventoFecha     `json:"eventDates"`
+	Perfiles    []PerfilDePersona `json:"perfiles"`
+	Sectores    []Sector          `json:"sectores"`
+	TiposTicket []TipoDeTicket    `json:"tiposTicket"`
+	//Precios     map[string]PreciosSector `json:"precios"`
 
 	// RELACIÓN 1–N: un evento tiene muchos cupones
 	Cupones []Cupon `gorm:"foreignKey:EventoID;references:ID"`

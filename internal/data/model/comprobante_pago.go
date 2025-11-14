@@ -3,18 +3,20 @@ package model
 import (
 	"time"
 
-	"github.com/Nexivent/nexivent-backend/internal/data/util"
+	"github.com/Nexivent/nexivent-backend/internal/data/model/util"
 	"github.com/Nexivent/nexivent-backend/internal/validator"
 )
 
 type ComprobanteDePago struct {
-	ID                uint64               `gorm:"column:comprobante_de_pago_id;primaryKey" json:"id"`
+	ID                uint64               `gorm:"column:comprobante_de_pago_id;primaryKey;autoIncrement" json:"id"`
 	OrdenDeCompraID   uint64               `gorm:"column:orden_de_compra_id" json:"ordenDeCompraId"`
-	TipoDeComprobante util.TipoComprobante `gorm:"column:tipo_de_comprobante" json:"tipoDeComprobante"`
+	TipoDeComprobante util.TipoComprobante `gorm:"column:tipo_de_comprobante;default:0" json:"tipoDeComprobante"`
 	Numero            string               `gorm:"column:numero" json:"numero"`
 	FechaEmision      time.Time            `gorm:"column:fecha_emision" json:"fechaEmision"`
 	RUC               *string              `gorm:"column:ruc" json:"ruc,omitempty"`
 	DireccionFiscal   *string              `gorm:"column:direccion_fiscal" json:"direccionFiscal,omitempty"`
+
+	// OrdenDeCompra *OrdenDeCompra `gorm:"foreignKey:OrdenDeCompraID;references:orden_de_compra_id"`
 }
 
 func (ComprobanteDePago) TableName() string { return "comprobante_de_pago" }

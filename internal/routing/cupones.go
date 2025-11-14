@@ -8,7 +8,7 @@ import (
 	"github.com/Nexivent/nexivent-backend/internal/context"
 	"github.com/Nexivent/nexivent-backend/internal/data/model"
 	"github.com/Nexivent/nexivent-backend/internal/data/repository"
-	datautil "github.com/Nexivent/nexivent-backend/internal/data/util"
+	datautil "github.com/Nexivent/nexivent-backend/internal/data/model/util"
 	"github.com/Nexivent/nexivent-backend/internal/validator"
 )
 

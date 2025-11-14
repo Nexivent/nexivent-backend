@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"github.com/Nexivent/nexivent-backend/internal/data/model"
-	util "github.com/Nexivent/nexivent-backend/internal/data/util"
+	util "github.com/Nexivent/nexivent-backend/internal/data/model/util"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )

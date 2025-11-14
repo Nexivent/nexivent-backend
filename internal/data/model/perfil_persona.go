@@ -3,21 +3,21 @@ package model
 import (
 	"time"
 
-	"github.com/Nexivent/nexivent-backend/internal/data/util"
+	"github.com/Nexivent/nexivent-backend/internal/data/model/util"
 	"github.com/Nexivent/nexivent-backend/internal/validator"
 )
 
 type PerfilDePersona struct {
-	ID                  uint64      `gorm:"column:perfil_de_persona_id;primaryKey" json:"id"`
-	EventoID            uint64      `gorm:"column:evento_id" json:"eventoId"`
-	Nombre              string      `gorm:"column:nombre" json:"nombre"`
-	Estado              util.Estado `gorm:"column:estado" json:"-"`
+	ID                  uint64      `gorm:"column:perfil_de_persona_id;primaryKey;autoIncrement" json:"id"`
+	EventoID            uint64      `gorm:"column:evento_id;uniqueIndex:uq_perfil_de_persona_nombre" json:"eventoId"`
+	Nombre              string      `gorm:"column:nombre;uniqueIndex:uq_perfil_de_persona_nombre" json:"nombre"`
+	Estado              util.Estado `gorm:"column:estado;default:1" json:"-"`
 	UsuarioCreacion     *uint64     `gorm:"column:usuario_creacion" json:"-"`
-	FechaCreacion       time.Time   `gorm:"column:fecha_creacion" json:"-"`
+	FechaCreacion       time.Time   `gorm:"column:fecha_creacion:default:now()" json:"-"`
 	UsuarioModificacion *uint64     `gorm:"column:usuario_modificacion" json:"-"`
 	FechaModificacion   *time.Time  `gorm:"column:fecha_modificacion" json:"-"`
 
-	Tarifas []Tarifa `json:"tarifas,omitempty"`
+	// Evento *Evento `gorm:"foreignKey:EventoID;references:evento_id"`
 }
 
 func (PerfilDePersona) TableName() string { return "perfil_de_persona" }

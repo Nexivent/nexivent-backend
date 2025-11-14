@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/Nexivent/nexivent-backend/internal/data/model"
-	"github.com/Nexivent/nexivent-backend/internal/data/util"
+	"github.com/Nexivent/nexivent-backend/internal/data/model/util"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )

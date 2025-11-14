@@ -4,7 +4,7 @@ package model
 import (
 	"time"
 
-	"github.com/Nexivent/nexivent-backend/internal/data/util"
+	"github.com/Nexivent/nexivent-backend/internal/data/model/util"
 	"github.com/Nexivent/nexivent-backend/internal/validator"
 )
 
@@ -31,11 +31,16 @@ type Evento struct {
 	VideoPresentacion   string            `gorm:"column:video_presentacion" json:"videoPresentacion"`
 	ImagenEscenario     string            `gorm:"column:imagen_escenario" json:"imagenEscenario"`
 
-	Comentarios []Comentario      `json:"comentarios"`
-	Sectores    []Sector          `json:"sectores"`
-	TiposTicket []TipoDeTicket    `json:"tiposDeTicket"`
-	Perfiles    []PerfilDePersona `json:"perfiles"`
-	Fechas      []EventoFecha     `json:"fechas"`
+	// Organizador *Usuario          `gorm:"foreignKey:OrganizadorID;references:ID"`
+	// Categoria   *Categoria        `gorm:"foreignKey:CategoriaID;references:ID"`
+
+	Comentarios []Comentario      `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"comentarios"`
+	Sectores    []Sector          `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"sectores"`
+	TiposTicket []TipoDeTicket    `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"tiposDeTicket"`
+	Perfiles    []PerfilDePersona `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"perfiles"`
+	Fechas      []EventoFecha     `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"fechas"`
+
+	Cupones []Cupon `gorm:"foreignKey:EventoID;references:ID" json:"cupones"`
 }
 
 func (Evento) TableName() string { return "evento" }

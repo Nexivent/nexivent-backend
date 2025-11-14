@@ -4,26 +4,26 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/Nexivent/nexivent-backend/internal/data/util"
+	"github.com/Nexivent/nexivent-backend/internal/data/model/util"
 	"github.com/Nexivent/nexivent-backend/internal/validator"
 )
 
 type Usuario struct {
-	ID                    uint64      `gorm:"column:usuario_id;primaryKey" json:"id"`
+	ID                    uint64      `gorm:"column:usuario_id;primaryKey;autoIncrement" json:"id"`
 	Nombre                string      `gorm:"column:nombre" json:"nombre"`
-	TipoDocumento         string      `gorm:"column:tipo_documento" json:"tipoDocumento"`
-	NumDocumento          string      `gorm:"column:num_documento" json:"numDocumento"`
-	Correo                string      `gorm:"column:correo" json:"correo"`
+	TipoDocumento         string      `gorm:"column:tipo_documento;uniqueIndex:uq_usuario_doc" json:"tipoDocumento"`
+	NumDocumento          string      `gorm:"column:num_documento;uniqueIndex:uq_usuario_doc" json:"numDocumento"`
+	Correo                string      `gorm:"column:correo;uniqueIndex" json:"correo"`
 	password              []byte      `gorm:"column:password" json:"-"`
 	Telefono              *string     `gorm:"column:telefono" json:"telefono,omitempty"`
-	EstadoDeCuenta        util.Estado `gorm:"column:estado_de_cuenta" json:"estadoDeCuenta"`
+	EstadoDeCuenta        util.Estado `gorm:"column:estado_de_cuenta;default:0" json:"estadoDeCuenta"`
 	CodigoVerificacion    *string     `gorm:"column:codigo_verificacion" json:"-"`
 	FechaExpiracionCodigo *time.Time  `gorm:"column:fecha_expiracion_codigo" json:"-"`
 	UsuarioCreacion       *uint64     `gorm:"column:usuario_creacion" json:"-"`
-	FechaCreacion         time.Time   `gorm:"column:fecha_creacion" json:"-"`
+	FechaCreacion         time.Time   `gorm:"column:fecha_creacion;default:now()" json:"-"`
 	UsuarioModificacion   *uint64     `gorm:"column:usuario_modificacion" json:"-"`
 	FechaModificacion     *time.Time  `gorm:"column:fecha_modificacion" json:"-"`
-	Estado                util.Estado `gorm:"column:estado" json:"-"`
+	Estado                util.Estado `gorm:"column:estado;default:1" json:"-"`
 
 	Comentarios    []Comentario    `json:"comentarios,"`
 	Ordenes        []OrdenDeCompra `json:"ordenes"`

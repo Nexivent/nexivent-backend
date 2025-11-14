@@ -8,7 +8,7 @@ import (
 	"github.com/Nexivent/nexivent-backend/internal"
 	"github.com/Nexivent/nexivent-backend/internal/context"
 	"github.com/Nexivent/nexivent-backend/internal/data/model"
-	datautil "github.com/Nexivent/nexivent-backend/internal/data/util"
+	datautil "github.com/Nexivent/nexivent-backend/internal/data/model/util"
 	"github.com/Nexivent/nexivent-backend/internal/util"
 	"github.com/Nexivent/nexivent-backend/internal/validator"
 	"gorm.io/gorm"

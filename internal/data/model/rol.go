@@ -8,13 +8,13 @@ import (
 
 type Rol struct {
 	ID                  uint64     `gorm:"column:rol_id;primaryKey" json:"id"`
-	Nombre              string     `gorm:"column:nombre" json:"nombre"`
+	Nombre              string     `gorm:"column:nombre;uniqueIndex" json:"nombre"`
 	UsuarioCreacion     *uint64    `gorm:"column:usuario_creacion" json:"-"`
-	FechaCreacion       time.Time  `gorm:"column:fecha_creacion" json:"-"`
+	FechaCreacion       time.Time  `gorm:"column:fecha_creacion;default:now()" json:"-"`
 	UsuarioModificacion *uint64    `gorm:"column:usuario_modificacion" json:"-"`
 	FechaModificacion   *time.Time `gorm:"column:fecha_modificacion" json:"-"`
 
-	Usuarios []RolUsuario `json:"usuarios,omitempty"`
+	Usuarios []RolUsuario `json:"usuarios"`
 }
 
 func (Rol) TableName() string { return "rol" }

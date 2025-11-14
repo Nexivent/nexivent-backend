@@ -3,17 +3,17 @@ package model
 import (
 	"time"
 
-	"github.com/Nexivent/nexivent-backend/internal/data/util"
+	"github.com/Nexivent/nexivent-backend/internal/data/model/util"
 	"github.com/Nexivent/nexivent-backend/internal/validator"
 )
 
 type Comentario struct {
-	ID            uint64      `gorm:"column:comentario_id;primaryKey" json:"id"`
+	ID            uint64      `gorm:"column:comentario_id;primaryKey;autoIncrement" json:"id"`
 	UsuarioID     uint64      `gorm:"column:usuario_id" json:"usuarioId"`
 	EventoID      uint64      `gorm:"column:evento_id" json:"eventoId"`
 	Descripcion   string      `gorm:"column:descripcion" json:"descripcion"`
-	FechaCreacion time.Time   `gorm:"column:fecha_creacion" json:"fechaCreacion"`
-	Estado        util.Estado `gorm:"column:estado" json:"-"`
+	FechaCreacion time.Time   `gorm:"column:fecha_creacion;default:now()" json:"fechaCreacion"`
+	Estado        util.Estado `gorm:"column:estado;default:1" json:"-"`
 }
 
 func (Comentario) TableName() string { return "comentario" }

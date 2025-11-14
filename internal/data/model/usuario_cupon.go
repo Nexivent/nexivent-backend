@@ -7,7 +7,10 @@ import (
 type UsuarioCupon struct {
 	CuponID   uint64 `gorm:"column:cupon_id;primaryKey" json:"cuponId"`
 	UsuarioID uint64 `gorm:"column:usuario_id;primaryKey" json:"usuarioId"`
-	CantUsada int64  `gorm:"column:cant_usada" json:"cantUsada"`
+	CantUsada int64  `gorm:"column:cant_usada;default:0" json:"cantUsada"`
+
+	// Cupon   *Cupon   `gorm:"foreignKey:CuponID;references:cupon_id"`
+	// Usuario *Usuario `gorm:"foreignKey:UsuarioID;references:usuario_id"`
 }
 
 func (UsuarioCupon) TableName() string { return "usuario_cupon" }

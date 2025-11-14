@@ -3,23 +3,26 @@ package model
 import (
 	"time"
 
-	"github.com/Nexivent/nexivent-backend/internal/data/util"
+	"github.com/Nexivent/nexivent-backend/internal/data/model/util"
 	"github.com/Nexivent/nexivent-backend/internal/validator"
 )
 
 type OrdenDeCompra struct {
-	ID               uint64           `gorm:"column:orden_de_compra_id;primaryKey" json:"id"`
+	ID               uint64           `gorm:"column:orden_de_compra_id;primaryKey;autoIncrement" json:"id"`
 	UsuarioID        uint64           `gorm:"column:usuario_id" json:"usuarioId"`
 	MetodoDePagoID   uint64           `gorm:"column:metodo_de_pago_id" json:"metodoDePagoId"`
-	Fecha            time.Time        `gorm:"column:fecha" json:"fecha"`
-	FechaHoraIni     time.Time        `gorm:"column:fecha_hora_ini" json:"fechaHoraIni"`
+	Fecha            time.Time        `gorm:"column:fecha;default:current_date" json:"fecha"`
+	FechaHoraIni     time.Time        `gorm:"column:fecha_hora_ini;default:now()" json:"fechaHoraIni"`
 	FechaHoraFin     *time.Time       `gorm:"column:fecha_hora_fin" json:"fechaHoraFin,omitempty"`
 	Total            float64          `gorm:"column:total" json:"total"`
 	MontoFeeServicio float64          `gorm:"column:monto_fee_servicio" json:"montoFeeServicio"`
-	EstadoDeOrden    util.EstadoOrden `gorm:"column:estado_de_orden" json:"estadoDeOrden"`
+	EstadoDeOrden    util.EstadoOrden `gorm:"column:estado_de_orden;default:0" json:"estadoDeOrden"`
 
-	Tickets          []Ticket            `json:"tickets,omitempty"`
-	ComprobantesPago []ComprobanteDePago `json:"comprobantesPago,omitempty"`
+	// Usuario      *Usuario      `gorm:"foreignKey:UsuarioID;references:usuario_id"`
+	// MetodoDePago *MetodoDePago `gorm:"foreignKey:MetodoDePagoID;references:metodo_de_pago_id"`
+
+	Tickets          []Ticket            `json:"tickets"`
+	ComprobantesPago []ComprobanteDePago `json:"comprobantesPago"`
 }
 
 func (OrdenDeCompra) TableName() string { return "orden_de_compra" }

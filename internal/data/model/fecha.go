@@ -7,8 +7,8 @@ import (
 )
 
 type Fecha struct {
-	ID          uint64    `gorm:"column:fecha_id;primaryKey" json:"id"`
-	FechaEvento time.Time `gorm:"column:fecha_evento" json:"fechaEvento"`
+	ID          uint64    `gorm:"column:fecha_id;primaryKey;autoIncrement" json:"id"`
+	FechaEvento time.Time `gorm:"column:fecha_evento;unique" json:"fechaEvento"`
 
 	EventoFechas []EventoFecha `json:"-"`
 }

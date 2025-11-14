@@ -3,24 +3,27 @@ package model
 import (
 	"time"
 
-	"github.com/Nexivent/nexivent-backend/internal/data/util"
+	"github.com/Nexivent/nexivent-backend/internal/data/model/util"
 	"github.com/Nexivent/nexivent-backend/internal/validator"
 )
 
 type Cupon struct {
-	ID                  uint64      `gorm:"column:cupon_id;primaryKey" json:"id"`
+	ID                  uint64      `gorm:"column:cupon_id;primaryKey;autoIncrement" json:"id"`
 	Descripcion         string      `gorm:"column:descripcion" json:"descripcion"`
 	Tipo                string      `gorm:"column:tipo" json:"tipo"`
 	Valor               float64     `gorm:"column:valor" json:"valor"`
-	EstadoCupon         util.Estado `gorm:"column:estado_cupon" json:"estadoCupon"`
-	Codigo              string      `gorm:"column:codigo" json:"codigo"`
-	UsoPorUsuario       uint64      `gorm:"column:uso_por_usuario" json:"usoPorUsuario"`
-	UsoRealizados       uint64      `gorm:"column:uso_realizados" json:"usoRealizados"`
+	EstadoCupon         util.Estado `gorm:"column:estado_cupon;default:0" json:"estadoCupon"`
+	Codigo              string      `gorm:"column:codigo;uniqueIndex" json:"codigo"`
+	UsoPorUsuario       uint64      `gorm:"column:uso_por_usuario;default:0" json:"usoPorUsuario"`
+	UsoRealizados       uint64      `gorm:"column:uso_realizados;default:0" json:"usoRealizados"`
 	UsuarioCreacion     *uint64     `gorm:"column:usuario_creacion" json:"-"`
-	FechaCreacion       time.Time   `gorm:"column:fecha_creacion" json:"-"`
+	FechaCreacion       time.Time   `gorm:"column:fecha_creacion;default:now()" json:"-"`
 	UsuarioModificacion *uint64     `gorm:"column:usuario_modificacion" json:"-"`
 	FechaModificacion   *time.Time  `gorm:"column:fecha_modificacion" json:"-"`
-	EventoID            uint64      `gorm:"column:evento_id" json:"eventoId"`
+
+	// FK al evento (muchos cupones pertenecen a un evento)
+	EventoID uint64  `gorm:"column:evento_id" json:"eventoId"`
+	// Evento   *Evento `gorm:"foreignKey:EventoID;references:ID"`
 
 	Usuarios []UsuarioCupon `json:"usuarios"`
 }

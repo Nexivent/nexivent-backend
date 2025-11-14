@@ -3,12 +3,12 @@ package model
 import (
 	"time"
 
-	"github.com/Nexivent/nexivent-backend/internal/data/util"
+	"github.com/Nexivent/nexivent-backend/internal/data/model/util"
 	"github.com/Nexivent/nexivent-backend/internal/validator"
 )
 
 type Notificacion struct {
-	ID                 uint64                  `gorm:"column:notificacion_id;primaryKey" json:"id"`
+	ID                 uint64                  `gorm:"column:notificacion_id;primaryKey;autoIncrement" json:"id"`
 	Mensaje            string                  `gorm:"column:mensaje" json:"mensaje"`
 	Canal              string                  `gorm:"column:canal" json:"canal"`
 	FechaEnvio         time.Time               `gorm:"column:fecha_envio" json:"fechaEnvio"`

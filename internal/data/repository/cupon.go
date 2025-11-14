@@ -9,6 +9,14 @@ type Cupon struct {
 	DB *gorm.DB
 }
 
+func NewCuponController(
+	postgresqlDB *gorm.DB,
+) *Cupon {
+	return &Cupon{
+		DB: postgresqlDB,
+	}
+}
+
 func (c *Cupon) ObtenerCupones() ([]*model.Cupon, error) {
 	var cupones []*model.Cupon
 	respuesta := c.DB.Find(&cupones)

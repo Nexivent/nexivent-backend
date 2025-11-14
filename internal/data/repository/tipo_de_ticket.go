@@ -9,6 +9,14 @@ type TipoDeTicket struct {
 	DB *gorm.DB
 }
 
+func NewTipoDeTicketController(
+	postgresqlDB *gorm.DB,
+) *TipoDeTicket {
+	return &TipoDeTicket{
+		DB: postgresqlDB,
+	}
+}
+
 func (t *TipoDeTicket) CrearTipoDeTicket(TipoDeTicket *model.TipoDeTicket) error {
 	resultado := t.DB.Create(TipoDeTicket)
 

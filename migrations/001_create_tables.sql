@@ -47,7 +47,7 @@ CREATE TABLE usuario (
     fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     usuario_modificacion BIGINT,
     fecha_modificacion TIMESTAMPTZ,
-    estado SMALLINT NOT NULL DEFAULT 1
+    estado SMALLINT NOT NULL DEFAULT 0
     -- CONSTRAINT uq_usuario_doc UNIQUE (tipo_documento, num_documento),
     -- CONSTRAINT chk_usuario_estado_cta CHECK (estado_de_cuenta IN (0, 1, 2)),
     -- CONSTRAINT chk_usuario_estado CHECK (estado IN (0, 1)),

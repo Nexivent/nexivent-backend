@@ -9,6 +9,14 @@ type Categoria struct {
 	DB *gorm.DB
 }
 
+func NewCategoriaController(
+	postgresqlDB *gorm.DB,
+) *Categoria {
+	return &Categoria{
+		DB: postgresqlDB,
+	}
+}
+
 func (c *Categoria) CrearCategoria(Categoria *model.Categoria) error {
 	respuesta := c.DB.Create(Categoria)
 	if respuesta.Error != nil {

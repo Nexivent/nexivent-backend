@@ -1,4 +1,4 @@
- package repository
+package repository
 
 import (
 	"errors"
@@ -11,6 +11,14 @@ import (
 
 type Usuario struct {
 	DB *gorm.DB
+}
+
+func NewUsuariosController(
+	postgresqlDB *gorm.DB,
+) *Usuario {
+	return &Usuario{
+		DB: postgresqlDB,
+	}
 }
 
 func (c *Usuario) ObtenerUsuarios() ([]*model.Usuario, error) {

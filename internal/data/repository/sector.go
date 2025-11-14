@@ -12,6 +12,14 @@ type Sector struct {
 	DB *gorm.DB
 }
 
+func NewSectorController(
+	postgresqlDB *gorm.DB,
+) *Sector {
+	return &Sector{
+		DB: postgresqlDB,
+	}
+}
+
 func (s *Sector) CrearSector(sector *model.Sector) error {
 	resultado := s.DB.Create(sector)
 

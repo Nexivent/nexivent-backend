@@ -13,6 +13,14 @@ type Ticket struct {
 	DB *gorm.DB
 }
 
+func NewTicketsController(
+	postgresqlDB *gorm.DB,
+) *Ticket {
+	return &Ticket{
+		DB: postgresqlDB,
+	}
+}
+
 // VerificarOrdenConfirmada: true si la orden existe y está CONFIRMADA (enum).
 func (c *Ticket) VerificarOrdenConfirmada(orderID int64) (bool, error) {
 	var estInt int16

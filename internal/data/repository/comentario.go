@@ -12,6 +12,14 @@ type Comentario struct {
 	DB *gorm.DB
 }
 
+func NewComentariosController(
+	postgresqlDB *gorm.DB,
+) *Comentario {
+	return &Comentario{
+		DB: postgresqlDB,
+	}
+}
+
 // CrearComentario: inserta un comentario (FKs deben existir en BD).
 func (c *Comentario) CrearComentario(comentario *model.Comentario) error {
 	if comentario == nil {

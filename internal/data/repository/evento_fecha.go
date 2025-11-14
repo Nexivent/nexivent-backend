@@ -11,6 +11,14 @@ type EventoFecha struct {
 	DB *gorm.DB
 }
 
+func NewEventoFechaController(
+	postgreesqlDB *gorm.DB,
+) *EventoFecha {
+	return &EventoFecha{
+		DB: postgreesqlDB,
+	}
+}
+
 func (e *EventoFecha) CrearEventoFecha(EventoFecha *model.EventoFecha) error {
 	respuesta := e.DB.Create(EventoFecha)
 

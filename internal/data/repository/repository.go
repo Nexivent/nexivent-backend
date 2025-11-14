@@ -13,7 +13,7 @@ var (
 
 type Repository struct {
 	DB              *gorm.DB
-	Eventos         EventoSQL
+	Eventos         Evento
 	EventoFechas    EventoFecha
 	Fechas          Fecha
 	Categorias      Categoria
@@ -36,7 +36,7 @@ type Repository struct {
 func NewRepository(db *gorm.DB) Repository {
 	return Repository{
 		DB:              db,
-		Eventos:         EventoSQL{DB: db},
+		Eventos:         Evento{DB: db},
 		EventoFechas:    EventoFecha{DB: db},
 		Fechas:          Fecha{DB: db},
 		Categorias:      Categoria{DB: db},
@@ -61,7 +61,7 @@ func NewRepository(db *gorm.DB) Repository {
 func (r *Repository) WithTx(tx *gorm.DB) Repository {
 	return Repository{
 		DB:              tx,
-		Eventos:         EventoSQL{DB: tx},
+		Eventos:         Evento{DB: tx},
 		EventoFechas:    EventoFecha{DB: tx},
 		Fechas:          Fecha{DB: tx},
 		Categorias:      Categoria{DB: tx},

@@ -11,6 +11,14 @@ type Fecha struct {
 	DB *gorm.DB
 }
 
+func NewFechaController(
+	postgresqlDB *gorm.DB,
+) *Fecha {
+	return &Fecha{
+		DB: postgresqlDB,
+	}
+}
+
 func (f *Fecha) CrearFecha(Fecha *model.Fecha) error {
 	respuesta := f.DB.Create(Fecha)
 

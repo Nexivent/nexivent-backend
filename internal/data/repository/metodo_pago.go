@@ -13,6 +13,14 @@ type MetodoDePago struct {
 	DB *gorm.DB
 }
 
+func NewMetodoDePagoController(
+	postgresqlDB *gorm.DB,
+) *MetodoDePago {
+	return &MetodoDePago{
+		DB: postgresqlDB,
+	}
+}
+
 func (r *MetodoDePago) CrearMetodoDePago(m *model.MetodoDePago) error {
 	if m == nil {
 		return gorm.ErrInvalidData

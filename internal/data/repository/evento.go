@@ -9,11 +9,19 @@ import (
 	"gorm.io/gorm/clause"
 )
 
-type EventoSQL struct {
+type Evento struct {
 	DB *gorm.DB
 }
 
-func (e *EventoSQL) CrearEvento(Evento *model.Evento) error {
+func NewEventoController(
+	postgresqlDB *gorm.DB,
+) *Evento {
+	return &Evento{
+		DB: postgresqlDB,
+	}
+}
+
+func (e *Evento) CrearEvento(Evento *model.Evento) error {
 	respuesta := e.DB.Create(Evento)
 	if respuesta.Error != nil {
 		return respuesta.Error
@@ -22,7 +30,7 @@ func (e *EventoSQL) CrearEvento(Evento *model.Evento) error {
 	return nil
 }
 
-func (e *EventoSQL) ObtenerEventosDisponiblesSinFiltros() ([]*model.Evento, error) {
+func (e *Evento) ObtenerEventosDisponiblesSinFiltros() ([]*model.Evento, error) {
 	// var categoriaID *uint64
 	// var titulo *string
 	// var descripcion *string
@@ -45,7 +53,7 @@ func (e *EventoSQL) ObtenerEventosDisponiblesSinFiltros() ([]*model.Evento, erro
 	return eventos, nil
 }
 
-func (e *EventoSQL) ObtenerEventosDisponiblesConFiltros(
+func (e *Evento) ObtenerEventosDisponiblesConFiltros(
 	categoriaID *uint64,
 	titulo *string,
 	descripcion *string,
@@ -62,7 +70,7 @@ func (e *EventoSQL) ObtenerEventosDisponiblesConFiltros(
 		Joins("JOIN fecha f ON f.fecha_id = ef.fecha_id").
 		Where("evento.evento_estado = 1 AND f.fecha_evento >= NOW()")
 
-	//Aplicar filtros dinámicamente
+	// Aplicar filtros dinámicamente
 	if categoriaID != nil && *categoriaID != 0 {
 		query = query.Where("evento.categoria_id = ?", *categoriaID)
 	}
@@ -87,14 +95,14 @@ func (e *EventoSQL) ObtenerEventosDisponiblesConFiltros(
 	}
 
 	// Contar total antes de aplicar limit/offset
-	//queryCount := query.Session(&gorm.Session{}) // Clona el query sin afectar el original
-	//queryCount.Count(&total)
+	// queryCount := query.Session(&gorm.Session{}) // Clona el query sin afectar el original
+	// queryCount.Count(&total)
 
 	// Aplicar paginación
 	respuesta := query.
 		Order("f.fecha_evento ASC").
-		//Limit(limit).
-		//Offset(offset).
+		// Limit(limit).
+		// Offset(offset).
 		Find(&eventos)
 
 	if respuesta.Error != nil {
@@ -102,7 +110,7 @@ func (e *EventoSQL) ObtenerEventosDisponiblesConFiltros(
 	}
 
 	// Calcular total de páginas
-	//totalPaginas := int((total + int64(limit) - 1) / int64(limit))
+	// totalPaginas := int((total + int64(limit) - 1) / int64(limit))
 
 	// Retornar resultado completo
 	/*resultado := &schemas.EventosPaginados{
@@ -120,13 +128,12 @@ func (e *EventoSQL) ObtenerEventosDisponiblesConFiltros(
 //	Actualización: UBICACIÓN
 //
 // ===============================
-func (e *EventoSQL) ActualizarUbicacionEvento(
+func (e *Evento) ActualizarUbicacionEvento(
 	eventoID int64,
 	nuevoLugar string,
 	usuarioModificacion *int64,
 	fechaModificacion *time.Time,
 ) (*model.Evento, error) {
-
 	if eventoID <= 0 || nuevoLugar == "" {
 		return nil, gorm.ErrInvalidData
 	}
@@ -167,13 +174,12 @@ func (e *EventoSQL) ActualizarUbicacionEvento(
 //	(p.ej., 0=Borrador, 1=Publicado, 2=Finalizado)
 //
 // =======================================
-func (e *EventoSQL) ActualizarEstadoWorkflowEvento(
+func (e *Evento) ActualizarEstadoWorkflowEvento(
 	eventoID int64,
 	nuevoEstado int16,
 	usuarioModificacion *int64,
 	fechaModificacion *time.Time,
 ) (*model.Evento, error) {
-
 	if eventoID <= 0 {
 		return nil, gorm.ErrInvalidData
 	}
@@ -212,13 +218,12 @@ func (e *EventoSQL) ActualizarEstadoWorkflowEvento(
 //	(0=inactivo, 1=activo; soft on/off del registro)
 //
 // =======================================
-func (e *EventoSQL) ActualizarEstadoFlagEvento(
+func (e *Evento) ActualizarEstadoFlagEvento(
 	eventoID int64,
 	nuevoEstado int16,
 	usuarioModificacion *int64,
 	fechaModificacion *time.Time,
 ) (*model.Evento, error) {
-
 	if eventoID <= 0 {
 		return nil, gorm.ErrInvalidData
 	}
@@ -262,13 +267,12 @@ func (e *EventoSQL) ActualizarEstadoFlagEvento(
 
 // Cambia el valor de fecha_evento (tabla FECHA) para un fecha_id dado.
 // Ojo: este cambio afecta a todos los evento_fecha que referencien ese fecha_id.
-func (e *EventoSQL) ActualizarFechaCalendario(
+func (e *Evento) ActualizarFechaCalendario(
 	fechaID int64,
 	nuevaFecha time.Time, // usar solo la parte de día acorde a tu diseño
 	usuarioModificacion *int64,
 	fechaModificacion *time.Time,
 ) error {
-
 	if fechaID <= 0 {
 		return gorm.ErrInvalidData
 	}
@@ -302,13 +306,12 @@ func (e *EventoSQL) ActualizarFechaCalendario(
 }
 
 // Cambia la HORA de inicio de un registro evento_fecha (no la fecha).
-func (e *EventoSQL) ActualizarHoraInicioEventoFecha(
+func (e *Evento) ActualizarHoraInicioEventoFecha(
 	eventoFechaID int64,
 	nuevaHora time.Time, // usa time con la hora deseada (Postgres TIMESTAMPTZ)
 	usuarioModificacion *int64,
 	fechaModificacion *time.Time,
 ) error {
-
 	if eventoFechaID <= 0 {
 		return gorm.ErrInvalidData
 	}
@@ -341,13 +344,12 @@ func (e *EventoSQL) ActualizarHoraInicioEventoFecha(
 
 // Reasigna la fecha (fecha_id) de un evento_fecha específico.
 // Útil si creas una nueva fecha en 'fecha' y quieres apuntar el evento_fecha a esa nueva fecha.
-func (e *EventoSQL) ReasignarFechaDeEventoFecha(
+func (e *Evento) ReasignarFechaDeEventoFecha(
 	eventoFechaID int64,
 	nuevoFechaID int64,
 	usuarioModificacion *int64,
 	fechaModificacion *time.Time,
 ) error {
-
 	if eventoFechaID <= 0 || nuevoFechaID <= 0 {
 		return gorm.ErrInvalidData
 	}

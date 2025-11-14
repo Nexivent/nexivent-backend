@@ -12,6 +12,14 @@ type Tarifa struct {
 	DB *gorm.DB
 }
 
+func NewTarifaController(
+	postgresqlDB *gorm.DB,
+) *Tarifa {
+	return &Tarifa{
+		DB: postgresqlDB,
+	}
+}
+
 func (t *Tarifa) CrearTarifa(tarifa *model.Tarifa) error {
 	res := t.DB.Create(tarifa)
 	if res.Error != nil {

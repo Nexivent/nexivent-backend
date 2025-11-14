@@ -12,6 +12,14 @@ type PerfilDePersona struct {
 	DB *gorm.DB
 }
 
+func NewPerfilDePersonaController(
+	postgresqlDB *gorm.DB, // (opcional: corregí el nombre)
+) *PerfilDePersona {
+	return &PerfilDePersona{
+		DB: postgresqlDB,
+	}
+}
+
 func (p *PerfilDePersona) CrearPerfilDePersona(perfil *model.PerfilDePersona) error {
 	if err := p.DB.Create(perfil).Error; err != nil {
 		return err

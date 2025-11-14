@@ -12,6 +12,12 @@ type Rol struct {
 	DB *gorm.DB
 }
 
+func NewRolesController(postgresqlDB *gorm.DB) *Rol {
+	return &Rol{
+		DB: postgresqlDB,
+	}
+}
+
 // Listar todos los roles
 func (r *Rol) ObtenerRoles() ([]*model.Rol, error) {
 	roles := []*model.Rol{}

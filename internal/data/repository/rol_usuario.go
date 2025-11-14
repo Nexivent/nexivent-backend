@@ -13,6 +13,12 @@ type RolUsuarioRepo struct {
 	DB *gorm.DB
 }
 
+func NewRolUsuarioController(postgresqlDB *gorm.DB) *RolUsuarioRepo {
+	return &RolUsuarioRepo{
+		DB: postgresqlDB,
+	}
+}
+
 // Asignar rol a usuario (si ya existe y está activo, no duplica; si existe inactivo, puedes reactivarlo)
 func (r *RolUsuarioRepo) AsignarRolAUsuario(
 	usuarioID uint64,

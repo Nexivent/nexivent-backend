@@ -14,6 +14,14 @@ type OrdenDeCompra struct {
 	DB *gorm.DB
 }
 
+func NewOrdenDeCompraController(
+	postgresqlDB *gorm.DB,
+) *OrdenDeCompra {
+	return &OrdenDeCompra{
+		DB: postgresqlDB,
+	}
+}
+
 // CrearOrdenTemporal inserta una nueva orden temporal (estado = TEMPORAL).
 func (c *OrdenDeCompra) CrearOrdenTemporal(orden *model.OrdenDeCompra) error {
 	if orden == nil {

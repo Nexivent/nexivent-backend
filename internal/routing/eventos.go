@@ -53,11 +53,39 @@ func postEvento(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var evento model.Evento
-	err := internal.ReadJSON(w, r, &evento)
+	var input struct {
+		OrganizadorID      uint64                `json:"organizadorId"`
+		CategoriaID        uint64                `json:"categoriaId"`
+		Titulo             string                `json:"titulo"`
+		Descripcion        string                `json:"descripcion"`
+		DescripcionArtista string                `json:"descripcionArtista"`
+		Lugar              string                `json:"lugar"`
+		EventoEstado       datautil.EstadoEvento `json:"eventoEstado"`
+		ImagenDescripcion  string                `json:"imagenDescripcion"`
+		ImagenPortada      string                `json:"imagenPortada"`
+		VideoPresentacion  string                `json:"videoPresentacion"`
+		ImagenEscenario    string                `json:"imagenEscenario"`
+		Fechas             []model.EventoFecha   `json:"fechas"`
+	}
+	err := internal.ReadJSON(w, r, &input)
 	if err != nil {
 		app.BadRequestResponse(w, r, err)
 		return
+	}
+
+	evento := model.Evento{
+		OrganizadorID:      input.OrganizadorID,
+		CategoriaID:        input.CategoriaID,
+		Titulo:             input.Titulo,
+		Descripcion:        input.Descripcion,
+		DescripcionArtista: input.DescripcionArtista,
+		Lugar:              input.Lugar,
+		EventoEstado:       input.EventoEstado,
+		ImagenDescripcion:  input.ImagenDescripcion,
+		ImagenPortada:      input.ImagenPortada,
+		VideoPresentacion:  input.VideoPresentacion,
+		ImagenEscenario:    input.ImagenEscenario,
+		Fechas:             input.Fechas,
 	}
 
 	v := validator.New()

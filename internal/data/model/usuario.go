@@ -1,11 +1,25 @@
 package model
 
 import (
+	"crypto/rand"
+	"crypto/subtle"
+	"encoding/base64"
+	"fmt"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/Nexivent/nexivent-backend/internal/data/model/util"
 	"github.com/Nexivent/nexivent-backend/internal/validator"
+	"golang.org/x/crypto/argon2"
+)
+
+const (
+	argonTime    uint32 = 1         // Number of iterations
+	argonMemory  uint32 = 64 * 1024 // 64 MB
+	argonThreads uint8  = 4         // Number of threads
+	argonKeyLen  uint32 = 32        // 32-byte hash
+	saltLength          = 16        // 16-byte salt
 )
 
 type Usuario struct {
@@ -23,7 +37,7 @@ type Usuario struct {
 	FechaCreacion         time.Time   `gorm:"column:fecha_creacion;default:now()" json:"-"`
 	UsuarioModificacion   *uint64     `gorm:"column:usuario_modificacion" json:"-"`
 	FechaModificacion     *time.Time  `gorm:"column:fecha_modificacion" json:"-"`
-	Estado                util.Estado `gorm:"column:estado;default:1" json:"-"`
+	Estado                util.Estado `gorm:"column:estado;default:0" json:"-"`
 
 	Comentarios    []Comentario    `json:"comentarios,"`
 	Ordenes        []OrdenDeCompra `json:"ordenes"`
@@ -55,10 +69,80 @@ func ValidateUsuario(v *validator.Validator, usuario *Usuario) {
 	v.Check(len(usuario.Correo) <= 100, "correo", "el correo no debe exceder 100 caracteres")
 
 	// Validar password
-	v.Check(len(usuario.password) != 0, "contrasenha", "la contraseña debe tener al menos 6 caracteres")
+	v.Check(len(usuario.password) != 0, "password", "la contraseña debe tener al menos 6 caracteres")
 
 	// Validar Telefono (si está presente)
 	if usuario.Telefono != nil && *usuario.Telefono != "" {
 		v.Check(len(*usuario.Telefono) <= 15, "telefono", "el teléfono no debe exceder 15 caracteres")
 	}
+}
+
+func generateRandomBytes(n int) ([]byte, error) {
+	b := make([]byte, n)
+	_, err := rand.Read(b)
+	if err != nil {
+		return nil, err
+	}
+	return b, nil
+}
+
+func HashPassword(password string) (string, error) {
+	salt, err := generateRandomBytes(saltLength)
+	if err != nil {
+		return "", err
+	}
+
+	hash := argon2.IDKey([]byte(password), salt, argonTime, argonMemory, argonThreads, argonKeyLen)
+
+	// Encode parameters, salt and hash into a single string
+	b64Salt := base64.RawStdEncoding.EncodeToString(salt)
+	b64Hash := base64.RawStdEncoding.EncodeToString(hash)
+
+	encodedHash := fmt.Sprintf("$argon2id$v=19$m=%d,t=%d,p=%d$%s$%s",
+		argonMemory, argonTime, argonThreads, b64Salt, b64Hash)
+
+	return encodedHash, nil
+}
+
+func VerifyPassword(password, encodedHash string) (bool, error) {
+    parts := strings.Split(encodedHash, "$")
+    if len(parts) != 6 {
+        return false, fmt.Errorf("invalid hash format")
+    }
+
+    // parts[0] = "" (before first $)
+    // parts[1] = "argon2id"
+    // parts[2] = "v=19"
+    // parts[3] = "m=65536,t=1,p=4"
+    // parts[4] = salt (b64)
+    // parts[5] = hash (b64)
+
+    var memory uint32
+    var time uint32
+    var threads uint8
+
+    _, err := fmt.Sscanf(parts[3], "m=%d,t=%d,p=%d", &memory, &time, &threads)
+    if err != nil {
+        return false, err
+    }
+
+    salt, err := base64.RawStdEncoding.DecodeString(parts[4])
+    if err != nil {
+        return false, err
+    }
+
+    hash, err := base64.RawStdEncoding.DecodeString(parts[5])
+    if err != nil {
+        return false, err
+    }
+
+    // Recompute the hash with the same parameters
+    computedHash := argon2.IDKey([]byte(password), salt, time, memory, threads, uint32(len(hash)))
+
+    // Constant-time comparison
+    if subtle.ConstantTimeCompare(hash, computedHash) == 1 {
+        return true, nil
+    }
+
+    return false, nil
 }

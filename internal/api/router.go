@@ -2,40 +2,58 @@ package api
 
 import (
 	"fmt"
-	"net/http"
 
+	config "github.com/Loui27/nexivent-backend/internal/config"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	echoSwagger "github.com/swaggo/echo-swagger"
-	_ "onichankimochi.com/astro_cat_backend/src/server/api/docs" // Import generated swagger docs
-	"onichankimochi.com/astro_cat_backend/src/server/schemas"
 )
 
-// HealthCheck 			godoc
+// HealthCheck godoc
 // @Summary 			Health Check
-// @Description 		Verify connection in swagger
-// @Tags 				Health Check
+// @Description 		Check the health status of the API
+// @Tags 				Health
 // @Accept 				json
 // @Produce 			json
-// @Success 			200 {object} 	string "ok"
+// @Success 			200 {object} map[string]string "API is healthy"
 // @Router 				/health-check/ [get]
 func (a *Api) HealthCheck(c echo.Context) error {
-	return c.JSON(http.StatusOK, "Works well !!")
+	return c.JSON(200, map[string]string{
+		"status": "OK",
+	})
 }
 
-func (a *Api) RunApi(envSettings *schemas.EnvSettings) {
+func (a *Api) RegisterRoutes(configEnv *config.ConfigEnv) {
 	// CORS
 	corsConfig := middleware.CORSConfig{
-		AllowOrigins:     []string{"*"}, // TODO: allow only FrontOffice and UserFront origins
+		AllowOrigins:     []string{"*"}, // TODO: allow only authorized origins
 		AllowCredentials: true,
 	}
 	a.Echo.Use(middleware.CORSWithConfig(corsConfig))
 
-	if envSettings.EnableSwagger {
+	// Enable Swagger if configured
+	if configEnv.EnableSwagger {
 		a.Echo.GET("/swagger/*", echoSwagger.EchoWrapHandler(echoSwagger.InstanceName("server")))
 	}
 
+	// ===== PUBLIC ENDPOINTS =====
+	healthCheck := a.Echo.Group("/health-check")
+	healthCheck.GET("/", a.HealthCheck)
+
+	// Eventos endpoints
+	a.Echo.GET("/evento/", a.FetchEventos)
+	a.Echo.GET("/evento/:eventoId/", a.GetEvento)
+	a.Echo.POST("/evento/", a.CreateEvento)
+}
+
+func (a *Api) RunApi(configEnv *config.ConfigEnv) {
+	a.RegisterRoutes(configEnv)
+
 	// Start the server
-	a.Logger.Infoln(fmt.Sprintf("AstroCat server running on port %s", a.EnvSettings.MainPort))
-	a.Logger.Fatal(a.Echo.Start(fmt.Sprintf(":%s", a.EnvSettings.MainPort)))
+	port := configEnv.MainPort
+	if port == "" {
+		port = "8080"
+	}
+	a.Logger.Infoln(fmt.Sprintf("Nexivent server running on port %s", port))
+	a.Logger.Fatal(a.Echo.Start(fmt.Sprintf(":%s", port)))
 }

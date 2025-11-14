@@ -1,46 +1,45 @@
 package api
 
 import (
+	"github.com/Loui27/nexivent-backend/internal/application/controller"
+	config "github.com/Loui27/nexivent-backend/internal/config"
 	"github.com/Loui27/nexivent-backend/logging"
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
-
-	//"onichankimochi.com/astro_cat_backend/src/server/bll/controller"
-	"onichankimochi.com/astro_cat_backend/src/server/schemas"
 )
 
 type Api struct {
-	Logger        logging.Logger
-	BllController *controller.ControllerCollection
-	EnvSettings   *schemas.EnvSettings
-	Echo          *echo.Echo
+	Logger           logging.Logger
+	BllController    *controller.ControllerCollection
+	ConfigEnv        *config.ConfigEnv
+	Echo             *echo.Echo
 }
 
 /*
 Creates a new Api server with
 - Logger provided by input
 - BllController as new bll controller collection
-- EnvSettings as new env settings provided by .env file
+- ConfigEnv as new config env settings
 */
 func NewApi(
 	logger logging.Logger,
-	envSettings *schemas.EnvSettings,
+	configEnv *config.ConfigEnv,
 ) (*Api, *gorm.DB) {
-	bllController, astroCatPsqlDB := controller.NewControllerCollection(logger, envSettings)
+	bllController, nexiventPsqlDB := controller.NewControllerCollection(logger, configEnv)
 
 	return &Api{
-		Logger:        logger,
-		BllController: bllController,
-		EnvSettings:   envSettings,
-		Echo:          echo.New(),
-	}, astroCatPsqlDB
+		Logger:           logger,
+		BllController:    bllController,
+		ConfigEnv:        configEnv,
+		Echo:             echo.New(),
+	}, nexiventPsqlDB
 }
 
-// @title AstroCat API
+// @title Nexivent API
 // @version 1.0
-// @description AstroCat API sample for clients
+// @description Nexivent Event Management API
 // @BasePath /
-func RunService(envSettings *schemas.EnvSettings, logger logging.Logger) {
-	api, _ := NewApi(logger, envSettings)
-	api.RunApi(envSettings)
+func RunService(configEnv *config.ConfigEnv, logger logging.Logger) {
+	api, _ := NewApi(logger, configEnv)
+	api.RunApi(configEnv)
 }

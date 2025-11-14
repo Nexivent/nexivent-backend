@@ -29,6 +29,7 @@ var (
 		ServiceLocalNotFound        Error
 		ServiceProfessionalNotFound Error
 		SessionNotFound             Error
+		EventoNotFound              Error
 	}{
 		CommunityNotFound: Error{
 			Code:    "COMMUNITY_ERROR_001",
@@ -81,6 +82,10 @@ var (
 		SessionNotFound: Error{
 			Code:    "SESSION_ERROR_001",
 			Message: "Session not found",
+		},
+		EventoNotFound: Error{
+			Code:    "EVENTO_ERROR_001",
+			Message: "Evento not found",
 		},
 	}
 
@@ -211,6 +216,9 @@ var (
 		SessionNotCreated             Error
 		SessionNotUpdated             Error
 		SessionNotSoftDeleted         Error
+		EventoNotCreated              Error
+		EventoNotUpdated              Error
+		EventoNotFound                Error
 	}{
 		InvalidUpdatedByValue: Error{
 			Code:    "REQUEST_ERROR_002",
@@ -351,6 +359,18 @@ var (
 		SessionNotSoftDeleted: Error{
 			Code:    "SESSION_ERROR_005",
 			Message: "Session not soft deleted",
+		},
+		EventoNotCreated: Error{
+			Code:    "EVENTO_ERROR_002",
+			Message: "Evento not created",
+		},
+		EventoNotUpdated: Error{
+			Code:    "EVENTO_ERROR_003",
+			Message: "Evento not updated",
+		},
+		EventoNotFound: Error{
+			Code:    "EVENTO_ERROR_001",
+			Message: "Evento not found",
 		},
 	}
 

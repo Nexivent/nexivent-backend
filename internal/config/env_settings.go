@@ -13,6 +13,10 @@ type ConfigEnv struct {
 	// LOGS
 	EnableSqlLogs bool
 
+	// SERVER
+	MainPort      string
+	EnableSwagger bool
+
 	// DB
 	PostgresHost     string
 	PostgresPort     string
@@ -35,6 +39,11 @@ func NuevoConfigEnv(logger logging.Logger) *ConfigEnv {
 		enableSqlLogs = false
 	}
 
+	enableSwagger, err := strconv.ParseBool(os.Getenv("ENABLE_SWAGGER"))
+	if err != nil {
+		enableSwagger = false
+	}
+
 	mainPort := os.Getenv("MAIN_PORT")
 	// Railway uses PORT environment variable
 	if mainPort == "" {
@@ -42,7 +51,7 @@ func NuevoConfigEnv(logger logging.Logger) *ConfigEnv {
 	}
 	// Default port if none is specified
 	if mainPort == "" {
-		mainPort = "5438"
+		mainPort = "8080"
 	}
 
 	PostgresHost := os.Getenv("NEXIVENT_POSTGRES_HOST")
@@ -54,6 +63,8 @@ func NuevoConfigEnv(logger logging.Logger) *ConfigEnv {
 
 	return &ConfigEnv{
 		EnableSqlLogs:    enableSqlLogs,
+		MainPort:         mainPort,
+		EnableSwagger:    enableSwagger,
 		PostgresHost:     PostgresHost,
 		PostgresPort:     PostgresPort,
 		PostgresUser:     PostgresUser,

@@ -30,6 +30,7 @@ var (
 		ServiceProfessionalNotFound Error
 		SessionNotFound             Error
 		EventoNotFound              Error
+		CategoriaNotFound			Error
 	}{
 		CommunityNotFound: Error{
 			Code:    "COMMUNITY_ERROR_001",
@@ -63,14 +64,6 @@ var (
 			Code:    "ONBOARDING_ERROR_001",
 			Message: "Onboarding not found",
 		},
-		CommunityPlanNotFound: Error{
-			Code:    "COMMUNITY_PLAN_ERROR_001",
-			Message: "Community-Plan association not found",
-		},
-		CommunityServiceNotFound: Error{
-			Code:    "COMMUNITY_SERVICE_ERROR_001",
-			Message: "Community-Service association not found",
-		},
 		ServiceLocalNotFound: Error{
 			Code:    "SERVICE_LOCAL_ERROR_001",
 			Message: "Service-Local association not found",
@@ -87,6 +80,10 @@ var (
 			Code:    "EVENTO_ERROR_001",
 			Message: "Evento not found",
 		},
+		CategoriaNotFound: Error{
+			Code:    "CATEGORIA_ERROR_001",
+			Message: "Categoria not found",
+		},
 	}
 
 	// For 422 Unprocessable Entity errors
@@ -94,9 +91,7 @@ var (
 		InvalidCommunityId           Error
 		InvalidRequestBody           Error
 		InvalidProfessionalId        Error
-		InvalidLocalId               Error
 		InvalidServiceId             Error
-		InvalidPlanId                Error
 		InvalidMembershipId          Error
 		InvalidOnboardingId          Error
 		InvalidUserEmail             Error
@@ -121,17 +116,9 @@ var (
 			Code:    "PROFESSIONAL_ERROR_004",
 			Message: "Invalid professional id",
 		},
-		InvalidLocalId: Error{
-			Code:    "LOCAL_ERROR_004",
-			Message: "Invalid local id",
-		},
 		InvalidServiceId: Error{
 			Code:    "SERVICE_ERROR_004",
 			Message: "Invalid service id",
-		},
-		InvalidPlanId: Error{
-			Code:    "PLAN_ERROR_004",
-			Message: "Invalid plan id",
 		},
 		InvalidMembershipId: Error{
 			Code:    "MEMBERSHIP_ERROR_001",
@@ -219,34 +206,13 @@ var (
 		EventoNotCreated              Error
 		EventoNotUpdated              Error
 		EventoNotFound                Error
+		CategoriaNotCreated              Error
+		CategoriaNotUpdated              Error
+		CategoriaNotFound                Error
 	}{
 		InvalidUpdatedByValue: Error{
 			Code:    "REQUEST_ERROR_002",
 			Message: "Invalid updated by value error",
-		},
-		CommunityNotCreated: Error{
-			Code:    "COMMUNITY_ERROR_002",
-			Message: "Community not created",
-		},
-		CommunityNotUpdated: Error{
-			Code:    "COMMUNITY_ERROR_003",
-			Message: "Community not updated",
-		},
-		CommunityNotSoftDeleted: Error{
-			Code:    "COMMUNITY_ERROR_005",
-			Message: "Community not soft deleted",
-		},
-		ProfessionalNotCreated: Error{
-			Code:    "PROFESSIONAL_ERROR_002",
-			Message: "Professional not created",
-		},
-		ProfessionalNotUpdated: Error{
-			Code:    "PROFESSIONAL_ERROR_003",
-			Message: "Professional not updated",
-		},
-		ProfessionalNotSoftDeleted: Error{
-			Code:    "PROFESSIONAL_ERROR_005",
-			Message: "Professional not soft deleted",
 		},
 		LocalNotCreated: Error{
 			Code:    "LOCAL_ERROR_002",
@@ -295,18 +261,6 @@ var (
 		ServiceNotSoftDeleted: Error{
 			Code:    "SERVICE_ERROR_005",
 			Message: "Service not soft deleted",
-		},
-		PlanNotCreated: Error{
-			Code:    "PLAN_ERROR_002",
-			Message: "Plan not created",
-		},
-		PlanNotUpdated: Error{
-			Code:    "PLAN_ERROR_003",
-			Message: "Plan not updated",
-		},
-		PlanNotSoftDeleted: Error{
-			Code:    "PLAN_ERROR_006",
-			Message: "Plan not soft deleted",
 		},
 		InvalidPlanType: Error{
 			Code:    "PLAN_ERROR_005",
@@ -371,6 +325,18 @@ var (
 		EventoNotFound: Error{
 			Code:    "EVENTO_ERROR_001",
 			Message: "Evento not found",
+		},
+		CategoriaNotCreated: Error{
+			Code:    "CATEGORIA_ERROR_002",
+			Message: "Categoria not created",
+		},
+		CategoriaNotUpdated: Error{
+			Code:    "CATEGORIA_ERROR_003",
+			Message: "Categoria not updated",
+		},
+		CategoriaNotFound: Error{
+			Code:    "CATEGORIA_ERROR_001",
+			Message: "Categoria not found",
 		},
 	}
 

@@ -46,6 +46,7 @@ func (a *Api) RegisterRoutes(configEnv *config.ConfigEnv) {
 	a.Echo.POST("/evento/", a.CreateEvento)
 
 	a.Echo.GET("/categorias/",a.FetchCategorias)
+	a.Echo.POST("/categoria/",a.CreateCategoria)
 	
 }
 

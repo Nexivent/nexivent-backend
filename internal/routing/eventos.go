@@ -273,6 +273,7 @@ func getEventos(w http.ResponseWriter, r *http.Request) {
 		Filters     util.Filters
 	}
 
+	// localhost:4000/v1/eventos/?year=2020?descripcion=metal?titulo="2"
 	// Initialize a new Validator instance.
 	v := validator.New()
 

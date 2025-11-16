@@ -51,6 +51,7 @@ func (c *Usuario) CrearUsuario(usuario *model.Usuario) error {
 
 	return nil
 }
+
 func (u *Usuario) ActualizarUsuario(
 	id int64,
 	nombre *string,

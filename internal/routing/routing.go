@@ -27,9 +27,11 @@ func Routes(app *settings.Application) http.Handler {
 	router.HandlerFunc(http.MethodGet, "/v1/fecha", getFechaPorFecha)
 
 	// Rutas para CATEGORIAS
-	router.HandlerFunc(http.MethodGet, "/v1/categorias", getCategorias)
+	router.HandlerFunc(http.MethodGet, "/v1/categorias", getCategorias) // check
+	router.HandlerFunc(http.MethodPost, "/v1/categoria", postCategoria) // check
 
 	// Rutas para USUARIOS
+	router.HandlerFunc(http.MethodPost, "/v1/register", registerUsuario)
 	router.HandlerFunc(http.MethodGet, "/v1/usuarios", getUsuarios)
 	router.HandlerFunc(http.MethodGet, "/v1/usuario/:id", getUsuarioPorID)
 	router.HandlerFunc(http.MethodGet, "/v1/usuario", getUsuarioPorCorreo)

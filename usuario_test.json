@@ -1,0 +1,8 @@
+{
+	"nombre": "string",
+	"tipoDocumento": "DNI",
+	"numDocumento": "88792222",
+	"correo": "string@example.com",
+	"password": "lamejorpassword",
+	"telefono": "string"
+}

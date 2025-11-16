@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"strings"
 	"time"
 
 	"github.com/Loui27/nexivent-backend/internal/dao/model"
@@ -76,14 +77,30 @@ func (e *Evento) ObtenerEventosDisponiblesConFiltros(
 	if horaInicio != nil {
 		query = query.Where("ef.hora_inicio = ?", *horaInicio)
 	}
+
+	// Filtro OR agrupado para búsqueda textual
+	var condiciones []string
+	var valores []interface{}
+
 	if titulo != nil && *titulo != "" {
-		query = query.Where("evento.titulo ILIKE ?", "%"+*titulo+"%")
+		condiciones = append(condiciones, "evento.titulo ILIKE ?")
+		valores = append(valores, "%"+*titulo+"%")
 	}
+
 	if descripcion != nil && *descripcion != "" {
-		query = query.Where("evento.descripcion ILIKE ?", "%"+*descripcion+"%")
+		condiciones = append(condiciones, "evento.descripcion ILIKE ?")
+		valores = append(valores, "%"+*descripcion+"%")
 	}
+
 	if lugar != nil && *lugar != "" {
-		query = query.Where("evento.lugar ILIKE ?", "%"+*lugar+"%")
+		condiciones = append(condiciones, "evento.lugar ILIKE ?")
+		valores = append(valores, "%"+*lugar+"%")
+	}
+
+	// Solo agregar el OR si al menos un campo se envió
+	if len(condiciones) > 0 {
+		orGroup := "(" + strings.Join(condiciones, " OR ") + ")"
+		query = query.Where(orGroup, valores...)
 	}
 
 	// Contar total antes de aplicar limit/offset

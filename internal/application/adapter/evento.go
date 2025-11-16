@@ -324,6 +324,42 @@ func (e *Evento) FetchPostgresqlEventos() (*schemas.EventosPaginados, *errors.Er
 	}, nil
 }
 
+// FetchPostgresqlEventos retrieves the upcoming events with filters
+func (e *Evento) FetchPostgresqlEventosWithFilters(
+	categoriaID *int64,
+	titulo *string,
+	descripcion *string,
+	lugar *string,
+	fecha *time.Time,
+	horaInicio *time.Time) (*schemas.EventosPaginados, *errors.Error) {
+	eventos, err := e.DaoPostgresql.Evento.ObtenerEventosDisponiblesConFiltros(
+		categoriaID,
+		titulo,
+		descripcion,
+		lugar,
+		fecha,
+		horaInicio)
+
+	if err != nil {
+		e.logger.Errorf("Failed to fetch eventos: %v", err)
+		return nil, &errors.BadRequestError.EventoNotFound
+	}
+
+	//Revisar esta lógica
+	total := int64(len(eventos))
+	totalPaginas := 0
+	if total > 0 {
+		totalPaginas = 1
+	}
+
+	return &schemas.EventosPaginados{
+		Eventos:      eventos,
+		Total:        total,
+		PaginaActual: 1,
+		TotalPaginas: totalPaginas,
+	}, nil
+}
+
 // GetPostgresqlEventoById gets an event by ID
 func (e *Evento) GetPostgresqlEventoById(eventoID int64) (*schemas.EventoResponse, *errors.Error) {
 	var eventoModel model.Evento

@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"time"
+
 	"github.com/Loui27/nexivent-backend/errors"
 	"github.com/Loui27/nexivent-backend/internal/application/adapter"
 	"github.com/Loui27/nexivent-backend/internal/schemas"
@@ -34,6 +36,22 @@ func (ec *EventoController) CreateEvento(
 // FetchEventos retrieves the list of available events
 func (ec *EventoController) FetchEventos() (*schemas.EventosPaginados, *errors.Error) {
 	return ec.EventoAdapter.FetchPostgresqlEventos()
+}
+
+func (ec *EventoController) FetchEventosWithFilters(
+	categoriaID *int64,
+	titulo *string,
+	descripcion *string,
+	lugar *string,
+	fecha *time.Time,
+	horaInicio *time.Time) (*schemas.EventosPaginados, *errors.Error) {
+	return ec.EventoAdapter.FetchPostgresqlEventosWithFilters(
+		categoriaID,
+		titulo,
+		descripcion,
+		lugar,
+		fecha,
+		horaInicio)
 }
 
 // GetEventoById retrieves an event by its ID with all related entities

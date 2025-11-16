@@ -103,6 +103,7 @@ var (
 		InvalidServiceProfessionalId Error
 		InvalidSessionId             Error
 		InvalidReservationId         Error
+		InvalidDateFormat            Error
 	}{
 		InvalidRequestBody: Error{
 			Code:    "REQUEST_ERROR_001",
@@ -163,6 +164,10 @@ var (
 		InvalidReservationId: Error{
 			Code:    "RESERVATION_ERROR_004",
 			Message: "Invalid reservation id",
+		},
+		InvalidDateFormat: Error{
+			Code:    "DATE_FORMAT_ERROR_004",
+			Message: "Invalid date format",
 		},
 	}
 

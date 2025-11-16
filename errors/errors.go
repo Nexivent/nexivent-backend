@@ -30,7 +30,7 @@ var (
 		ServiceProfessionalNotFound Error
 		SessionNotFound             Error
 		EventoNotFound              Error
-		CategoriaNotFound			Error
+		CategoriaNotFound           Error
 	}{
 		CommunityNotFound: Error{
 			Code:    "COMMUNITY_ERROR_001",
@@ -206,9 +206,11 @@ var (
 		EventoNotCreated              Error
 		EventoNotUpdated              Error
 		EventoNotFound                Error
-		CategoriaNotCreated              Error
-		CategoriaNotUpdated              Error
-		CategoriaNotFound                Error
+		CategoriaNotCreated           Error
+		CategoriaNotUpdated           Error
+		CategoriaNotFound             Error
+		InvalidUploadMimeType         Error
+		UploadURLNotCreated           Error
 	}{
 		InvalidUpdatedByValue: Error{
 			Code:    "REQUEST_ERROR_002",
@@ -337,6 +339,14 @@ var (
 		CategoriaNotFound: Error{
 			Code:    "CATEGORIA_ERROR_001",
 			Message: "Categoria not found",
+		},
+		InvalidUploadMimeType: Error{
+			Code:    "UPLOAD_ERROR_001",
+			Message: "Invalid file type. Only images and videos are allowed",
+		},
+		UploadURLNotCreated: Error{
+			Code:    "UPLOAD_ERROR_002",
+			Message: "Upload URL could not be generated",
 		},
 	}
 

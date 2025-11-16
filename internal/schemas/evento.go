@@ -1,7 +1,7 @@
 package schemas
 
 import (
-	"github.com/Loui27/nexivent-backend/internal/dao/model"
+	"github.com/Nexivent/nexivent-backend/internal/dao/model"
 )
 
 type EventosPaginados struct {

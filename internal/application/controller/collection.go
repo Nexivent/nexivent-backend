@@ -3,11 +3,11 @@ package controller
 import (
 	"gorm.io/gorm"
 
-	"github.com/Loui27/nexivent-backend/internal/application/adapter"
-	"github.com/Loui27/nexivent-backend/internal/application/service/storage"
-	config "github.com/Loui27/nexivent-backend/internal/config"
-	"github.com/Loui27/nexivent-backend/internal/dao/repository"
-	"github.com/Loui27/nexivent-backend/logging"
+	"github.com/Nexivent/nexivent-backend/internal/application/adapter"
+	"github.com/Nexivent/nexivent-backend/internal/application/service/storage"
+	config "github.com/Nexivent/nexivent-backend/internal/config"
+	"github.com/Nexivent/nexivent-backend/internal/dao/repository"
+	"github.com/Nexivent/nexivent-backend/logging"
 )
 
 type ControllerCollection struct {

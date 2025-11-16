@@ -3,10 +3,10 @@ package repository
 import (
 	"fmt"
 
-	config "github.com/Loui27/nexivent-backend/internal/config"
-	model "github.com/Loui27/nexivent-backend/internal/dao/model"
-	"github.com/Loui27/nexivent-backend/logging"
-	psql "github.com/Loui27/nexivent-backend/utils/psql"
+	config "github.com/Nexivent/nexivent-backend/internal/config"
+	model "github.com/Nexivent/nexivent-backend/internal/dao/model"
+	"github.com/Nexivent/nexivent-backend/logging"
+	psql "github.com/Nexivent/nexivent-backend/utils/psql"
 	"github.com/uptrace/opentelemetry-go-extra/otelgorm"
 	"gorm.io/gorm"
 )

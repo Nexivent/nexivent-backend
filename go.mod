@@ -1,4 +1,4 @@
-module github.com/Loui27/nexivent-backend
+module github.com/Nexivent/nexivent-backend
 
 go 1.25.3
 

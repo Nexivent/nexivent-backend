@@ -104,6 +104,7 @@ var (
 		InvalidSessionId             Error
 		InvalidReservationId         Error
 		InvalidDateFormat            Error
+		EmailAlreadyRegistered       Error
 	}{
 		InvalidRequestBody: Error{
 			Code:    "REQUEST_ERROR_001",
@@ -169,6 +170,10 @@ var (
 			Code:    "DATE_FORMAT_ERROR_004",
 			Message: "Invalid date format",
 		},
+		EmailAlreadyRegistered: Error{
+			Code:    "USER_ERROR_006",
+			Message: "Email is already registered",
+		},
 	}
 
 	// For 400 Bad Request errors
@@ -216,6 +221,7 @@ var (
 		CategoriaNotFound             Error
 		InvalidUploadMimeType         Error
 		UploadURLNotCreated           Error
+		InvalidIDParam                Error
 	}{
 		InvalidUpdatedByValue: Error{
 			Code:    "REQUEST_ERROR_002",
@@ -353,6 +359,10 @@ var (
 			Code:    "UPLOAD_ERROR_002",
 			Message: "Upload URL could not be generated",
 		},
+		InvalidIDParam: Error{
+			Code:    "REQUEST_ERROR_003",
+			Message: "Invalid ID parameter",
+		},
 	}
 
 	// For 401 Unauthorized errors
@@ -382,6 +392,7 @@ var (
 		ServiceProfessionalAlreadyExists Error
 		ServiceLocalAlreadyExists        Error
 		UserAlreadyExists                Error
+		EmailAlreadyExists               Error
 	}{
 		CommunityPlanAlreadyExists: Error{
 			Code:    "COMMUNITY_PLAN_ERROR_006",
@@ -403,15 +414,24 @@ var (
 			Code:    "SERVICE_PROFESSIONAL_ERROR_003",
 			Message: "Service-Professional association already exists",
 		},
+		EmailAlreadyExists: Error{
+			Code:    "USER_ERROR_007",
+			Message: "Email already exists",
+		},
 	}
 
 	// For 500 Internal Server errors
 	InternalServerError = struct {
 		Default Error
+		PasswordHashingFailed Error
 	}{
 		Default: Error{
 			Code:    "INTERNAL_SERVER_ERROR_001",
 			Message: "An unexpected error occurred.",
+		},
+		PasswordHashingFailed: Error{
+			Code:    "INTERNAL_SERVER_ERROR_002",
+			Message: "Password hashing failed",
 		},
 	}
 )

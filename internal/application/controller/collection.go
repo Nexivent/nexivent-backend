@@ -13,8 +13,10 @@ import (
 type ControllerCollection struct {
 	Logger    logging.Logger
 	Evento    *EventoController
+	Usuario   *UsuarioController
 	Categoria *CategoriaController
 	Media     *MediaController
+	Comentario *ComentarioController
 }
 
 // Creates BLL controller collection
@@ -51,5 +53,13 @@ func NewControllerCollection(
 		Evento:    eventoController,
 		Categoria: categoriaController,
 		Media:     mediaController,
+		Usuario: &UsuarioController{
+			Logger: logger,
+			DB:     daoPostgresql,
+		},
+		Comentario: &ComentarioController{
+			Logger: logger,
+			DB:     daoPostgresql,
+		},
 	}, nexiventPsqlDB
 }

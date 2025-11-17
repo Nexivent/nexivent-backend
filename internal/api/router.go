@@ -51,6 +51,11 @@ func (a *Api) RegisterRoutes(configEnv *config.ConfigEnv) {
 	// Media uploads
 	a.Echo.POST("/media/upload-url", a.GenerateUploadURL)
 
+
+	a.Echo.POST("/register", a.RegisterUsuario)
+	a.Echo.GET("/usuario/:id", a.GetUsuario)
+	a.Echo.GET("usuarios/search", a.GetUsuario)
+
 }
 
 func (a *Api) RunApi(configEnv *config.ConfigEnv) {

@@ -82,8 +82,8 @@ func (r *RolUsuarioRepo) QuitarRolDeUsuario(
 }
 
 // Listar roles activos de un usuario (con preload del Rol)
-func (r *RolUsuarioRepo) ListarRolesDeUsuario(usuarioID int64) ([]*model.RolUsuario, error) {
-	asignaciones := []*model.RolUsuario{}
+func (r *RolUsuarioRepo) ListarRolesDeUsuario(usuarioID int64) ([]model.RolUsuario, error) {
+	asignaciones := []model.RolUsuario{}
 	result := r.PostgresqlDB.
 		Preload("Rol").
 		Where("usuario_id = ? AND estado = 1", usuarioID).

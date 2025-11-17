@@ -1,0 +1,85 @@
+package api
+
+import (
+	"net/http"
+	"strconv"
+
+	"github.com/Nexivent/nexivent-backend/errors"
+	"github.com/Nexivent/nexivent-backend/internal/dao/model"
+	"github.com/labstack/echo/v4"
+)
+
+func (a *Api) RegisterUsuario(c echo.Context) error {
+
+	var input struct {
+		Nombre        string  `json:"nombre"`
+		TipoDocumento string  `json:"tipo_documento"`
+		NumDocumento  string  `json:"num_documento"`
+		Correo        string  `json:"correo"`
+		Contrasenha   string  `json:"contrasenha"`
+		Telefono      *string `json:"telefono"`
+	}
+
+	if err := c.Bind(&input); err != nil {
+		return errors.HandleError(errors.UnprocessableEntityError.InvalidRequestBody, c)
+	}
+
+	var usuario model.Usuario = model.Usuario{
+		Nombre:        input.Nombre,
+		TipoDocumento: input.TipoDocumento,
+		NumDocumento:  input.NumDocumento,
+		Correo:        input.Correo,
+		Contrasenha:   input.Contrasenha,
+		Telefono:      input.Telefono,
+	}
+
+	password, err := model.HashPassword(input.Contrasenha)
+	if err != nil {
+		return errors.HandleError(errors.InternalServerError.PasswordHashingFailed, c)
+	}
+	usuario.Contrasenha = password
+
+	response, newErr := a.BllController.Usuario.RegisterUsuario(&usuario)
+	if newErr != nil {
+		return errors.HandleError(*newErr, c)
+	}
+
+	return c.JSON(http.StatusCreated, response)
+}
+
+func (a *Api) GetUsuario(c echo.Context) error {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return errors.HandleError(errors.BadRequestError.InvalidIDParam, c)
+	}
+
+	usuario, newErr := a.BllController.Usuario.GetUsuario(int64(id))
+	if newErr != nil {
+		return errors.HandleError(*newErr, c)
+	}
+
+	var response struct {
+		ID            int64   `json:"id"`
+		Nombre        string  `json:"nombre"`
+		TipoDocumento string  `json:"tipo_documento"`
+		NumDocumento  string  `json:"num_documento"`
+		Correo        string  `json:"correo"`
+		Telefono      *string `json:"telefono"`
+		Comentario    []model.Comentario `json:"comentarios"`
+		Ordenes       []model.OrdenDeCompra `json:"ordenes"`
+		Roles         []model.RolUsuario `json:"roles"`
+
+	}
+
+	response.ID = usuario.ID
+	response.Nombre = usuario.Nombre
+	response.TipoDocumento = usuario.TipoDocumento
+	response.NumDocumento = usuario.NumDocumento
+	response.Correo = usuario.Correo
+	response.Telefono = usuario.Telefono
+	response.Comentario	= usuario.Comentarios
+	response.Ordenes = usuario.Ordenes
+	response.Roles = usuario.RolesAsignados
+
+	return c.JSON(http.StatusOK, response)
+}

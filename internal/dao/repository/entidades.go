@@ -12,11 +12,15 @@ import (
 )
 
 type NexiventPsqlEntidades struct {
-	Logger    logging.Logger
-	Cupon     *Cupon
-	Evento    *Evento
-	Usuario   *Usuario
-	Categoria *Categoria
+	Logger        logging.Logger
+	Cupon         *Cupon
+	Evento        *Evento
+	Usuario       *Usuario
+	Categoria     *Categoria
+	Roles         *Rol
+	RolesUsuario  *RolUsuarioRepo
+	Comentario    *Comentario
+	OrdenDeCompra *OrdenDeCompra
 }
 
 // Clase que crea colección de entidades para Nexivent Postgresql
@@ -43,11 +47,30 @@ func NewNexiventPsqlEntidades(
 	crearTablas(postgresqlDB)
 
 	return &NexiventPsqlEntidades{
-		Logger:    logger,
-		Cupon:     NewCuponController(logger, postgresqlDB),
-		Evento:    NewEventoController(logger, postgresqlDB),
-		Usuario:   NewUsuariosController(logger, postgresqlDB),
+		Logger: logger,
+		Cupon:  NewCuponController(logger, postgresqlDB),
+		Evento: NewEventoController(logger, postgresqlDB),
+		Usuario: &Usuario{
+			logger:       logger,
+			PostgresqlDB: postgresqlDB,
+		},
 		Categoria: NewCategoriaController(logger, postgresqlDB),
+		Roles: &Rol{
+			logger:       logger,
+			PostgresqlDB: postgresqlDB,
+		},
+		RolesUsuario: &RolUsuarioRepo{
+			logger:       logger,
+			PostgresqlDB: postgresqlDB,
+		},
+		Comentario: &Comentario{
+			logger:       logger,
+			PostgresqlDB: postgresqlDB,
+		},
+		OrdenDeCompra: &OrdenDeCompra{
+			logger:       logger,
+			PostgresqlDB: postgresqlDB,
+		},
 	}, postgresqlDB
 }
 

@@ -36,8 +36,7 @@ func (ec *CategoriaController) FetchCategorias() ([]schemas.CategoriaResponse, *
 }
 
 // GetEventoById retrieves an event by its ID with all related entities
-/*
-func (ec *CategoriaController) GetCategoriaById(eventoID int64) (*schemas.EventoResponse, *errors.Error) {
-	return ec.CategoriaAdapter.GetPostgresqlEventoById(eventoID)
+
+func (ec *CategoriaController) GetCategoriaById(eventoID int64) (*schemas.CategoriaResponse, *errors.Error) {
+	return ec.CategoriaAdapter.GetPostgresqlCategoriaById(eventoID)
 }
-*/

@@ -91,100 +91,20 @@ func (e *Categoria) FetchPostgresqlCategorias() ([] schemas.CategoriaResponse, *
 }
 
 // GetPostgresqlEventoById gets an event by ID
-/*
-func (e *Evento) GetPostgresqlCategoriaById(categoriaID int64) (*schemas.CategoriaResponse, *errors.Error) {
-	var eventoModel model.Evento
 
-	// Use preload to fetch all related entities
-	result := e.DaoPostgresql.Categoria.PostgresqlDB.
-		Preload("Perfiles").
-		Preload("Sectores").
-		Preload("TiposTicket").
-		Preload("Fechas.Fecha").
-		First(&eventoModel, eventoID)
+func (e *Categoria) GetPostgresqlCategoriaById(categoriaID int64) (*schemas.CategoriaResponse, *errors.Error) {
+	var categoriaModel *model.Categoria
 
-	if result.Error != nil {
-		if result.Error == gorm.ErrRecordNotFound {
-			return nil, &errors.ObjectNotFoundError.CategoriaNotFound
-		}
-		e.logger.Errorf("Failed to get evento: %v", result.Error)
-		return nil, &errors.BadRequestError.CategoriaNotFound
+	categoriaModel, err := e.DaoPostgresql.Categoria.ObtenerCategoriaPorId(categoriaID)
+	if err != nil {
+		e.logger.Errorf("Failed to fetch categorias: %v", err)
+		return nil, &errors.BadRequestError.EventoNotFound
 	}
 
-	// Build event dates response
-	eventDates := []schemas.EventDateResponse{}
-	for _, ef := range eventoModel.Fechas {
-		if ef.Fecha != nil {
-			eventDates = append(eventDates, schemas.EventDateResponse{
-				IdFechaEvento: ef.ID,
-				IdFecha:       ef.FechaID,
-				Fecha:         ef.Fecha.FechaEvento.Format("2006-01-02"),
-				HoraInicio:    ef.HoraInicio.Format("15:04"),
-				HoraFin:       "", // You may need to add HoraFin to the model
-			})
-		}
-	}
-
-	// Build perfiles response
-	perfiles := []schemas.PerfilResponse{}
-	for _, p := range eventoModel.Perfiles {
-		perfiles = append(perfiles, schemas.PerfilResponse{
-			ID:    fmt.Sprintf("%d", p.ID),
-			Label: p.Nombre,
-		})
-	}
-
-	// Build sectores response
-	sectores := []schemas.SectorResponse{}
-	for _, s := range eventoModel.Sectores {
-		sectores = append(sectores, schemas.SectorResponse{
-			ID:        fmt.Sprintf("%d", s.ID),
-			Nombre:    s.SectorTipo,
-			Capacidad: s.TotalEntradas,
-		})
-	}
-
-	// Build tipos ticket response
-	tiposTicket := []schemas.TipoTicketResponse{}
-	for _, t := range eventoModel.TiposTicket {
-		tiposTicket = append(tiposTicket, schemas.TipoTicketResponse{
-			ID:    fmt.Sprintf("%d", t.ID),
-			Label: t.Nombre,
-		})
-	}
-
-	// Fetch and build precios (this requires fetching tarifas)
-	// For now, returning empty map - you may want to implement this based on your needs
-	precios := make(schemas.PreciosSector)
-
-	response := &schemas.EventoResponse{
-		IdEvento:          eventoModel.ID,
-		IdOrganizador:     eventoModel.OrganizadorID,
-		IdCategoria:       eventoModel.CategoriaID,
-		Titulo:            eventoModel.Titulo,
-		Descripcion:       eventoModel.Descripcion,
-		Lugar:             eventoModel.Lugar,
-		Estado:            convert.MapEstadoToString(eventoModel.EventoEstado),
-		Likes:             eventoModel.CantMeGusta,
-		NoInteres:         eventoModel.CantNoInteresa,
-		CantVendidasTotal: eventoModel.CantVendidoTotal,
-		TotalRecaudado:    eventoModel.TotalRecaudado,
-		ImagenPortada:     eventoModel.ImagenPortada,
-		ImagenLugar:       eventoModel.ImagenEscenario,
-		VideoUrl:          eventoModel.VideoPresentacion,
-		EventDates:        eventDates,
-		Perfiles:          perfiles,
-		Sectores:          sectores,
-		TiposTicket:       tiposTicket,
-		Precios:           precios,
-		Metadata: schemas.MetadataResponse{
-			CreadoPor:           fmt.Sprintf("%d", *eventoModel.UsuarioCreacion),
-			FechaCreacion:       eventoModel.FechaCreacion.Format(time.RFC3339),
-			UltimaActualizacion: eventoModel.FechaCreacion.Format(time.RFC3339),
-			Version:             1,
-		},
+	response := &schemas.CategoriaResponse{
+		ID:          categoriaModel.ID,
+		Nombre:     categoriaModel.Nombre,
 	}
 
 	return response, nil
 }
-*/

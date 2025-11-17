@@ -2,7 +2,7 @@ package api
 
 import (
 	"net/http"
-	//"strconv"
+	"strconv"
 
 	"github.com/Loui27/nexivent-backend/errors"
 	"github.com/Loui27/nexivent-backend/internal/schemas"
@@ -21,7 +21,7 @@ import (
 // @Failure 			422 {object} errors.Error "Unprocessable Entity"
 // @Failure 			500 {object} errors.Error "Internal Server Error"
 // @Router 				/evento/{eventoId}/ [get]
-/*
+
 func (a *Api) GetCategoria(c echo.Context) error {
 	categoriaIdStr := c.Param("categoriaId")
 	categoriaId, parseErr := strconv.ParseInt(categoriaIdStr, 10, 64)
@@ -29,14 +29,14 @@ func (a *Api) GetCategoria(c echo.Context) error {
 		return errors.HandleError(errors.UnprocessableEntityError.InvalidParsingInteger, c)
 	}
 
-	response, err := a.BllController.Categoria.(categoriaId)
+	response, err := a.BllController.Categoria.GetCategoriaById(categoriaId)
 	if err != nil {
 		return errors.HandleError(*err, c)
 	}
 
 	return c.JSON(http.StatusOK, response)
 }
-*/
+
 
 // @Summary 			Fetch Eventos.
 // @Description 		Fetches all available events.

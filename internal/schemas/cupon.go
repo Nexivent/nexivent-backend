@@ -1,7 +1,7 @@
 package schemas
 
 import (
-	util "github.com/Loui27/nexivent-backend/internal/dao/model/util"
+	util "github.com/Nexivent/nexivent-backend/internal/dao/model/util"
 )
 
 type CuponResponse struct { //response // API -> front

@@ -1,12 +1,12 @@
 package adapter
 
 import (
-	"github.com/Loui27/nexivent-backend/errors"
-	"github.com/Loui27/nexivent-backend/internal/dao/model"
-	util "github.com/Loui27/nexivent-backend/internal/dao/model/util"
-	daoPostgresql "github.com/Loui27/nexivent-backend/internal/dao/repository"
-	"github.com/Loui27/nexivent-backend/internal/schemas"
-	"github.com/Loui27/nexivent-backend/logging"
+	"github.com/Nexivent/nexivent-backend/errors"
+	"github.com/Nexivent/nexivent-backend/internal/dao/model"
+	util "github.com/Nexivent/nexivent-backend/internal/dao/model/util"
+	daoPostgresql "github.com/Nexivent/nexivent-backend/internal/dao/repository"
+	"github.com/Nexivent/nexivent-backend/internal/schemas"
+	"github.com/Nexivent/nexivent-backend/logging"
 )
 
 type Cupon struct {

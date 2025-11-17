@@ -1,10 +1,10 @@
 package main
 
 import (
-	"github.com/Loui27/nexivent-backend/internal/api"
-	_ "github.com/Loui27/nexivent-backend/internal/api/docs"
-	"github.com/Loui27/nexivent-backend/internal/config"
-	"github.com/Loui27/nexivent-backend/logging"
+	"github.com/Nexivent/nexivent-backend/internal/api"
+	_ "github.com/Nexivent/nexivent-backend/internal/api/docs"
+	"github.com/Nexivent/nexivent-backend/internal/config"
+	"github.com/Nexivent/nexivent-backend/logging"
 )
 
 func main() {

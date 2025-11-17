@@ -3,7 +3,7 @@ package api
 import (
 	"fmt"
 
-	config "github.com/Loui27/nexivent-backend/internal/config"
+	config "github.com/Nexivent/nexivent-backend/internal/config"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	echoSwagger "github.com/swaggo/echo-swagger"
@@ -50,6 +50,11 @@ func (a *Api) RegisterRoutes(configEnv *config.ConfigEnv) {
 
 	// Media uploads
 	a.Echo.POST("/media/upload-url", a.GenerateUploadURL)
+
+
+	a.Echo.POST("/register", a.RegisterUsuario)
+	a.Echo.GET("/usuario/:id", a.GetUsuario)
+	a.Echo.GET("usuarios/search", a.GetUsuario)
 
 }
 

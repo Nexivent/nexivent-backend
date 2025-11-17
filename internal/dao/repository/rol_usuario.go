@@ -3,9 +3,9 @@ package repository
 import (
 	"time"
 
-	"github.com/Loui27/nexivent-backend/internal/dao/model"
-	util "github.com/Loui27/nexivent-backend/internal/dao/model/util"
-	"github.com/Loui27/nexivent-backend/logging"
+	"github.com/Nexivent/nexivent-backend/internal/dao/model"
+	util "github.com/Nexivent/nexivent-backend/internal/dao/model/util"
+	"github.com/Nexivent/nexivent-backend/logging"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -82,8 +82,8 @@ func (r *RolUsuarioRepo) QuitarRolDeUsuario(
 }
 
 // Listar roles activos de un usuario (con preload del Rol)
-func (r *RolUsuarioRepo) ListarRolesDeUsuario(usuarioID int64) ([]*model.RolUsuario, error) {
-	asignaciones := []*model.RolUsuario{}
+func (r *RolUsuarioRepo) ListarRolesDeUsuario(usuarioID int64) ([]model.RolUsuario, error) {
+	asignaciones := []model.RolUsuario{}
 	result := r.PostgresqlDB.
 		Preload("Rol").
 		Where("usuario_id = ? AND estado = 1", usuarioID).

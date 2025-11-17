@@ -4,8 +4,8 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/Loui27/nexivent-backend/logging"
-	"github.com/Loui27/nexivent-backend/utils/env"
+	"github.com/Nexivent/nexivent-backend/logging"
+	"github.com/Nexivent/nexivent-backend/utils/env"
 	"github.com/joho/godotenv"
 )
 

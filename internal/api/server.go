@@ -1,9 +1,9 @@
 package api
 
 import (
-	"github.com/Loui27/nexivent-backend/internal/application/controller"
-	config "github.com/Loui27/nexivent-backend/internal/config"
-	"github.com/Loui27/nexivent-backend/logging"
+	"github.com/Nexivent/nexivent-backend/internal/application/controller"
+	config "github.com/Nexivent/nexivent-backend/internal/config"
+	"github.com/Nexivent/nexivent-backend/logging"
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
 )

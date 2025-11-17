@@ -32,3 +32,12 @@ go.work.sum
 # .vscode/
 /bin/
 /coverage.out
+
+
+context/
+.pgpass
+compose.yaml
+CONTEXT_FLOW.md
+CONTEXT_GUIDE.md
+CONTEXT_QUICKSTART.md
+test.json

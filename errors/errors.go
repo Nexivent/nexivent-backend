@@ -377,31 +377,16 @@ var (
 
 	// For 409 Conflict errors
 	ConflictError = struct {
-		CommunityPlanAlreadyExists       Error
-		CommunityServiceAlreadyExists    Error
-		ServiceProfessionalAlreadyExists Error
-		ServiceLocalAlreadyExists        Error
-		UserAlreadyExists                Error
+		UserAlreadyExists Error
+		CuponAlreadyExits Error
 	}{
-		CommunityPlanAlreadyExists: Error{
-			Code:    "COMMUNITY_PLAN_ERROR_006",
-			Message: "Community-Plan association already exists",
-		},
-		CommunityServiceAlreadyExists: Error{
-			Code:    "COMMUNITY_SERVICE_ERROR_006",
-			Message: "Community-Service association already exists",
-		},
 		UserAlreadyExists: Error{
 			Code:    "USER_ERROR_006",
 			Message: "User already exists with this email",
 		},
-		ServiceLocalAlreadyExists: Error{
-			Code:    "SERVICE_LOCAL_ERROR_003",
-			Message: "Service-Local association already exists",
-		},
-		ServiceProfessionalAlreadyExists: Error{
-			Code:    "SERVICE_PROFESSIONAL_ERROR_003",
-			Message: "Service-Professional association already exists",
+		CuponAlreadyExits: Error{
+			Code:    "CUPON_ERROR_001",
+			Message: "Cupon already exists in this event",
 		},
 	}
 

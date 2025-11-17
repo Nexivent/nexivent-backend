@@ -43,13 +43,16 @@ func (a *Api) RegisterRoutes(configEnv *config.ConfigEnv) {
 	// Eventos endpoints
 	a.Echo.GET("/evento/", a.FetchEventos)
 	a.Echo.GET("/evento/:eventoId/", a.GetEvento)
-	a.Echo.POST("/evento/", a.CreateEvento)
+	a.Echo.POST("/evento/", a.CreateEvento) //falta usuario creacion
 
 	a.Echo.GET("/categorias/", a.FetchCategorias)
 	a.Echo.POST("/categoria/", a.CreateCategoria)
 
 	// Media uploads
 	a.Echo.POST("/media/upload-url", a.GenerateUploadURL)
+
+	//Cupon
+	a.Echo.POST("/cupon/:usuarioCreacion", a.CreateCupon)
 
 }
 

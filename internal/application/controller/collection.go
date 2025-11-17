@@ -15,6 +15,7 @@ type ControllerCollection struct {
 	Evento    *EventoController
 	Categoria *CategoriaController
 	Media     *MediaController
+	Cupon     *CuponController
 }
 
 // Creates BLL controller collection
@@ -31,6 +32,7 @@ func NewControllerCollection(
 	// Create adapters
 	eventoAdapter := adapter.NewEventoAdapter(logger, daoPostgresql)
 	categoriaAdapter := adapter.NewCategoriaAdapter(logger, daoPostgresql)
+	cuponAdapter := adapter.NewCuponAdapter(logger, daoPostgresql)
 
 	// Services
 	s3Storage, storageErr := storage.NewS3Storage(logger, configEnv)
@@ -41,6 +43,8 @@ func NewControllerCollection(
 	// Create controllers
 	eventoController := NewEventoController(logger, eventoAdapter)
 	categoriaController := NewCategoriaController(logger, categoriaAdapter)
+	cuponController := NewCuponController(logger, cuponAdapter)
+
 	var mediaController *MediaController
 	if s3Storage != nil {
 		mediaController = NewMediaController(logger, s3Storage)
@@ -51,5 +55,6 @@ func NewControllerCollection(
 		Evento:    eventoController,
 		Categoria: categoriaController,
 		Media:     mediaController,
+		Cupon:     cuponController,
 	}, nexiventPsqlDB
 }

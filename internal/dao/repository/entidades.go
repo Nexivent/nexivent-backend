@@ -21,6 +21,7 @@ type NexiventPsqlEntidades struct {
 	RolesUsuario  *RolUsuarioRepo
 	Comentario    *Comentario
 	OrdenDeCompra *OrdenDeCompra
+	Token         *Token
 }
 
 // Clase que crea colección de entidades para Nexivent Postgresql
@@ -70,6 +71,10 @@ func NewNexiventPsqlEntidades(
 		OrdenDeCompra: &OrdenDeCompra{
 			logger:       logger,
 			PostgresqlDB: postgresqlDB,
+		},
+		Token: &Token{
+			logger: logger,
+			DB:     postgresqlDB,
 		},
 	}, postgresqlDB
 }

@@ -57,7 +57,6 @@ func (a *Api) RegisterRoutes(configEnv *config.ConfigEnv) {
 
 	a.Echo.POST("/register", a.RegisterUsuario)
 	a.Echo.GET("/usuario/:id", a.GetUsuario)
-	a.Echo.GET("usuarios/search", a.GetUsuario)
 
 }
 

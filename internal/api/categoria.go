@@ -58,9 +58,9 @@ func (a *Api) FetchCategorias(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
-// @Summary 			Create Evento.
+// @Summary 			Create Categoria.
 // @Description 		Create a new event with all related entities.
-// @Tags 				Evento
+// @Tags 				Categoria
 // @Accept 				json
 // @Produce 			json
 // @Param               request body schemas.EventoRequest true "Create Evento Request"

@@ -47,6 +47,7 @@ func (a *Api) RegisterRoutes(configEnv *config.ConfigEnv) {
 
 	a.Echo.GET("/categorias/", a.FetchCategorias)
 	a.Echo.POST("/categoria/", a.CreateCategoria)
+	a.Echo.GET("/categoria/:categoriaId/",a.GetCategoria)
 
 	// Media uploads
 	a.Echo.POST("/media/upload-url", a.GenerateUploadURL)

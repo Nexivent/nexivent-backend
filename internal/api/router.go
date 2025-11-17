@@ -58,6 +58,9 @@ func (a *Api) RegisterRoutes(configEnv *config.ConfigEnv) {
 	a.Echo.POST("/register", a.RegisterUsuario)
 	a.Echo.GET("/usuario/:id", a.GetUsuario)
 
+	a.Echo.POST("/orden_de_compra/hold", a.CrearSesionOrdenTemporal)
+	a.Echo.GET("/orden_de_compra/:orderId/hold", a.ObtenerEstadoHold)
+	a.Echo.POST("/orden_de_compra/:orderId/confirm", a.ConfirmarOrden)
 }
 
 func (a *Api) RunApi(configEnv *config.ConfigEnv) {

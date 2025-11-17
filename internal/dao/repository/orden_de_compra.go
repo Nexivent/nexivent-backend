@@ -4,9 +4,9 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/Loui27/nexivent-backend/internal/dao/model"
-	util "github.com/Loui27/nexivent-backend/internal/dao/model/util"
-	"github.com/Loui27/nexivent-backend/logging"
+	"github.com/Nexivent/nexivent-backend/internal/dao/model"
+	util "github.com/Nexivent/nexivent-backend/internal/dao/model/util"
+	"github.com/Nexivent/nexivent-backend/logging"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )

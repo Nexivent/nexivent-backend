@@ -5,11 +5,11 @@ import (
 	"log"
 	"time"
 
-	config "github.com/Loui27/nexivent-backend/internal/config"
-	"github.com/Loui27/nexivent-backend/internal/dao/model"
-	"github.com/Loui27/nexivent-backend/internal/dao/repository"
-	"github.com/Loui27/nexivent-backend/logging"
-	setupDB "github.com/Loui27/nexivent-backend/utils"
+	config "github.com/Nexivent/nexivent-backend/internal/config"
+	"github.com/Nexivent/nexivent-backend/internal/dao/model"
+	"github.com/Nexivent/nexivent-backend/internal/dao/repository"
+	"github.com/Nexivent/nexivent-backend/logging"
+	setupDB "github.com/Nexivent/nexivent-backend/utils"
 )
 
 func main() {

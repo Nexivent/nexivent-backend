@@ -1,10 +1,10 @@
 package controller
 
 import (
-	"github.com/Loui27/nexivent-backend/errors"
-	"github.com/Loui27/nexivent-backend/internal/application/adapter"
-	"github.com/Loui27/nexivent-backend/internal/schemas"
-	"github.com/Loui27/nexivent-backend/logging"
+	"github.com/Nexivent/nexivent-backend/errors"
+	"github.com/Nexivent/nexivent-backend/internal/application/adapter"
+	"github.com/Nexivent/nexivent-backend/internal/schemas"
+	"github.com/Nexivent/nexivent-backend/logging"
 )
 
 type CategoriaController struct {
@@ -36,8 +36,7 @@ func (ec *CategoriaController) FetchCategorias() ([]schemas.CategoriaResponse, *
 }
 
 // GetEventoById retrieves an event by its ID with all related entities
-/*
-func (ec *CategoriaController) GetCategoriaById(eventoID int64) (*schemas.EventoResponse, *errors.Error) {
-	return ec.CategoriaAdapter.GetPostgresqlEventoById(eventoID)
+
+func (ec *CategoriaController) GetCategoriaById(eventoID int64) (*schemas.CategoriaResponse, *errors.Error) {
+	return ec.CategoriaAdapter.GetPostgresqlCategoriaById(eventoID)
 }
-*/

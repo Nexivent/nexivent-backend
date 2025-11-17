@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/Loui27/nexivent-backend/errors"
-	"github.com/Loui27/nexivent-backend/internal/schemas"
+	"github.com/Nexivent/nexivent-backend/errors"
+	"github.com/Nexivent/nexivent-backend/internal/schemas"
 	"github.com/labstack/echo/v4"
 )
 

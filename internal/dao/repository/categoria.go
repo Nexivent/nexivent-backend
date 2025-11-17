@@ -1,8 +1,8 @@
 package repository
 
 import (
-	"github.com/Loui27/nexivent-backend/internal/dao/model"
-	"github.com/Loui27/nexivent-backend/logging"
+	"github.com/Nexivent/nexivent-backend/internal/dao/model"
+	"github.com/Nexivent/nexivent-backend/logging"
 	"gorm.io/gorm"
 )
 
@@ -38,4 +38,15 @@ func (c *Categoria) ObtenerCategorias() ([]*model.Categoria, error) {
 	}
 
 	return categorias, nil
+}
+
+func (c *Categoria) ObtenerCategoriaPorId( categoriaID int64) (Categoria *model.Categoria,Error error) {
+	var categoria *model.Categoria
+	respuesta := c.PostgresqlDB.First(&categoria,categoriaID)
+
+	if respuesta.Error != nil {
+		return nil, respuesta.Error
+	}
+
+	return categoria, nil
 }

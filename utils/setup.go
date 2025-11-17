@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	config "github.com/Loui27/nexivent-backend/internal/config"
-	model "github.com/Loui27/nexivent-backend/internal/dao/model"
-	"github.com/Loui27/nexivent-backend/logging"
+	config "github.com/Nexivent/nexivent-backend/internal/config"
+	model "github.com/Nexivent/nexivent-backend/internal/dao/model"
+	"github.com/Nexivent/nexivent-backend/logging"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )

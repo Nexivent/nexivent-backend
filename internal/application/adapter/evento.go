@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Loui27/nexivent-backend/errors"
-	"github.com/Loui27/nexivent-backend/internal/dao/model"
-	daoPostgresql "github.com/Loui27/nexivent-backend/internal/dao/repository"
-	"github.com/Loui27/nexivent-backend/internal/schemas"
-	"github.com/Loui27/nexivent-backend/logging"
-	"github.com/Loui27/nexivent-backend/utils/convert"
+	"github.com/Nexivent/nexivent-backend/errors"
+	"github.com/Nexivent/nexivent-backend/internal/dao/model"
+	daoPostgresql "github.com/Nexivent/nexivent-backend/internal/dao/repository"
+	"github.com/Nexivent/nexivent-backend/internal/schemas"
+	"github.com/Nexivent/nexivent-backend/logging"
+	"github.com/Nexivent/nexivent-backend/utils/convert"
 	"gorm.io/gorm"
 )
 

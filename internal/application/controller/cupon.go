@@ -35,3 +35,7 @@ func (cc *CuponController) UpdateCupon(
 ) (*schemas.CuponResponse, *errors.Error) {
 	return cc.CuponAdapter.UpdatePostgresqlCupon(&cuponReq, usuarioModificacion)
 }
+
+func (cc *CuponController) FetchCuponPorOrganizador(organizadorId int64) (*schemas.CuponesOrganizator, *errors.Error) {
+	return cc.CuponAdapter.FetchPostresqlCuponPorOrganizador(organizadorId)
+}

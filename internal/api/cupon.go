@@ -79,3 +79,30 @@ func (a *Api) UpdateCupon(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, response)
 }
+
+// @Summary 			Get Cupones by Organizador.
+// @Description 		Fetch all cupones belonging to a specific organizer.
+// @Tags 				Cupon
+// @Accept 				json
+// @Produce 			json
+// @Param               organizadorId path int true "ID del organizador"
+// @Success 			200 {object} schemas.CuponesOrganizator "OK"
+// @Failure 			400 {object} errors.Error "Bad Request"
+// @Failure 			404 {object} errors.Error "Not Found"
+// @Failure 			500 {object} errors.Error "Internal Server Error"
+// @Router 				/cupon/organizador/{organizadorId} [get]
+func (a *Api) FetchCuponPorOrganizador(c echo.Context) error {
+	organizadorParam := c.Param("organizadorId")
+	organizadorId, err := strconv.ParseInt(organizadorParam, 10, 64)
+
+	if err != nil || organizadorId <= 0 {
+		return errors.HandleError(errors.BadRequestError.InvalidUpdatedByValue, c)
+	}
+
+	response, newErr := a.BllController.Cupon.FetchCuponPorOrganizador(organizadorId)
+	if newErr != nil {
+		return errors.HandleError(*newErr, c)
+	}
+
+	return c.JSON(http.StatusOK, response)
+}

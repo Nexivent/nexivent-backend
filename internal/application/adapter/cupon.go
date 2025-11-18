@@ -108,7 +108,7 @@ func (c *Cupon) UpdatePostgresqlCupon(cuponReq *schemas.CuponResquest, usuarioMo
 		Descripcion:         cuponReq.Descripcion,
 		Tipo:                cuponReq.Tipo.Codigo(),
 		Valor:               cuponReq.Valor,
-		EstadoCupon:         util.Activo.Codigo(), //activo
+		EstadoCupon:         cuponReq.EstadoCupon.Codigo(), //activo
 		Codigo:              cuponReq.Codigo,
 		UsoPorUsuario:       cuponReq.UsoPorUsuario,
 		FechaInicio:         cuponReq.FechaInicio,
@@ -148,4 +148,42 @@ func (c *Cupon) UpdatePostgresqlCupon(cuponReq *schemas.CuponResquest, usuarioMo
 		FechaFin:      cuponReq.FechaFin,
 	}
 	return cuponRes, nil
+}
+
+func (c *Cupon) FetchPostresqlCuponPorOrganizador(oranizadorId int64) (*schemas.CuponesOrganizator, *errors.Error) {
+	_, error := c.DaoPostgresql.Usuario.ObtenerUsuarioBasicoPorID(oranizadorId)
+
+	if error != nil {
+		return nil, &errors.ObjectNotFoundError.UserNotFound
+	}
+
+	cupones, result := c.DaoPostgresql.Cupon.ObtenerCuponesPorOrganizador(oranizadorId)
+
+	if result != nil {
+		return nil, &errors.InternalServerError.Default
+	}
+
+	var listCupones []*schemas.CuponOrganizator
+
+	for _, cu := range cupones {
+		listCupones = append(listCupones, &schemas.CuponOrganizator{
+			ID:            cu.ID,
+			Descripcion:   cu.Descripcion,
+			Tipo:          util.TipoCupon(cu.Tipo),
+			EstadoCupon:   util.Estado(cu.EstadoCupon),
+			Valor:         cu.Valor,
+			Codigo:        cu.Codigo,
+			UsoPorUsuario: cu.UsoPorUsuario,
+			UsoRealizados: cu.UsoRealizados,
+			FechaInicio:   cu.FechaInicio,
+			FechaFin:      cu.FechaFin,
+			EventoID:      cu.EventoID,
+		})
+	}
+
+	cuponesRes := &schemas.CuponesOrganizator{
+		Cupones: listCupones,
+	}
+
+	return cuponesRes, nil
 }

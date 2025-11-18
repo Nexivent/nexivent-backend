@@ -12,13 +12,18 @@
             "username": "postgres"
         },
         {
+            "pgOptions": {
+                "ssl": {
+                    "rejectUnauthorized": false
+                }
+            },
             "ssh": "Disabled",
             "previewLimit": 50,
             "server": "nextivent.c5aqxhnorqvv.us-east-1.rds.amazonaws.com",
             "port": 5432,
             "askForPassword": true,
             "driver": "PostgreSQL",
-            "name": "nexivent",
+            "name": "nextivent",
             "database": "nextivent",
             "username": "nextivent"
         }

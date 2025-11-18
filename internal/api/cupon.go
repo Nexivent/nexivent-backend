@@ -45,3 +45,37 @@ func (a *Api) CreateCupon(c echo.Context) error {
 
 	return c.JSON(http.StatusCreated, response)
 }
+
+// @Summary 			Update Cupon.
+// @Description 		Update an existing cupon with validation and ownership.
+// @Tags 				Cupon
+// @Accept 				json
+// @Produce 			json
+// @Param               usuarioModificacion path int true "ID del usuario que realiza la modificación"
+// @Param               request body schemas.CuponResquest true "Update Cupon Request"
+// @Success 			200 {object} schemas.CuponResponse "Updated"
+// @Failure 			400 {object} errors.Error "Bad Request"
+// @Failure 			404 {object} errors.Error "Not Found"
+// @Failure 			422 {object} errors.Error "Unprocessable Entity"
+// @Failure 			500 {object} errors.Error "Internal Server Error"
+// @Router 				/cupon/{usuarioModificacion} [put]
+func (a *Api) UpdateCupon(c echo.Context) error {
+	usuarioModParam := c.Param("usuarioModificacion")
+	usuarioModId, err := strconv.ParseInt(usuarioModParam, 10, 64)
+
+	if err != nil || usuarioModId <= 0 {
+		return errors.HandleError(errors.BadRequestError.InvalidUpdatedByValue, c)
+	}
+
+	var request schemas.CuponResquest
+	if err := c.Bind(&request); err != nil {
+		return errors.HandleError(errors.UnprocessableEntityError.InvalidRequestBody, c)
+	}
+
+	response, newErr := a.BllController.Cupon.UpdateCupon(request, usuarioModId)
+	if newErr != nil {
+		return errors.HandleError(*newErr, c)
+	}
+
+	return c.JSON(http.StatusOK, response)
+}

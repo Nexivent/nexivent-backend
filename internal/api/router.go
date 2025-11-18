@@ -54,6 +54,7 @@ func (a *Api) RegisterRoutes(configEnv *config.ConfigEnv) {
 
 	//Cupon
 	a.Echo.POST("/cupon/:usuarioCreacion", a.CreateCupon)
+	a.Echo.PUT("/cupon/:usuarioModificacion", a.UpdateCupon)
 
 	a.Echo.POST("/register", a.RegisterUsuario)
 	a.Echo.GET("/usuario/:id", a.GetUsuario)

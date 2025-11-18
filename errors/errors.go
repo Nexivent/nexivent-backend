@@ -31,6 +31,7 @@ var (
 		SessionNotFound             Error
 		EventoNotFound              Error
 		CategoriaNotFound           Error
+		CuponNotFound               Error
 	}{
 		CommunityNotFound: Error{
 			Code:    "COMMUNITY_ERROR_001",
@@ -83,6 +84,10 @@ var (
 		CategoriaNotFound: Error{
 			Code:    "CATEGORIA_ERROR_001",
 			Message: "Categoria not found",
+		},
+		CommunityServiceNotFound: Error{
+			Code:    "CUPON_ERROR_002",
+			Message: "Cupon not found",
 		},
 	}
 

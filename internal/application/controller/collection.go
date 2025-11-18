@@ -11,14 +11,18 @@ import (
 )
 
 type ControllerCollection struct {
-	Logger     logging.Logger
-	Evento     *EventoController
-	Usuario    *UsuarioController
-	Categoria  *CategoriaController
-	Media      *MediaController
-	Cupon      *CuponController
-	Comentario *ComentarioController
-	Orden      *OrdenDeCompraController
+	Logger        logging.Logger
+	Evento        *EventoController
+	Usuario       *UsuarioController
+	Categoria     *CategoriaController
+	Media         *MediaController
+	Cupon         *CuponController
+	Comentario    *ComentarioController
+	Orden         *OrdenDeCompraController
+	PerfilPersona *PerfilPersonaController
+	Sector        *SectorController
+	TipoTicket    *TipoTicketController
+	Tarifa        *TarifaController
 }
 
 // Creates BLL controller collection
@@ -37,6 +41,11 @@ func NewControllerCollection(
 	categoriaAdapter := adapter.NewCategoriaAdapter(logger, daoPostgresql)
 	cuponAdapter := adapter.NewCuponAdapter(logger, daoPostgresql)
 	ordenAdapter := adapter.NewOrdenDeCompraAdapter(logger, daoPostgresql)
+	perfilAdapter := adapter.NewPerfilPersonaAdapter(logger, daoPostgresql)
+	sectorAdapter := adapter.NewSectorAdapter(logger, daoPostgresql)
+	tipoTicketAdapter := adapter.NewTipoTicketAdapter(logger, daoPostgresql)
+	tarifaAdapter := adapter.NewTarifaAdapter(logger, daoPostgresql)
+
 	// Services
 	s3Storage, storageErr := storage.NewS3Storage(logger, configEnv)
 	if storageErr != nil {
@@ -48,6 +57,11 @@ func NewControllerCollection(
 	categoriaController := NewCategoriaController(logger, categoriaAdapter)
 	cuponController := NewCuponController(logger, cuponAdapter)
 	ordenController := NewOrdenDeCompraController(logger, ordenAdapter)
+	perfilController := NewPerfilPersonaController(logger, perfilAdapter)
+	sectorController := NewSectorController(logger, sectorAdapter)
+	tipoTicketController := NewTipoTicketController(logger, tipoTicketAdapter)
+	tarifaController := NewTarifaController(logger, tarifaAdapter)
+
 	var mediaController *MediaController
 	if s3Storage != nil {
 		mediaController = NewMediaController(logger, s3Storage)
@@ -67,6 +81,10 @@ func NewControllerCollection(
 			Logger: logger,
 			DB:     daoPostgresql,
 		},
-		Orden: ordenController,
+		Orden:         ordenController,
+		PerfilPersona: perfilController,
+		Sector:        sectorController,
+		TipoTicket:    tipoTicketController,
+		Tarifa:        tarifaController,
 	}, nexiventPsqlDB
 }

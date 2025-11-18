@@ -135,6 +135,25 @@ func (c *Ticket) IncrementarVendidasPorSector(sectorID int64, cantidad int64) er
 	return nil
 }
 
+// DecrementarVendidasPorSector: resta cantidad a cant_vendidas (sector).
+func (c *Ticket) DecrementarVendidasPorSector(sectorID int64, cantidad int64) error {
+	if sectorID <= 0 || cantidad <= 0 {
+		return gorm.ErrInvalidData
+	}
+	res := c.PostgresqlDB.
+		Table("sector").
+		Where("sector_id = ?", sectorID).
+		UpdateColumn("cant_vendidas", gorm.Expr("cant_vendidas - ?", cantidad))
+	if res.Error != nil {
+		c.logger.Errorf("DecrementarVendidasPorSector(%d): %v", sectorID, res.Error)
+		return res.Error
+	}
+	if res.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
+}
+
 // ObtenerSectorPorTarifa: retorna sector_id para una tarifa.
 func (c *Ticket) ObtenerSectorPorTarifa(tarifaID int64) (int64, error) {
 	var sectorID int64

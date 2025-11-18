@@ -105,6 +105,7 @@ var (
 		InvalidReservationId         Error
 		InvalidDateFormat            Error
 		EmailAlreadyRegistered       Error
+		InvalidEventoId              Error
 	}{
 		InvalidRequestBody: Error{
 			Code:    "REQUEST_ERROR_001",
@@ -173,6 +174,10 @@ var (
 		EmailAlreadyRegistered: Error{
 			Code:    "USER_ERROR_006",
 			Message: "Email is already registered",
+		},
+		InvalidEventoId: Error{
+			Code:    "EVENTO_ERROR_004",
+			Message: "Invalid evento_id",
 		},
 	}
 
@@ -389,13 +394,13 @@ var (
 	ConflictError = struct {
 		EmailAlreadyExists Error
 		UserAlreadyExists  Error
-		CuponAlreadyExits  Error
+		CuponAlreadyExists Error
 	}{
 		UserAlreadyExists: Error{
 			Code:    "USER_ERROR_006",
 			Message: "User already exists with this email",
 		},
-		CuponAlreadyExits: Error{
+		CuponAlreadyExists: Error{
 			Code:    "CUPON_ERROR_001",
 			Message: "Cupon already exists in this event",
 		},

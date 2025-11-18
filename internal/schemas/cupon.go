@@ -1,6 +1,8 @@
 package schemas
 
 import (
+	"time"
+
 	util "github.com/Nexivent/nexivent-backend/internal/dao/model/util"
 )
 
@@ -11,6 +13,8 @@ type CuponResponse struct { //response // API -> front
 	Valor         float64
 	Codigo        string
 	UsoPorUsuario int64
+	FechaInicio   time.Time
+	FechaFin      time.Time
 	//EventoID      int64
 }
 
@@ -21,5 +25,7 @@ type CuponResquest struct { //request //front -> API
 	Valor         float64
 	Codigo        string
 	UsoPorUsuario int64
+	FechaInicio   time.Time
+	FechaFin      time.Time
 	EventoID      int64
 }

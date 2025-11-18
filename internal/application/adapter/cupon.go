@@ -1,12 +1,15 @@
 package adapter
 
 import (
+	goerrors "errors"
+
 	"github.com/Nexivent/nexivent-backend/errors"
 	"github.com/Nexivent/nexivent-backend/internal/dao/model"
 	util "github.com/Nexivent/nexivent-backend/internal/dao/model/util"
 	daoPostgresql "github.com/Nexivent/nexivent-backend/internal/dao/repository"
 	"github.com/Nexivent/nexivent-backend/internal/schemas"
 	"github.com/Nexivent/nexivent-backend/logging"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 type Cupon struct {
@@ -39,13 +42,35 @@ func (c *Cupon) CreatePostgresqlCupon(cuponReq *schemas.CuponResquest, usuarioCr
 		Codigo:          cuponReq.Codigo,
 		UsoPorUsuario:   cuponReq.UsoPorUsuario,
 		UsoRealizados:   0, // sin uso aún
+		FechaInicio:     cuponReq.FechaInicio,
+		FechaFin:        cuponReq.FechaFin,
 		UsuarioCreacion: &usuario.ID,
 		EventoID:        cuponReq.EventoID,
 	}
 
 	result := c.DaoPostgresql.Cupon.CrearCupon(cuponModel)
+
 	if result != nil {
-		return nil, &errors.ConflictError.CuponAlreadyExits
+		// Intentamos convertir el error a un PgError (Propio de Postgres)
+		var pgErr *pgconn.PgError
+
+		if goerrors.As(result, &pgErr) {
+			switch pgErr.Code {
+			// Violación de UNIQUE → cupón ya existe
+			case "23505":
+				return nil, &errors.ConflictError.CuponAlreadyExists
+			// Violación de Foreign Key
+			case "23503":
+				return nil, &errors.UnprocessableEntityError.InvalidEventoId // o el FK que corresponda
+
+			// Violación de CHECK o restricciones de dominio
+			case "23514":
+				return nil, &errors.UnprocessableEntityError.InvalidRequestBody
+			}
+		}
+
+		// Otros errores no controlados → error 500
+		return nil, &errors.InternalServerError.Default
 	}
 
 	cuponRes := &schemas.CuponResponse{
@@ -55,6 +80,8 @@ func (c *Cupon) CreatePostgresqlCupon(cuponReq *schemas.CuponResquest, usuarioCr
 		Valor:         cuponModel.Valor,
 		Codigo:        cuponModel.Codigo,
 		UsoPorUsuario: cuponReq.UsoPorUsuario,
+		FechaInicio:   cuponReq.FechaInicio,
+		FechaFin:      cuponReq.FechaFin,
 	}
 
 	return cuponRes, nil

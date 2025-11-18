@@ -11,6 +11,8 @@ type Cupon struct {
 	Codigo              string `gorm:"uniqueIndex:uq_cupon_evento"` // único global; si quieres por evento, usa uniqueIndex combinado
 	UsoPorUsuario       int64  `gorm:"default:0"`
 	UsoRealizados       int64  `gorm:"default:0"`
+	FechaInicio         time.Time
+	FechaFin            time.Time
 	UsuarioCreacion     *int64
 	FechaCreacion       time.Time `gorm:"default:now()"`
 	UsuarioModificacion *int64

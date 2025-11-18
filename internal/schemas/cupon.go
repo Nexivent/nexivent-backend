@@ -6,45 +6,47 @@ import (
 	util "github.com/Nexivent/nexivent-backend/internal/dao/model/util"
 )
 
-type CuponResponse struct { //response // API -> front
-	ID            int64
-	Descripcion   string
-	Tipo          util.TipoCupon
-	Valor         float64
-	Codigo        string
-	UsoPorUsuario int64
-	FechaInicio   time.Time
-	FechaFin      time.Time
-	//EventoID      int64
+// response // API -> front
+type CuponResponse struct {
+	ID            int64          `json:"id"`
+	Descripcion   string         `json:"descripcion"`
+	Tipo          util.TipoCupon `json:"tipo"`
+	Valor         float64        `json:"valor"`
+	Codigo        string         `json:"codigo"`
+	UsoPorUsuario int64          `json:"usoPorUsuario"`
+	FechaInicio   time.Time      `json:"fechaInicio"`
+	FechaFin      time.Time      `json:"fechaFin"`
+	//EventoID    int64         `json:"eventoId,omitempty"`
 }
 
-type CuponResquest struct { //request //front -> API
-	ID            int64
-	Descripcion   string
-	Tipo          util.TipoCupon
-	Valor         float64
-	Codigo        string
-	EstadoCupon   util.Estado
-	UsoPorUsuario int64
-	FechaInicio   time.Time
-	FechaFin      time.Time
-	EventoID      int64
+// request //front -> API
+type CuponResquest struct {
+	ID            int64          `json:"id"`
+	Descripcion   string         `json:"descripcion"`
+	Tipo          util.TipoCupon `json:"tipo"`
+	Valor         float64        `json:"valor"`
+	Codigo        string         `json:"codigo"`
+	EstadoCupon   util.Estado    `json:"estadoCupon"`
+	UsoPorUsuario int64          `json:"usoPorUsuario"`
+	FechaInicio   time.Time      `json:"fechaInicio"`
+	FechaFin      time.Time      `json:"fechaFin"`
+	EventoID      int64          `json:"eventoId"`
 }
 
 type CuponOrganizator struct {
-	ID            int64
-	Descripcion   string
-	Tipo          util.TipoCupon
-	EstadoCupon   util.Estado
-	Valor         float64
-	Codigo        string
-	UsoPorUsuario int64
-	UsoRealizados int64
-	FechaInicio   time.Time
-	FechaFin      time.Time
-	EventoID      int64
+	ID            int64          `json:"id"`
+	Descripcion   string         `json:"descripcion"`
+	Tipo          util.TipoCupon `json:"tipo"`
+	EstadoCupon   util.Estado    `json:"estadoCupon"`
+	Valor         float64        `json:"valor"`
+	Codigo        string         `json:"codigo"`
+	UsoPorUsuario int64          `json:"usoPorUsuario"`
+	UsoRealizados int64          `json:"usoRealizados"`
+	FechaInicio   time.Time      `json:"fechaInicio"`
+	FechaFin      time.Time      `json:"fechaFin"`
+	EventoID      int64          `json:"eventoId"`
 }
 
 type CuponesOrganizator struct {
-	Cupones []*CuponOrganizator
+	Cupones []*CuponOrganizator `json:"cupones"`
 }

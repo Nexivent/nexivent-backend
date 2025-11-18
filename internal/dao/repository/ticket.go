@@ -16,7 +16,7 @@ type Ticket struct {
 	PostgresqlDB *gorm.DB
 }
 
-func NewTicketsController(
+func NewTicketController(
 	logger logging.Logger,
 	postgresqlDB *gorm.DB,
 ) *Ticket {

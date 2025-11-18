@@ -60,6 +60,7 @@ func NewNexiventPsqlEntidades(
 		Sector:          NewSectorController(logger, postgresqlDB),
 		TipoDeTicket:    NewTipoDeTicketController(logger, postgresqlDB),
 		Tarifa:          NewTarifaController(logger, postgresqlDB),
+		Ticket:          NewTicketController(logger, postgresqlDB),
 		Usuario: &Usuario{
 			logger:       logger,
 			PostgresqlDB: postgresqlDB,

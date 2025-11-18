@@ -23,6 +23,7 @@ type ControllerCollection struct {
 	Sector        *SectorController
 	TipoTicket    *TipoTicketController
 	Tarifa        *TarifaController
+	Ticket        *TicketController
 }
 
 // Creates BLL controller collection
@@ -45,6 +46,7 @@ func NewControllerCollection(
 	sectorAdapter := adapter.NewSectorAdapter(logger, daoPostgresql)
 	tipoTicketAdapter := adapter.NewTipoTicketAdapter(logger, daoPostgresql)
 	tarifaAdapter := adapter.NewTarifaAdapter(logger, daoPostgresql)
+	ticketAdapter := adapter.NewTicketAdapter(logger, daoPostgresql)
 
 	// Services
 	s3Storage, storageErr := storage.NewS3Storage(logger, configEnv)
@@ -61,6 +63,7 @@ func NewControllerCollection(
 	sectorController := NewSectorController(logger, sectorAdapter)
 	tipoTicketController := NewTipoTicketController(logger, tipoTicketAdapter)
 	tarifaController := NewTarifaController(logger, tarifaAdapter)
+	ticketController := NewTicketController(logger, ticketAdapter)
 
 	var mediaController *MediaController
 	if s3Storage != nil {
@@ -86,5 +89,6 @@ func NewControllerCollection(
 		Sector:        sectorController,
 		TipoTicket:    tipoTicketController,
 		Tarifa:        tarifaController,
+		Ticket:        ticketController,
 	}, nexiventPsqlDB
 }

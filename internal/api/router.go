@@ -84,6 +84,10 @@ func (a *Api) RegisterRoutes(configEnv *config.ConfigEnv) {
 	a.Echo.POST("/tarifas", a.CrearTarifa)
 	a.Echo.PUT("/tarifas/:tarifaId", a.ActualizarTarifa)
 
+	// Tickets
+	a.Echo.POST("/api/tickets/issue", a.EmitirTickets)
+	a.Echo.POST("/api/tickets/cancel", a.CancelarTickets)
+
 }
 
 func (a *Api) RunApi(configEnv *config.ConfigEnv) {

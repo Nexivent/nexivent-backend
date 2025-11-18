@@ -2,6 +2,7 @@ package repository
 
 import (
 	"errors"
+	"time"
 
 	"github.com/Nexivent/nexivent-backend/internal/dao/model"
 	util "github.com/Nexivent/nexivent-backend/internal/dao/model/util"
@@ -15,7 +16,7 @@ type Ticket struct {
 	PostgresqlDB *gorm.DB
 }
 
-func NewTicketsController(
+func NewTicketController(
 	logger logging.Logger,
 	postgresqlDB *gorm.DB,
 ) *Ticket {
@@ -25,7 +26,7 @@ func NewTicketsController(
 	}
 }
 
-// VerificarOrdenConfirmada: true si la orden existe y está CONFIRMADA (enum).
+// / VerificarOrdenConfirmada: true si la orden existe y está CONFIRMADA (enum).
 func (c *Ticket) VerificarOrdenConfirmada(orderID int64) (bool, error) {
 	var estInt int16
 	err := c.PostgresqlDB.
@@ -92,7 +93,7 @@ func (c *Ticket) VerificarTicketPerteneceAOrden(ticketID, orderID int64) (bool, 
 	return count == 1, nil
 }
 
-// CrearTicket: inserta un solo ticket (el BO define QR y estado).
+// CrearTicket: inserta un solo ticket.
 func (c *Ticket) CrearTicket(ticket *model.Ticket) error {
 	if ticket == nil {
 		return gorm.ErrInvalidData
@@ -104,7 +105,7 @@ func (c *Ticket) CrearTicket(ticket *model.Ticket) error {
 	return nil
 }
 
-// CrearTicketsBatch: inserta varios tickets (BO validó todo antes).
+// CrearTicketsBatch: inserta varios tickets.
 func (c *Ticket) CrearTicketsBatch(tickets []model.Ticket) error {
 	if len(tickets) == 0 {
 		return nil
@@ -169,7 +170,7 @@ func (c *Ticket) ObtenerSectorPorTarifa(tarifaID int64) (int64, error) {
 	return sectorID, nil
 }
 
-// CambiarEstadoTicket: actualiza el estado de un ticket usando tu enum model.EstadoDeTicket.
+// CambiarEstadoTicket: actualiza el estado de un ticket usando el enum util.EstadoDeTicket.
 func (c *Ticket) CambiarEstadoTicket(ticketID int64, nuevo util.EstadoDeTicket) error {
 	if !nuevo.IsValid() {
 		return errors.New("estado de ticket inválido")
@@ -204,7 +205,7 @@ func (c *Ticket) CambiarEstadoTicketsDeOrden(orderID int64, nuevo util.EstadoDeT
 	return res.RowsAffected, nil
 }
 
-// ObtenerTicketsPorOrden: devuelve tickets (modelo puro) de una orden (para el BO).
+// ObtenerTicketsPorOrden: devuelve tickets (modelo puro) de una orden.
 func (c *Ticket) ObtenerTicketsPorOrden(orderID int64) ([]model.Ticket, error) {
 	var ts []model.Ticket
 	if err := c.PostgresqlDB.
@@ -227,4 +228,93 @@ func (c *Ticket) LockTicketsDeOrden(orderID int64) ([]model.Ticket, error) {
 		return nil, err
 	}
 	return ts, nil
+}
+
+// Helpers extra para BO (solo structs internos, NO schemas
+// DetalleOrden representa una fila de la tabla orden_de_compra_detalle.
+type DetalleOrden struct {
+	TarifaID      int64 `gorm:"column:tarifa_id"`
+	Cantidad      int64 `gorm:"column:cantidad"`
+	EventoFechaID int64 `gorm:"column:evento_fecha_id"`
+}
+
+func (c *Ticket) ObtenerDetallesOrden(orderID int64) ([]DetalleOrden, error) {
+	var detalles []DetalleOrden
+	res := c.PostgresqlDB.
+		Table("orden_de_compra_detalle").
+		Select("tarifa_id, cantidad, evento_fecha_id").
+		Where("orden_de_compra_id = ?", orderID).
+		Find(&detalles)
+
+	if res.Error != nil {
+		c.logger.Errorf("ObtenerDetallesOrden(orderID=%d): %v", orderID, res.Error)
+		return nil, res.Error
+	}
+	return detalles, nil
+}
+
+// TicketInfo: datos enriquecidos para mostrar tickets (JOIN con evento, sector, fecha, etc.).
+type TicketInfo struct {
+	ID          int64     `gorm:"column:ticket_id"`
+	CodigoQR    string    `gorm:"column:codigo_qr"`
+	Estado      int16     `gorm:"column:estado_de_ticket"`
+	Titulo      string    `gorm:"column:titulo"`
+	FechaEvento time.Time `gorm:"column:fecha_evento"`
+	HoraInicio  time.Time `gorm:"column:hora_inicio"`
+	SectorTipo  string    `gorm:"column:sector_tipo"`
+}
+
+func (c *Ticket) ObtenerTicketsInfoPorOrden(orderID int64) ([]TicketInfo, error) {
+	var info []TicketInfo
+
+	res := c.PostgresqlDB.
+		Table("ticket t").
+		Select(`
+			t.ticket_id,
+			t.codigo_qr,
+			t.estado_de_ticket,
+			e.titulo,
+			f.fecha_evento,
+			ef.hora_inicio,
+			s.sector_tipo
+		`).
+		Joins("JOIN evento_fecha ef ON ef.evento_fecha_id = t.evento_fecha_id").
+		Joins("JOIN evento e ON e.evento_id = ef.evento_id").
+		Joins("JOIN tarifa tf ON tf.tarifa_id = t.tarifa_id").
+		Joins("JOIN sector s ON s.sector_id = tf.sector_id").
+		Joins("JOIN fecha f ON f.fecha_id = ef.fecha_id").
+		Where("t.orden_de_compra_id = ?", orderID).
+		Find(&info)
+
+	if res.Error != nil {
+		c.logger.Errorf("ObtenerTicketsInfoPorOrden(orderID=%d): %v", orderID, res.Error)
+		return nil, res.Error
+	}
+	return info, nil
+}
+
+// TicketEstadoTarifa: helper para cancelación (estado actual + tarifa).
+type TicketEstadoTarifa struct {
+	ID             int64 `gorm:"column:ticket_id"`
+	TarifaID       int64 `gorm:"column:tarifa_id"`
+	EstadoDeTicket int16 `gorm:"column:estado_de_ticket"`
+}
+
+func (c *Ticket) ObtenerTicketsEstadoTarifaPorIDs(ids []int64) ([]TicketEstadoTarifa, error) {
+	if len(ids) == 0 {
+		return []TicketEstadoTarifa{}, nil
+	}
+
+	var rows []TicketEstadoTarifa
+	res := c.PostgresqlDB.
+		Table("ticket").
+		Select("ticket_id, tarifa_id, estado_de_ticket").
+		Where("ticket_id IN ?", ids).
+		Find(&rows)
+
+	if res.Error != nil {
+		c.logger.Errorf("ObtenerTicketsEstadoTarifaPorIDs: %v", res.Error)
+		return nil, res.Error
+	}
+	return rows, nil
 }

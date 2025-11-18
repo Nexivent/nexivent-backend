@@ -62,6 +62,26 @@ func (a *Api) RegisterRoutes(configEnv *config.ConfigEnv) {
 	a.Echo.POST("/orden_de_compra/hold", a.CrearSesionOrdenTemporal)
 	a.Echo.GET("/orden_de_compra/:orderId/hold", a.ObtenerEstadoHold)
 	a.Echo.POST("/orden_de_compra/:orderId/confirm", a.ConfirmarOrden)
+
+	// Perfiles de persona
+	a.Echo.GET("/evento/:eventoId/perfiles", a.ListarPerfilesPorEvento)
+	a.Echo.POST("/evento/:eventoId/perfiles", a.CrearPerfilPersona)
+	a.Echo.PUT("/perfiles/:perfilId", a.ActualizarPerfilPersona)
+
+	// Sectores
+	a.Echo.GET("/evento/:eventoId/sectores", a.ListarSectoresPorEvento)
+	a.Echo.POST("/evento/:eventoId/sectores", a.CrearSector)
+	a.Echo.PUT("/sectores/:sectorId", a.ActualizarSector)
+
+	// Tipos de ticket
+	a.Echo.GET("/evento/:eventoId/tipos-ticket", a.ListarTiposTicketPorEvento)
+	a.Echo.POST("/evento/:eventoId/tipos-ticket", a.CrearTipoTicket)
+	a.Echo.PUT("/tipos-ticket/:tipoTicketId", a.ActualizarTipoTicket)
+
+	// Tarifas
+	a.Echo.POST("/tarifas", a.CrearTarifa)
+	a.Echo.PUT("/tarifas/:tarifaId", a.ActualizarTarifa)
+
 }
 
 func (a *Api) RunApi(configEnv *config.ConfigEnv) {

@@ -40,6 +40,7 @@ func (c *Cupon) CreatePostgresqlCupon(cuponReq *schemas.CuponResquest, usuarioCr
 		UsoPorUsuario:   cuponReq.UsoPorUsuario,
 		UsoRealizados:   0, // sin uso aún
 		UsuarioCreacion: &usuario.ID,
+		EventoID:        cuponReq.EventoID,
 	}
 
 	result := c.DaoPostgresql.Cupon.CrearCupon(cuponModel)

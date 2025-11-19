@@ -24,6 +24,7 @@ type ControllerCollection struct {
 	TipoTicket    *TipoTicketController
 	Tarifa        *TarifaController
 	Ticket        *TicketController
+	Token      *TokenController
 }
 
 // Creates BLL controller collection
@@ -90,5 +91,9 @@ func NewControllerCollection(
 		TipoTicket:    tipoTicketController,
 		Tarifa:        tarifaController,
 		Ticket:        ticketController,
+		Token: &TokenController{
+			Logger: logger,
+			DB:     daoPostgresql,
+		},
 	}, nexiventPsqlDB
 }

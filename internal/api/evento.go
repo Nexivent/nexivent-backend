@@ -159,9 +159,21 @@ func (a *Api) CreateEvento(c echo.Context) error {
 	// TODO: Add access token validation (from here we will get the `usuarioCreacion` param)
 	usuarioCreacion := int64(1) // Hardcoded for now///////////////////////
 
+	hashToken := c.Request().Header.Get("Authorization")
+	token, err := a.BllController.Token.ValidateToken(hashToken)
+	if err != nil {
+		return errors.HandleError(*err, c)
+	}
+
+	usuarioCreacion = token.UsuarioID
+
 	var request schemas.EventoRequest
 	if err := c.Bind(&request); err != nil {
 		return errors.HandleError(errors.UnprocessableEntityError.InvalidRequestBody, c)
+	}
+
+	if request.IdOrganizador != usuarioCreacion {
+		return errors.HandleError(errors.AuthenticationError.UnauthorizedUser, c)
 	}
 
 	response, newErr := a.BllController.Evento.CreateEvento(request, usuarioCreacion)

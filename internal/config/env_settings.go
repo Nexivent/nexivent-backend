@@ -30,6 +30,13 @@ type ConfigEnv struct {
 	AwsS3Bucket         string
 	AwsS3Prefix         string
 	AwsS3UploadDuration int64
+
+	// Mail
+	Host     string
+	Port     int
+	Username string
+	Password string
+	Sender   string
 }
 
 func NuevoConfigEnv(logger logging.Logger) *ConfigEnv {
@@ -79,6 +86,17 @@ func NuevoConfigEnv(logger logging.Logger) *ConfigEnv {
 		}
 	}
 
+	// Mail config
+	host := os.Getenv("MAIL_HOST")
+	portStr := os.Getenv("MAIL_PORT")
+	port, err := strconv.Atoi(portStr)
+	if err != nil {
+		port = 587 // default port
+	}
+	username := os.Getenv("MAIL_USERNAME")
+	password := os.Getenv("MAIL_PASSWORD")
+	sender := os.Getenv("MAIL_SENDER")
+
 	return &ConfigEnv{
 		EnableSqlLogs:       enableSqlLogs,
 		MainPort:            mainPort,
@@ -93,5 +111,10 @@ func NuevoConfigEnv(logger logging.Logger) *ConfigEnv {
 		AwsS3Bucket:         awsBucket,
 		AwsS3Prefix:         awsPrefix,
 		AwsS3UploadDuration: awsDuration,
+		Host:                host,
+		Port:                port,
+		Username:            username,
+		Password:            password,
+		Sender:              sender,
 	}
 }

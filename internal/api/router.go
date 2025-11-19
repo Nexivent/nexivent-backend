@@ -53,13 +53,16 @@ func (a *Api) RegisterRoutes(configEnv *config.ConfigEnv) {
 	// Media uploads
 	a.Echo.POST("/media/upload-url", a.GenerateUploadURL)
 
-	//Cupon
+	// Cupón
 	a.Echo.POST("/cupon/:usuarioCreacion", a.CreateCupon)
 	a.Echo.PUT("/cupon/:usuarioModificacion", a.UpdateCupon)
 	a.Echo.GET("/cupon/organizador/:organizadorId", a.FetchCuponPorOrganizador)
 
 	a.Echo.POST("/register", a.RegisterUsuario)
 	a.Echo.GET("/usuario/:id", a.GetUsuario)
+
+	// Autenticación
+	a.Echo.POST("/login", a.AuthenticateUsuario)
 
 	a.Echo.POST("/orden_de_compra/hold", a.CrearSesionOrdenTemporal)
 	a.Echo.GET("/orden_de_compra/:orderId/hold", a.ObtenerEstadoHold)

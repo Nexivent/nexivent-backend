@@ -53,6 +53,7 @@ func (uc *UsuarioController) RegisterUsuario(usuario *model.Usuario) (model.Usua
 
 		return nil
 	})
+	
 	if err != nil {
 		return model.Usuario{}, &errors.InternalServerError.Default
 
@@ -108,3 +109,24 @@ func (uc *UsuarioController) GetUsuarioConRoles(id int64) ([]*model.Usuario, *er
 	}
 	return usuarios, nil
 }
+
+func (uc *UsuarioController) AuthenticateUsuario(correo, contrasenha string) (*model.Usuario, *errors.Error) {
+	usuario, err := uc.DB.Usuario.ObtenerUsuarioPorCorreo(correo)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, &errors.ObjectNotFoundError.UserNotFound
+		}
+		return nil, &errors.InternalServerError.Default
+	}
+
+	ok, err := model.VerifyPassword(contrasenha, usuario.Contrasenha)
+	if err != nil {
+		return nil, &errors.InternalServerError.Default
+	}
+
+	if !ok {
+		return nil, &errors.AuthenticationError.InvalidCredentials
+	}
+
+	return usuario, nil
+}	

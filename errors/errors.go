@@ -31,6 +31,7 @@ var (
 		SessionNotFound             Error
 		EventoNotFound              Error
 		CategoriaNotFound           Error
+		CuponNotFound               Error
 	}{
 		CommunityNotFound: Error{
 			Code:    "COMMUNITY_ERROR_001",
@@ -84,6 +85,10 @@ var (
 			Code:    "CATEGORIA_ERROR_001",
 			Message: "Categoria not found",
 		},
+		CommunityServiceNotFound: Error{
+			Code:    "CUPON_ERROR_002",
+			Message: "Cupon not found",
+		},
 	}
 
 	// For 422 Unprocessable Entity errors
@@ -105,6 +110,7 @@ var (
 		InvalidReservationId         Error
 		InvalidDateFormat            Error
 		EmailAlreadyRegistered       Error
+		InvalidEventoId              Error
 	}{
 		InvalidRequestBody: Error{
 			Code:    "REQUEST_ERROR_001",
@@ -173,6 +179,10 @@ var (
 		EmailAlreadyRegistered: Error{
 			Code:    "USER_ERROR_006",
 			Message: "Email is already registered",
+		},
+		InvalidEventoId: Error{
+			Code:    "EVENTO_ERROR_004",
+			Message: "Invalid evento_id",
 		},
 	}
 
@@ -370,6 +380,8 @@ var (
 		UnauthorizedUser    Error
 		InvalidRefreshToken Error
 		InvalidAccessToken  Error
+		InvalidCredentials  Error
+		ExpiredToken       Error
 	}{
 		UnauthorizedUser: Error{
 			Code:    "AUTHENTICATION_ERROR_001",
@@ -383,19 +395,27 @@ var (
 			Code:    "AUTHENTICATION_ERROR_003",
 			Message: "Invalid access token",
 		},
+		InvalidCredentials: Error{
+			Code:    "AUTHENTICATION_ERROR_004",
+			Message: "Invalid credentials",
+		},
+		ExpiredToken: Error{
+			Code:    "AUTHENTICATION_ERROR_005",
+			Message: "Token has expired",
+		},
 	}
 
 	// For 409 Conflict errors
 	ConflictError = struct {
 		EmailAlreadyExists Error
 		UserAlreadyExists  Error
-		CuponAlreadyExits  Error
+		CuponAlreadyExists Error
 	}{
 		UserAlreadyExists: Error{
 			Code:    "USER_ERROR_006",
 			Message: "User already exists with this email",
 		},
-		CuponAlreadyExits: Error{
+		CuponAlreadyExists: Error{
 			Code:    "CUPON_ERROR_001",
 			Message: "Cupon already exists in this event",
 		},
@@ -409,6 +429,7 @@ var (
 	InternalServerError = struct {
 		Default               Error
 		PasswordHashingFailed Error
+		TokenCreationFailed    Error
 	}{
 		Default: Error{
 			Code:    "INTERNAL_SERVER_ERROR_001",
@@ -417,6 +438,10 @@ var (
 		PasswordHashingFailed: Error{
 			Code:    "INTERNAL_SERVER_ERROR_002",
 			Message: "Password hashing failed",
+		},
+		TokenCreationFailed: Error{
+			Code:    "INTERNAL_SERVER_ERROR_003",
+			Message: "Token creation failed",
 		},
 	}
 )

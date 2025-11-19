@@ -327,6 +327,7 @@ func (e *Evento) FetchPostgresqlEventos() (*schemas.EventosPaginados, *errors.Er
 // FetchPostgresqlEventos retrieves the upcoming events with filters
 func (e *Evento) FetchPostgresqlEventosWithFilters(
 	categoriaID *int64,
+	organizadorID *int64,
 	titulo *string,
 	descripcion *string,
 	lugar *string,
@@ -334,6 +335,7 @@ func (e *Evento) FetchPostgresqlEventosWithFilters(
 	horaInicio *time.Time) (*schemas.EventosPaginados, *errors.Error) {
 	eventos, err := e.DaoPostgresql.Evento.ObtenerEventosDisponiblesConFiltros(
 		categoriaID,
+		organizadorID,
 		titulo,
 		descripcion,
 		lugar,

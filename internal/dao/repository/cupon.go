@@ -50,6 +50,34 @@ func (c *Cupon) ActualizarCupon(Cupon *model.Cupon) error {
 	return nil
 }
 
+func (c *Cupon) ObtenerCuponPorIdYIdEvento(id int64, eventoId int64) (*model.Cupon, error) {
+	var cupon *model.Cupon
+	respuesta := c.PostgresqlDB.
+		Where("cupon.cupon_id = ? AND cupon.evento_id = ?", id, eventoId).
+		Find(&cupon)
+
+	if respuesta.Error != nil {
+		return nil, respuesta.Error
+	}
+
+	return cupon, nil
+}
+
+func (c *Cupon) ObtenerCuponesPorOrganizador(organizadorId int64) ([]*model.Cupon, error) {
+	var cupones []*model.Cupon
+	respuesta := c.PostgresqlDB.
+		Table("cupon").
+		Joins("JOIN evento e ON e.evento_id = cupon.evento_id").
+		Where("e.organizador_id  = ?", organizadorId).
+		Find(&cupones)
+
+	if respuesta.Error != nil {
+		return nil, respuesta.Error
+	}
+
+	return cupones, nil
+}
+
 /*
 func (c *Cupon) BorrarCupon(CuponId int64) error {
 	respuesta := c.PostgresqlDB.Where("id = ?", CuponId).Delete(&model.Cupon{})

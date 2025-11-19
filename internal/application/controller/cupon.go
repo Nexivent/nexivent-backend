@@ -28,3 +28,14 @@ func (cc *CuponController) CreateCupon(
 ) (*schemas.CuponResponse, *errors.Error) {
 	return cc.CuponAdapter.CreatePostgresqlCupon(&cuponReq, usuarioCreacion)
 }
+
+func (cc *CuponController) UpdateCupon(
+	cuponReq schemas.CuponResquest,
+	usuarioModificacion int64,
+) (*schemas.CuponResponse, *errors.Error) {
+	return cc.CuponAdapter.UpdatePostgresqlCupon(&cuponReq, usuarioModificacion)
+}
+
+func (cc *CuponController) FetchCuponPorOrganizador(organizadorId int64) (*schemas.CuponesOrganizator, *errors.Error) {
+	return cc.CuponAdapter.FetchPostresqlCuponPorOrganizador(organizadorId)
+}

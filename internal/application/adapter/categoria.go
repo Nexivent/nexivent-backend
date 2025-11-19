@@ -58,6 +58,10 @@ func (e *Categoria) CreatePostgresqlCategoria(categoriaReq *schemas.CategoriaReq
 		return nil, &errors.BadRequestError.CategoriaNotCreated
 	}
 
+	if err := tx.Commit().Error; err!=nil{
+		e.logger.Errorf("Failed to commit categoria: %v", err)
+		return nil, &errors.BadRequestError.CategoriaNotCreated
+	}
 	
 	// Build the response
 	response := &schemas.CategoriaResponse{
@@ -76,7 +80,7 @@ func (e *Categoria) FetchPostgresqlCategorias() ([] schemas.CategoriaResponse, *
 	categorias, err := e.DaoPostgresql.Categoria.ObtenerCategorias()
 	if err != nil {
 		e.logger.Errorf("Failed to fetch categorias: %v", err)
-		return nil, &errors.BadRequestError.EventoNotFound
+		return nil, &errors.BadRequestError.CategoriaNotFound
 	}
 	categoriasResponse := make([]schemas.CategoriaResponse, len(categorias))
 

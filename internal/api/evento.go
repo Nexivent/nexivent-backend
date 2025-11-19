@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -76,6 +77,8 @@ func (a *Api) FetchEventos(c echo.Context) error {
 // @Failure      500  {object}  errors.Error              "Internal Server Error"
 // @Router       /evento/filter [get]
 func (a *Api) FetchEventosWithFilters(c echo.Context) error {
+	fmt.Println("QUERY DEBUG:", c.QueryParams())
+
 	var categoriaID *int64
 	if catStr := c.QueryParam("categoriaId"); catStr != "" {
 		parsed, err := strconv.ParseInt(catStr, 10, 64)

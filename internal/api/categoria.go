@@ -38,17 +38,17 @@ func (a *Api) GetCategoria(c echo.Context) error {
 }
 
 
-// @Summary 			Fetch Eventos.
-// @Description 		Fetches all available events.
-// @Tags 				Evento
+// @Summary 			Fetch Categorias.
+// @Description 		Fetches all available categorias.
+// @Tags 				Categoria
 // @Accept 				json
 // @Produce 			json
-// @Success 			200 {object} schemas.EventosPaginados "OK"
+// @Success 			200 {object} schemas.CategoriaResponse "OK"
 // @Failure 			400 {object} errors.Error "Bad Request"
 // @Failure 			404 {object} errors.Error "Not Found"
 // @Failure 			422 {object} errors.Error "Unprocessable Entity"
 // @Failure 			500 {object} errors.Error "Internal Server Error"
-// @Router 				/evento/ [get]
+// @Router 				/categorias/ [get]
 func (a *Api) FetchCategorias(c echo.Context) error {
 	response, err := a.BllController.Categoria.FetchCategorias()
 	if err != nil {
@@ -63,16 +63,15 @@ func (a *Api) FetchCategorias(c echo.Context) error {
 // @Tags 				Categoria
 // @Accept 				json
 // @Produce 			json
-// @Param               request body schemas.EventoRequest true "Create Evento Request"
-// @Success 			201 {object} schemas.EventoResponse "Created"
+// @Param               request body schemas.CategoriaRequest true "Create Evento Request"
+// @Success 			201 {object} schemas.CategoriaResponse "Created"
 // @Failure 			400 {object} errors.Error "Bad Request"
 // @Failure 			404 {object} errors.Error "Not Found"
 // @Failure 			422 {object} errors.Error "Unprocessable Entity"
 // @Failure 			500 {object} errors.Error "Internal Server Error"
-// @Router 				/evento/ [post]
+// @Router 				/categoria/ [post]
 func (a *Api) CreateCategoria(c echo.Context) error {
-	// TODO: Add access token validation (from here we will get the `usuarioCreacion` param)
-	//usuarioCreacion := int64(1) // Hardcoded for now
+	
 
 	var request schemas.CategoriaRequest
 	if err := c.Bind(&request); err != nil {

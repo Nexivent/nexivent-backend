@@ -63,6 +63,7 @@ func (a *Api) FetchEventos(c echo.Context) error {
 // @Accept       json
 // @Produce      json
 // @Param        categoriaId   query   int     false  "ID de categoría"
+// @Param        organizadorId query   int     false  "ID de organizador"
 // @Param        titulo        query   string  false  "Título del evento (coincidencia parcial)"
 // @Param        descripcion   query   string  false  "Descripción (coincidencia parcial)"
 // @Param        lugar         query   string  false  "Lugar del evento (coincidencia parcial)"
@@ -82,6 +83,15 @@ func (a *Api) FetchEventosWithFilters(c echo.Context) error {
 			return errors.HandleError(errors.UnprocessableEntityError.InvalidParsingInteger, c)
 		}
 		categoriaID = &parsed
+	}
+
+	var organizadorID *int64
+	if orgStr := c.QueryParam("organizadorId"); orgStr != "" {
+		parsed, err := strconv.ParseInt(orgStr, 10, 64)
+		if err != nil {
+			return errors.HandleError(errors.UnprocessableEntityError.InvalidParsingInteger, c)
+		}
+		organizadorID = &parsed
 	}
 
 	var titulo *string
@@ -119,6 +129,7 @@ func (a *Api) FetchEventosWithFilters(c echo.Context) error {
 
 	response, err := a.BllController.Evento.FetchEventosWithFilters(
 		categoriaID,
+		organizadorID,
 		titulo,
 		descripcion,
 		lugar,

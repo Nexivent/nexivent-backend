@@ -40,6 +40,7 @@ func (ec *EventoController) FetchEventos() (*schemas.EventosPaginados, *errors.E
 
 func (ec *EventoController) FetchEventosWithFilters(
 	categoriaID *int64,
+	organizadorID *int64,
 	titulo *string,
 	descripcion *string,
 	lugar *string,
@@ -47,6 +48,7 @@ func (ec *EventoController) FetchEventosWithFilters(
 	horaInicio *time.Time) (*schemas.EventosPaginados, *errors.Error) {
 	return ec.EventoAdapter.FetchPostgresqlEventosWithFilters(
 		categoriaID,
+		organizadorID,
 		titulo,
 		descripcion,
 		lugar,

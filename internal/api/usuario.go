@@ -17,12 +17,24 @@ func (a *Api) RegisterUsuario(c echo.Context) error {
 		TipoDocumento string  `json:"tipo_documento"`
 		NumDocumento  string  `json:"num_documento"`
 		Correo        string  `json:"correo"`
+		Email         string  `json:"email"` // Alias para correo
 		Contrasenha   string  `json:"contrasenha"`
+		Contrasena    string  `json:"contrasena"` // Alias para contrasenha
 		Telefono      *string `json:"telefono"`
 	}
 
 	if err := c.Bind(&input); err != nil {
 		return errors.HandleError(errors.UnprocessableEntityError.InvalidRequestBody, c)
+	}
+
+	// Usar email si correo está vacío
+	if input.Correo == "" && input.Email != "" {
+		input.Correo = input.Email
+	}
+
+	// Usar contrasena si contrasenha está vacío
+	if input.Contrasenha == "" && input.Contrasena != "" {
+		input.Contrasenha = input.Contrasena
 	}
 
 	var usuario model.Usuario = model.Usuario{

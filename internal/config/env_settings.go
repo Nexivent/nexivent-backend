@@ -37,6 +37,9 @@ type ConfigEnv struct {
 	Username string
 	Password string
 	Sender   string
+
+	// Factiliza
+	FactilizaToken string `env:"FACTILIZA_TOKEN"`
 }
 
 func NuevoConfigEnv(logger logging.Logger) *ConfigEnv {
@@ -60,11 +63,11 @@ func NuevoConfigEnv(logger logging.Logger) *ConfigEnv {
 	mainPort := os.Getenv("MAIN_PORT")
 	// Railway uses PORT environment variable
 	if mainPort == "" {
-		mainPort = os.Getenv("PORT")
+		mainPort = os.Getenv("MAIN_PORT")
 	}
 	// Default port if none is specified
 	if mainPort == "" {
-		mainPort = "8080"
+		mainPort = "8098"
 	}
 
 	PostgresHost := os.Getenv("NEXIVENT_POSTGRES_HOST")
@@ -97,6 +100,9 @@ func NuevoConfigEnv(logger logging.Logger) *ConfigEnv {
 	password := os.Getenv("MAIL_PASSWORD")
 	sender := os.Getenv("MAIL_SENDER")
 
+	// Factiliza API token
+	factilizaToken := os.Getenv("FACTILIZA_TOKEN")
+
 	return &ConfigEnv{
 		EnableSqlLogs:       enableSqlLogs,
 		MainPort:            mainPort,
@@ -116,5 +122,6 @@ func NuevoConfigEnv(logger logging.Logger) *ConfigEnv {
 		Username:            username,
 		Password:            password,
 		Sender:              sender,
+		FactilizaToken:      factilizaToken,
 	}
 }

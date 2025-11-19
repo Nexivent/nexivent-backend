@@ -32,6 +32,7 @@ func (a *Api) RegisterUsuario(c echo.Context) error {
 		Correo:        input.Correo,
 		Contrasenha:   input.Contrasenha,
 		Telefono:      input.Telefono,
+		Estado:        1,
 	}
 
 	password, err := model.HashPassword(input.Contrasenha)

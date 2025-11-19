@@ -24,7 +24,7 @@ type ControllerCollection struct {
 	TipoTicket    *TipoTicketController
 	Tarifa        *TarifaController
 	Ticket        *TicketController
-	Token      *TokenController
+	Token         *TokenController
 }
 
 // Creates BLL controller collection

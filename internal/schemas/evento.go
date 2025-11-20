@@ -94,47 +94,67 @@ type MetadataResponse struct {
 
 // EventoRequest represents the request payload for creating/updating an event
 type EventoRequest struct {
-	IdOrganizador     int64             `json:"idOrganizador"`
-	IdCategoria       int64             `json:"idCategoria"`
-	Titulo            string            `json:"titulo"`
-	Descripcion       string            `json:"descripcion"`
-	Lugar             string            `json:"lugar"`
-	Estado            string            `json:"estado"`
-	Likes             int               `json:"likes"`
-	NoInteres         int               `json:"noInteres"`
-	CantVendidasTotal int               `json:"cantVendidasTotal"`
-	TotalRecaudado    float64           `json:"totalRecaudado"`
-	ImagenPortada     string            `json:"imagenPortada"`
-	ImagenLugar       string            `json:"imagenLugar"`
-	VideoUrl          string            `json:"videoUrl"`
-	EventDates        []EventDateRequest `json:"eventDates"`
-	Perfiles          []PerfilRequest   `json:"perfiles"`
-	Sectores          []SectorRequest   `json:"sectores"`
+	IdOrganizador     int64               `json:"idOrganizador"`
+	IdCategoria       int64               `json:"idCategoria"`
+	Titulo            string              `json:"titulo"`
+	Descripcion       string              `json:"descripcion"`
+	Lugar             string              `json:"lugar"`
+	Estado            string              `json:"estado"`
+	Likes             int                 `json:"likes"`
+	NoInteres         int                 `json:"noInteres"`
+	CantVendidasTotal int                 `json:"cantVendidasTotal"`
+	TotalRecaudado    float64             `json:"totalRecaudado"`
+	ImagenPortada     string              `json:"imagenPortada"`
+	ImagenLugar       string              `json:"imagenLugar"`
+	VideoUrl          string              `json:"videoUrl"`
+	EventDates        []EventDateRequest  `json:"eventDates"`
+	Perfiles          []PerfilRequest     `json:"perfiles"`
+	Sectores          []SectorRequest     `json:"sectores"`
 	TiposTicket       []TipoTicketRequest `json:"tiposTicket"`
-	Precios           PreciosSector     `json:"precios"`
-	Metadata          MetadataRequest   `json:"metadata"`
+	Precios           PreciosSector       `json:"precios"`
+	Metadata          MetadataRequest     `json:"metadata"`
 }
 
 // EventoResponse represents the response payload for an event
 type EventoResponse struct {
-	IdEvento          int64              `json:"idEvento"`
-	IdOrganizador     int64              `json:"idOrganizador"`
-	IdCategoria       int64              `json:"idCategoria"`
-	Titulo            string             `json:"titulo"`
-	Descripcion       string             `json:"descripcion"`
-	Lugar             string             `json:"lugar"`
-	Estado            string             `json:"estado"`
-	Likes             int                `json:"likes"`
-	NoInteres         int                `json:"noInteres"`
-	CantVendidasTotal int                `json:"cantVendidasTotal"`
-	TotalRecaudado    float64            `json:"totalRecaudado"`
-	ImagenPortada     string             `json:"imagenPortada"`
-	ImagenLugar       string             `json:"imagenLugar"`
-	VideoUrl          string             `json:"videoUrl"`
-	EventDates        []EventDateResponse `json:"eventDates"`
-	Perfiles          []PerfilResponse   `json:"perfiles"`
-	Sectores          []SectorResponse   `json:"sectores"`
+	IdEvento          int64                `json:"idEvento"`
+	IdOrganizador     int64                `json:"idOrganizador"`
+	IdCategoria       int64                `json:"idCategoria"`
+	Titulo            string               `json:"titulo"`
+	Descripcion       string               `json:"descripcion"`
+	Lugar             string               `json:"lugar"`
+	Estado            string               `json:"estado"`
+	Likes             int                  `json:"likes"`
+	NoInteres         int                  `json:"noInteres"`
+	CantVendidasTotal int                  `json:"cantVendidasTotal"`
+	TotalRecaudado    float64              `json:"totalRecaudado"`
+	ImagenPortada     string               `json:"imagenPortada"`
+	ImagenLugar       string               `json:"imagenLugar"`
+	VideoUrl          string               `json:"videoUrl"`
+	EventDates        []EventDateResponse  `json:"eventDates"`
+	Perfiles          []PerfilResponse     `json:"perfiles"`
+	Sectores          []SectorResponse     `json:"sectores"`
 	TiposTicket       []TipoTicketResponse `json:"tiposTicket"`
-	Precios           PreciosSector      `json:"precios"`
-	Metadata          MetadataResponse   `json:"metadata"`
+	Precios           PreciosSector        `json:"precios"`
+	Metadata          MetadataResponse     `json:"metadata"`
+}
+
+type TipoTicketReporte struct {
+	Nombre       string `json:"nombre"`
+	CantVendida  int64  `json:"cantVendida"`
+	CantIngresos int64  `json:"cantIngresos"`
+}
+
+type EventoReporte struct {
+	IdEvento  int64  `json:"idEvento"`
+	Titulo    string `json:"titulo"`
+	Lugar     string `json:"lugar"`
+	Capacidad int64  `json:"capacidad"`
+	//estado Agotado
+	IngresoTotal     float64             `json:"ingresoTotal"`
+	TicketsVendidos  int64               `json:"ticketsVendidos"`
+	VentasPorTipo    []TipoTicketReporte `json:"ventasPorTipo"`
+	Fechas           []EventDateResponse `json:"fechas"`
+	CargosPorServico float64             `json:"cargosPorServicio"`
+	Comisiones       float64             `json:"comisiones"`
 }

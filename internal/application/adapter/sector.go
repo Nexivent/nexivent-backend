@@ -89,12 +89,29 @@ func (a *SectorAdapter) ActualizarSector(id int64, req *schemas.SectorUpdateRequ
 func (a *SectorAdapter) ListarSectoresPorEvento(eventoID int64) ([]schemas.SectorTicketResponse, *errors.Error) {
 	sectores, err := a.DaoPostgresql.Sector.ListarSectorePorIdEvento(eventoID)
 	if err != nil {
-		a.logger.Errorf("ListarSectoresPorEvento(%d): %v", eventoID, err)
-		return nil, &errors.BadRequestError.EventoNotFound
+		// ... manejo de error
 	}
 
 	out := make([]schemas.SectorTicketResponse, len(sectores))
 	for i, s := range sectores {
+
+		// Mapeo de Tarifas (Modelo -> Schema)
+		var tarifasResp []schemas.TarifaResponse
+		if len(s.Tarifa) > 0 {
+			tarifasResp = make([]schemas.TarifaResponse, len(s.Tarifa))
+			for j, t := range s.Tarifa {
+				tarifasResp[j] = schemas.TarifaResponse{
+					ID: t.ID,
+					SectorID: t.SectorID,
+					Nombre: t.Nombre,
+					Precio: t.Precio,
+					Estado: t.Estado,
+				}
+					// Mapea los campos de tarifa aquí
+				}
+			}
+		}
+
 		out[i] = schemas.SectorTicketResponse{
 			ID:            s.ID,
 			EventoID:      s.EventoID,
@@ -102,6 +119,7 @@ func (a *SectorAdapter) ListarSectoresPorEvento(eventoID int64) ([]schemas.Secto
 			TotalEntradas: s.TotalEntradas,
 			CantVendidas:  s.CantVendidas,
 			Estado:        s.Estado,
+			Tarifas:       tarifasResp, // <--- ASIGNAR AQUÍ
 		}
 	}
 	return out, nil

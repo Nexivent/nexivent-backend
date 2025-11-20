@@ -13,8 +13,9 @@ type PerfilPersonaUpdateRequest struct {
 }
 
 type PerfilPersonaResponse struct {
-	ID       int64  `json:"idPerfilPersona"`
-	EventoID int64  `json:"idEvento"`
-	Nombre   string `json:"nombre"`
-	Estado   int16  `json:"estado"`
+	ID       int64                 `json:"idPerfilPersona"`
+	EventoID int64                 `json:"idEvento"`
+	Nombre   string                `json:"nombre"`
+	Estado   int16                 `json:"estado"`
+	Tarifas  []TarifaResponseOtros `json:"tarifas"`
 }

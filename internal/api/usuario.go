@@ -66,25 +66,21 @@ func (a *Api) RegisterUsuario(c echo.Context) error {
     }
 
 	// Estructurar la respuesta con el token y los datos del usuario
-    var response struct {
-        ID            int64       `json:"id"`
-        Nombre        string      `json:"nombre"`
-        TipoDocumento string      `json:"tipo_documento"`
-        NumDocumento  string      `json:"num_documento"`
-        Correo        string      `json:"correo"`
-        Telefono      *string     `json:"telefono"`
-        Token         model.Token `json:"token"`
-    }
-
-	response.ID = usuarioRegistrado.ID
-	response.Nombre = usuarioRegistrado.Nombre
-	response.TipoDocumento = usuarioRegistrado.TipoDocumento
-	response.NumDocumento = usuarioRegistrado.NumDocumento
-	response.Correo = usuarioRegistrado.Correo
-	response.Telefono = usuarioRegistrado.Telefono
-	response.Token = *token
-
-	return c.JSON(http.StatusCreated, response)
+    return c.JSON(http.StatusCreated, map[string]interface{}{
+        "message": "Usuario registrado exitosamente",
+        "token": map[string]interface{}{
+            "token":  token.Plaintext, // Enviar el token en texto plano
+            "expiry": token.Expiry.Unix(),
+        },
+        "usuario": map[string]interface{}{
+            "id":             usuarioRegistrado.ID,
+            "nombre":         usuarioRegistrado.Nombre,
+            "correo":         usuarioRegistrado.Correo,
+            "tipo_documento": usuarioRegistrado.TipoDocumento,
+            "num_documento":  usuarioRegistrado.NumDocumento,
+            "telefono":       usuarioRegistrado.Telefono,
+        },
+    })
 }
 
 func (a *Api) GetUsuario(c echo.Context) error {

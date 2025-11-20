@@ -96,18 +96,14 @@ func (a *SectorAdapter) ListarSectoresPorEvento(eventoID int64) ([]schemas.Secto
 	for i, s := range sectores {
 
 		// Mapeo de Tarifas (Modelo -> Schema)
-		var tarifasResp []schemas.TarifaResponse
+		var tarifasResp []schemas.TarifaResponseOtros
 		if len(s.Tarifa) > 0 {
-			tarifasResp = make([]schemas.TarifaResponse, len(s.Tarifa))
+			tarifasResp = make([]schemas.TarifaResponseOtros, len(s.Tarifa))
 			for j, t := range s.Tarifa {
-				tarifasResp[j] = schemas.TarifaResponse{
-					ID: t.ID,
-					SectorID: t.SectorID,
-					Nombre: t.Nombre,
+				tarifasResp[j] = schemas.TarifaResponseOtros{
+					ID:     t.ID,
 					Precio: t.Precio,
 					Estado: t.Estado,
-				}
-					// Mapea los campos de tarifa aquí
 				}
 			}
 		}

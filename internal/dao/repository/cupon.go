@@ -56,7 +56,7 @@ func (c *Cupon) ObtenerCuponPorIdYIdEvento(id int64, eventoId int64) (*model.Cup
 		Where("cupon.cupon_id = ? AND cupon.evento_id = ?", id, eventoId).
 		Find(&cupon)
 
-	if respuesta != nil {
+	if respuesta.Error != nil {
 		return nil, respuesta.Error
 	}
 
@@ -71,7 +71,7 @@ func (c *Cupon) ObtenerCuponesPorOrganizador(organizadorId int64) ([]*model.Cupo
 		Where("e.organizador_id  = ?", organizadorId).
 		Find(&cupones)
 
-	if respuesta != nil {
+	if respuesta.Error != nil {
 		return nil, respuesta.Error
 	}
 

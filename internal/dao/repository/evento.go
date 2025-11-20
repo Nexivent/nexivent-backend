@@ -42,7 +42,7 @@ func (e *Evento) ObtenerEventosDisponiblesSinFiltros() ([]*model.Evento, error) 
 	var horaInicio *time.Time
 
 	eventos, respuesta := e.ObtenerEventosDisponiblesConFiltros(
-		categoriaID, titulo, descripcion, lugar, fecha, horaInicio,
+		categoriaID, nil, titulo, descripcion, lugar, fecha, horaInicio,
 	)
 	if respuesta != nil {
 		return nil, respuesta
@@ -53,6 +53,7 @@ func (e *Evento) ObtenerEventosDisponiblesSinFiltros() ([]*model.Evento, error) 
 
 func (e *Evento) ObtenerEventosDisponiblesConFiltros(
 	categoriaID *int64,
+	organizadorID *int64,
 	titulo *string,
 	descripcion *string,
 	lugar *string,
@@ -76,6 +77,9 @@ func (e *Evento) ObtenerEventosDisponiblesConFiltros(
 	}
 	if horaInicio != nil {
 		query = query.Where("ef.hora_inicio = ?", *horaInicio)
+	}
+	if organizadorID != nil {
+		query = query.Where("evento.organizador_id = ?", *organizadorID)
 	}
 
 	// Filtro OR agrupado para búsqueda textual

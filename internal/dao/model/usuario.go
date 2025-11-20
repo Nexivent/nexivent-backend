@@ -44,6 +44,8 @@ const (
 	saltLength          = 16        // 16-byte salt
 )
 
+var AnonymousUser = &Usuario{}
+
 func generateRandomBytes(n int) ([]byte, error) {
 	b := make([]byte, n)
 	_, err := rand.Read(b)
@@ -72,44 +74,48 @@ func HashPassword(password string) (string, error) {
 }
 
 func VerifyPassword(password, encodedHash string) (bool, error) {
-    parts := strings.Split(encodedHash, "$")
-    if len(parts) != 6 {
-        return false, fmt.Errorf("invalid hash format")
-    }
+	parts := strings.Split(encodedHash, "$")
+	if len(parts) != 6 {
+		return false, fmt.Errorf("invalid hash format")
+	}
 
-    // parts[0] = "" (before first $)
-    // parts[1] = "argon2id"
-    // parts[2] = "v=19"
-    // parts[3] = "m=65536,t=1,p=4"
-    // parts[4] = salt (b64)
-    // parts[5] = hash (b64)
+	// parts[0] = "" (before first $)
+	// parts[1] = "argon2id"
+	// parts[2] = "v=19"
+	// parts[3] = "m=65536,t=1,p=4"
+	// parts[4] = salt (b64)
+	// parts[5] = hash (b64)
 
-    var memory uint32
-    var time uint32
-    var threads uint8
+	var memory uint32
+	var time uint32
+	var threads uint8
 
-    _, err := fmt.Sscanf(parts[3], "m=%d,t=%d,p=%d", &memory, &time, &threads)
-    if err != nil {
-        return false, err
-    }
+	_, err := fmt.Sscanf(parts[3], "m=%d,t=%d,p=%d", &memory, &time, &threads)
+	if err != nil {
+		return false, err
+	}
 
-    salt, err := base64.RawStdEncoding.DecodeString(parts[4])
-    if err != nil {
-        return false, err
-    }
+	salt, err := base64.RawStdEncoding.DecodeString(parts[4])
+	if err != nil {
+		return false, err
+	}
 
-    hash, err := base64.RawStdEncoding.DecodeString(parts[5])
-    if err != nil {
-        return false, err
-    }
+	hash, err := base64.RawStdEncoding.DecodeString(parts[5])
+	if err != nil {
+		return false, err
+	}
 
-    // Recompute the hash with the same parameters
-    computedHash := argon2.IDKey([]byte(password), salt, time, memory, threads, uint32(len(hash)))
+	// Recompute the hash with the same parameters
+	computedHash := argon2.IDKey([]byte(password), salt, time, memory, threads, uint32(len(hash)))
 
-    // Constant-time comparison
-    if subtle.ConstantTimeCompare(hash, computedHash) == 1 {
-        return true, nil
-    }
+	// Constant-time comparison
+	if subtle.ConstantTimeCompare(hash, computedHash) == 1 {
+		return true, nil
+	}
 
-    return false, nil
+	return false, nil
+}
+
+func (u *Usuario) IsAnonymous() bool {
+	return u == AnonymousUser
 }

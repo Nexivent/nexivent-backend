@@ -8,15 +8,14 @@ import (
 )
 
 type Token struct {
-	Hash      []byte `gorm:"column:token_id;primaryKey"`
-	UsuarioID int64
-	Expiry    time.Time
-	Scope     string
-
-	Usuario *Usuario `gorm:"foreignKey:UsuarioID;references:ID"`
+    Plaintext string    `json:"token"` // El token que se envía al cliente
+    Hash      []byte    `json:"-" gorm:"-"` // No serializar ni guardar en BD
+    UsuarioID int64     `json:"user_id" gorm:"-"`
+    Expiry    time.Time `json:"expiry" gorm:"-"`
+    Scope     string    `json:"scope" gorm:"-"`
 }
 
-func (Token) TableName() string { return "token" }
+//func (Token) TableName() string { return "token" }
 
 func GenerateToken(usuarioID int64, ttl time.Duration, scope string) (*Token, error) {
 	// Create a Token instance containing the user ID, expiry, and scope information.
@@ -45,12 +44,12 @@ func GenerateToken(usuarioID int64, ttl time.Duration, scope string) (*Token, er
 	// Note that by default base-32 strings may be padded at the end with the =
 	// character. We don't need this padding character for the purpose of our tokens, so
 	// we use the WithPadding(base32.NoPadding) method in the line below to omit them.
-	plaintext := base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(randomBytes)
+	token.Plaintext = base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(randomBytes)
 	// Generate a SHA-256 hash of the plaintext token string. This will be the value
 	// that we store in the `hash` field of our database table. Note that the
 	// sha256.Sum256() function returns an *array* of length 32, so to make it easier to
 	// work with we convert it to a slice using the [:] operator before storing it.
-	hash := sha256.Sum256([]byte(plaintext))
+	hash := sha256.Sum256([]byte(token.Plaintext))
 	token.Hash = hash[:]
 	return token, nil
 }

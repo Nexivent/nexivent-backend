@@ -380,6 +380,8 @@ var (
 		UnauthorizedUser    Error
 		InvalidRefreshToken Error
 		InvalidAccessToken  Error
+		InvalidCredentials  Error
+		ExpiredToken       Error
 	}{
 		UnauthorizedUser: Error{
 			Code:    "AUTHENTICATION_ERROR_001",
@@ -392,6 +394,14 @@ var (
 		InvalidAccessToken: Error{
 			Code:    "AUTHENTICATION_ERROR_003",
 			Message: "Invalid access token",
+		},
+		InvalidCredentials: Error{
+			Code:    "AUTHENTICATION_ERROR_004",
+			Message: "Invalid credentials",
+		},
+		ExpiredToken: Error{
+			Code:    "AUTHENTICATION_ERROR_005",
+			Message: "Token has expired",
 		},
 	}
 
@@ -419,6 +429,7 @@ var (
 	InternalServerError = struct {
 		Default               Error
 		PasswordHashingFailed Error
+		TokenCreationFailed    Error
 	}{
 		Default: Error{
 			Code:    "INTERNAL_SERVER_ERROR_001",
@@ -427,6 +438,10 @@ var (
 		PasswordHashingFailed: Error{
 			Code:    "INTERNAL_SERVER_ERROR_002",
 			Message: "Password hashing failed",
+		},
+		TokenCreationFailed: Error{
+			Code:    "INTERNAL_SERVER_ERROR_003",
+			Message: "Token creation failed",
 		},
 	}
 )

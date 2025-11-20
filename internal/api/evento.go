@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -63,6 +64,7 @@ func (a *Api) FetchEventos(c echo.Context) error {
 // @Accept       json
 // @Produce      json
 // @Param        categoriaId   query   int     false  "ID de categoría"
+// @Param        organizadorId query   int     false  "ID de organizador"
 // @Param        titulo        query   string  false  "Título del evento (coincidencia parcial)"
 // @Param        descripcion   query   string  false  "Descripción (coincidencia parcial)"
 // @Param        lugar         query   string  false  "Lugar del evento (coincidencia parcial)"
@@ -75,6 +77,8 @@ func (a *Api) FetchEventos(c echo.Context) error {
 // @Failure      500  {object}  errors.Error              "Internal Server Error"
 // @Router       /evento/filter [get]
 func (a *Api) FetchEventosWithFilters(c echo.Context) error {
+	fmt.Println("QUERY DEBUG:", c.QueryParams())
+
 	var categoriaID *int64
 	if catStr := c.QueryParam("categoriaId"); catStr != "" {
 		parsed, err := strconv.ParseInt(catStr, 10, 64)
@@ -82,6 +86,15 @@ func (a *Api) FetchEventosWithFilters(c echo.Context) error {
 			return errors.HandleError(errors.UnprocessableEntityError.InvalidParsingInteger, c)
 		}
 		categoriaID = &parsed
+	}
+
+	var organizadorID *int64
+	if orgStr := c.QueryParam("organizadorId"); orgStr != "" {
+		parsed, err := strconv.ParseInt(orgStr, 10, 64)
+		if err != nil {
+			return errors.HandleError(errors.UnprocessableEntityError.InvalidParsingInteger, c)
+		}
+		organizadorID = &parsed
 	}
 
 	var titulo *string
@@ -119,6 +132,7 @@ func (a *Api) FetchEventosWithFilters(c echo.Context) error {
 
 	response, err := a.BllController.Evento.FetchEventosWithFilters(
 		categoriaID,
+		organizadorID,
 		titulo,
 		descripcion,
 		lugar,
@@ -148,10 +162,22 @@ func (a *Api) CreateEvento(c echo.Context) error {
 	// TODO: Add access token validation (from here we will get the `usuarioCreacion` param)
 	usuarioCreacion := int64(1) // Hardcoded for now///////////////////////
 
+	// hashToken := c.Request().Header.Get("Authorization")
+	// token, err := a.BllController.Token.ValidateToken(hashToken)
+	// if err != nil {
+	// 	return errors.HandleError(*err, c)
+	// }
+
+	// usuarioCreacion = token.UsuarioID
+
 	var request schemas.EventoRequest
 	if err := c.Bind(&request); err != nil {
 		return errors.HandleError(errors.UnprocessableEntityError.InvalidRequestBody, c)
 	}
+
+	// if request.IdOrganizador != usuarioCreacion {
+	// 	return errors.HandleError(errors.AuthenticationError.UnauthorizedUser, c)
+	// }
 
 	response, newErr := a.BllController.Evento.CreateEvento(request, usuarioCreacion)
 	if newErr != nil {

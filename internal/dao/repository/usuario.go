@@ -208,3 +208,15 @@ func (c *Usuario) ObtenerUsuariosPorRolID(rolID int64) ([]*model.Usuario, error)
 	}
 	return usuarios, nil
 }
+
+func (c *Usuario) ObtenerUsuarioPorNumDocumento(numDocumento string) (*model.Usuario, error) {
+	var user model.Usuario
+
+	result := c.PostgresqlDB.
+		Where("num_documento = ?", numDocumento).
+		First(&user)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &user, nil
+}

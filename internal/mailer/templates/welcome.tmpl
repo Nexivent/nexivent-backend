@@ -1,0 +1,32 @@
+{{define "subject"}}Welcome to Greenlight!{{end}}
+
+{{define "plainBody"}}
+Bienvenido,
+
+Somos la mejor ticketera del mundo mundial.
+Este es tu código de activación: {{.CodigoVerificacion}}
+
+Saludos,
+
+Nexivent Team
+{{end}}
+
+{{define "htmlBody"}}
+<!doctype html>
+<html>
+
+<head>
+	<meta name="viewport" content="width=device-width" />
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+</head>
+
+<body>
+	<p>Bienvenido,</p>
+	<p>Somos la mejor ticketera del mundo</p>
+	<p>Este es tu código de activación: {{.CodigoVerificacion}}</p>
+	<p>Saludos,</p>
+	<p>Nexivent Team</p>
+</body>
+
+</html>
+{{end}}

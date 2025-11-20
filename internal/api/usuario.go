@@ -53,10 +53,36 @@ func (a *Api) RegisterUsuario(c echo.Context) error {
 	}
 	usuario.Contrasenha = password
 
-	response, newErr := a.BllController.Usuario.RegisterUsuario(&usuario)
-	if newErr != nil {
-		return errors.HandleError(*newErr, c)
-	}
+	usuarioRegistrado, newErr := a.BllController.Usuario.RegisterUsuario(&usuario)
+    if newErr != nil {
+        return errors.HandleError(*newErr, c)
+    }
+
+	// Generar token JWT después del registro exitoso
+    token, tokenErr := a.BllController.Token.CreateToken(usuarioRegistrado.ID, 24*time.Hour, "authentication")
+    if tokenErr != nil {
+        a.Logger.Errorf("Error al generar token para usuario %d: %v", usuarioRegistrado.ID, tokenErr)
+        return errors.HandleError(*tokenErr, c)
+    }
+
+	// Estructurar la respuesta con el token y los datos del usuario
+    var response struct {
+        ID            int64       `json:"id"`
+        Nombre        string      `json:"nombre"`
+        TipoDocumento string      `json:"tipo_documento"`
+        NumDocumento  string      `json:"num_documento"`
+        Correo        string      `json:"correo"`
+        Telefono      *string     `json:"telefono"`
+        Token         model.Token `json:"token"`
+    }
+
+	response.ID = usuarioRegistrado.ID
+	response.Nombre = usuarioRegistrado.Nombre
+	response.TipoDocumento = usuarioRegistrado.TipoDocumento
+	response.NumDocumento = usuarioRegistrado.NumDocumento
+	response.Correo = usuarioRegistrado.Correo
+	response.Telefono = usuarioRegistrado.Telefono
+	response.Token = *token
 
 	return c.JSON(http.StatusCreated, response)
 }

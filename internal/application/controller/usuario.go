@@ -25,14 +25,31 @@ func (uc *UsuarioController) RegisterUsuario(usuario *model.Usuario) (model.Usua
 		case err == gorm.ErrRecordNotFound:
 			// No existe un usuario con este correo, continuar
 		case err != nil:
+			uc.Logger.Error(fmt.Sprintf("Error al verificar correo existente: %v", err))
 			return err
 		case existingUser != nil:
+			uc.Logger.Warn(fmt.Sprintf("Intento de registro con correo existente: %s", usuario.Correo))
 			return fmt.Errorf("el correo existe")
 		}
 
+		// Verificar si ya existe un usuario con el mismo número de documento
+        existingDoc, err := txRepo.Usuario.ObtenerUsuarioPorNumDocumento(usuario.NumDocumento)
+        switch {
+        case err == gorm.ErrRecordNotFound:
+            // No existe un usuario con este documento, continuar
+        case err != nil:
+            uc.Logger.Error(fmt.Sprintf("Error al verificar documento existente: %v", err))
+            return err
+        case existingDoc != nil:
+            uc.Logger.Warn(fmt.Sprintf("Intento de registro con documento existente: %s", usuario.NumDocumento))
+            return fmt.Errorf("el número de documento ya está registrado")
+        }
+
 		// Crear el usuario
+		uc.Logger.Info(fmt.Sprintf("Creando usuario: %s", usuario.Correo))
 		err = txRepo.Usuario.CrearUsuario(usuario)
 		if err != nil {
+			uc.Logger.Error(fmt.Sprintf("Error al crear usuario: %v", err))
 			return err
 		}
 
@@ -55,8 +72,25 @@ func (uc *UsuarioController) RegisterUsuario(usuario *model.Usuario) (model.Usua
 	})
 	
 	if err != nil {
-		return model.Usuario{}, &errors.InternalServerError.Default
-
+		uc.Logger.Error(fmt.Sprintf("Error en transacción de registro: %v", err))
+        // Retornar errores más específicos
+        if err.Error() == "el correo ya está registrado" {
+            return model.Usuario{}, &errors.Error{
+                Code:    "DUPLICATE_EMAIL",
+                Message: "El correo electrónico ya está registrado",
+            }
+        }
+        if err.Error() == "el número de documento ya está registrado" {
+            return model.Usuario{}, &errors.Error{
+                Code:    "DUPLICATE_DOCUMENT",
+                Message: "El número de documento ya está registrado",
+            }
+        }
+        if err.Error() == "rol por defecto 'ASISTENTE' no encontrado" {
+            return model.Usuario{}, &errors.InternalServerError.Default
+        }
+        
+        return model.Usuario{}, &errors.InternalServerError.Default
 	}
 	return *usuario, nil
 }

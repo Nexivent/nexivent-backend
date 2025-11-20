@@ -128,6 +128,7 @@ func (a *TipoTicketAdapter) ActualizarTipoTicket(id int64, req *schemas.TipoTick
 }
 
 func (a *TipoTicketAdapter) ListarTiposTicketPorEvento(eventoID int64) ([]schemas.TipoTicketTicketResponse, *errors.Error) {
+	// Llamada al DAO (Recuerda el .Preload("Tarifa"))
 	list, err := a.DaoPostgresql.TipoDeTicket.ListarTipoTicketPorEventoID(eventoID)
 	if err != nil {
 		a.logger.Errorf("ListarTiposTicketPorEvento(%d): %v", eventoID, err)
@@ -136,6 +137,22 @@ func (a *TipoTicketAdapter) ListarTiposTicketPorEvento(eventoID int64) ([]schema
 
 	out := make([]schemas.TipoTicketTicketResponse, len(list))
 	for i, t := range list {
+
+		// --- INICIO: Mapeo de Tarifas ---
+		var tarifasResp []schemas.TarifaResponseOtros
+		if len(t.Tarifa) > 0 {
+			tarifasResp = make([]schemas.TarifaResponseOtros, len(t.Tarifa))
+			for j, tar := range t.Tarifa {
+				tarifasResp[j] = schemas.TarifaResponseOtros{
+					ID:     tar.ID,
+					Precio: tar.Precio, // Ajusta según los campos reales
+					Estado: tar.Estado, // Ejemplo
+					// Mapea aquí el resto de campos de tarifa
+				}
+			}
+		}
+		// --- FIN: Mapeo de Tarifas ---
+
 		out[i] = schemas.TipoTicketTicketResponse{
 			ID:       t.ID,
 			EventoID: t.EventoID,
@@ -143,6 +160,7 @@ func (a *TipoTicketAdapter) ListarTiposTicketPorEvento(eventoID int64) ([]schema
 			FechaIni: t.FechaIni.Format("2006-01-02"),
 			FechaFin: t.FechaFin.Format("2006-01-02"),
 			Estado:   t.Estado,
+			Tarifas:  tarifasResp, // Asignamos el array mapeado
 		}
 	}
 	return out, nil

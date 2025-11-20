@@ -458,3 +458,137 @@ func (e *Evento) GetPostgresqlEventoById(eventoID int64) (*schemas.EventoRespons
 
 	return response, nil
 }
+
+func (e *Evento) GetPostgresqlReporteEvento(
+	eventoID *int64,
+	fechaDesde *time.Time,
+	fechaHasta *time.Time,
+) ([]*schemas.EventoReporte, *errors.Error) {
+
+	// 1️⃣ Obtener evento base
+	evento, err := e.DaoPostgresql.Evento.ObtenerEventoPorID(eventoID)
+	if err != nil {
+		return nil, &errors.BadRequestError.EventoNotFound
+	}
+
+	// 2️⃣ Obtener fechas del evento
+	fechas, err := e.DaoPostgresql.Evento.ObtenerFechasEvento(eventoID, fechaDesde, fechaHasta)
+	if err != nil {
+		return nil, &errors.InternalServerError.Default
+	}
+
+	// 3️⃣ Ventas por tipo (General, VIP, Preventa, etc)
+	ventasPorTipo, err := e.DaoPostgresql.Evento.ObtenerVentasPorTipo(eventoID, fechaDesde, fechaHasta)
+	if err != nil {
+		return nil, &errors.InternalServerError.Default
+	}
+
+	// 4️⃣ Cargos y comisiones
+	cargos, comisiones, err := e.DaoPostgresql.Evento.ObtenerCargosYComisiones(eventoID, fechaDesde, fechaHasta)
+	if err != nil {
+		return nil, &errors.InternalServerError.Default
+	}
+
+	// 5️⃣ Calcular totales
+	var totalVendidos int64
+	var totalIngresos float64
+
+	var ventasTipo []schemas.TipoTicketReporte
+
+	for _, v := range ventasPorTipo {
+		ventasTipo = append(ventasTipo, schemas.TipoTicketReporte{
+			Nombre:       v.Nombre,
+			CantVendida:  v.Cantidad,
+			CantIngresos: int64(v.Ingresos),
+		})
+
+		totalVendidos += v.Cantidad
+		totalIngresos += v.Ingresos
+	}
+
+	// 6️⃣ Preparar respuesta final
+	reporte := &schemas.EventoReporte{
+		IdEvento:         evento.IdEvento,
+		Titulo:           evento.Titulo,
+		Lugar:            evento.Lugar,
+		Capacidad:        evento.Capacidad,
+		IngresoTotal:     totalIngresos,
+		TicketsVendidos:  totalVendidos,
+		VentasPorTipo:    ventasTipo,
+		Fechas:           fechas,
+		CargosPorServico: cargos,
+		Comisiones:       comisiones,
+	}
+
+	return reporte, nil
+}
+
+func (a *Evento) GenerarReporteAdministrativo(req schemas.AdminReportRequest) (*schemas.AdminReportResponse, *errors.Error) {
+
+	// 1. Validaciones y Defaults
+	limit := 100
+	if req.Limit > 0 {
+		limit = req.Limit
+	}
+
+	// 2. Conversión de Fechas (ISO String -> Time)
+	var fechaInicio, fechaFin *time.Time
+	if req.FechaInicio != nil && *req.FechaInicio != "" {
+		t, err := time.Parse(time.RFC3339, *req.FechaInicio)
+		if err != nil {
+			return nil, &errors.UnprocessableEntityError.InvalidDateFormat
+		}
+		fechaInicio = &t
+	}
+	if req.FechaFin != nil && *req.FechaFin != "" {
+		t, err := time.Parse(time.RFC3339, *req.FechaFin)
+		if err != nil {
+			return nil, &errors.UnprocessableEntityError.InvalidDateFormat
+		}
+		fechaFin = &t
+	}
+
+	// 3. Conversión de Estado (String -> Int16 para DB)
+	// Asumiendo: 0=BORRADOR, 1=PUBLICADO, 2=CANCELADO (Ajusta según tu modelo real)
+	var estadoInt *int16
+	if req.Estado != "" {
+		val := convert.MapEstadoToInt16(req.Estado) // Tu función utilitaria existente
+		estadoInt = &val
+	}
+
+	// 4. Llamada al DAO
+	reporte, err := a.DaoPostgresql.Evento.GenerarReporteAdmin(
+		fechaInicio,
+		fechaFin,
+		req.IdCategoria,
+		req.IdOrganizador,
+		estadoInt,
+		limit,
+	)
+
+	if err != nil {
+		a.logger.Errorf("GenerarReporteAdmin Error: %v", err)
+		return nil, &errors.InternalServerError.Default
+	}
+
+	// 5. Manejo de "Sin Datos" (204/404)
+	if reporte == nil {
+		// Esto retornará JSON { "code": "NO_DATA", "message": "..." } con Status 404
+		return nil, &errors.ObjectNotFoundError.ReportNoDataFound
+	}
+
+	// 6. Mapeo Final de Estados (Int -> String) para la lista de eventos
+	// El DAO devolvió el int, ahora lo pasamos a string para el JSON
+	for i := range reporte.Events {
+		// Aquí asumimos que en DAO escaneaste evento_estado en un campo temporal o usas el helper
+		// Si el scan falló en mapear string directo, hazlo aquí:
+		// reporte.Events[i].Estado = convert.MapEstadoToString(reporte.Events[i].EstadoInt)
+
+		// Como ejemplo simple, si ya viene string o lo mapeas:
+		if reporte.Events[i].Estado == "" {
+			reporte.Events[i].Estado = "PUBLICADO" // Fallback o lógica real
+		}
+	}
+
+	return reporte, nil
+}

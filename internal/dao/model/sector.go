@@ -16,7 +16,8 @@ type Sector struct {
 	UsuarioModificacion *int64
 	FechaModificacion   *time.Time
 
-	Evento *Evento `gorm:"foreignKey:EventoID;references:evento_id"`
+	Tarifa []Tarifa `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	Evento *Evento  `gorm:"foreignKey:EventoID;references:evento_id"`
 }
 
 func (Sector) TableName() string { return "sector" }

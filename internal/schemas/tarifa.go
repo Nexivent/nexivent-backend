@@ -24,3 +24,9 @@ type TarifaResponse struct {
 	Precio            float64 `json:"precio"`
 	Estado            int16   `json:"estado"`
 }
+
+type TarifaResponseOtros struct {
+	ID     int64   `json:"idTarifa"`
+	Precio float64 `json:"precio"`
+	Estado int16   `json:"estado"`
+}

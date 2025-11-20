@@ -1,15 +1,13 @@
 package schemas
 
-// =============== ENTRADAS / ITEMS DE LA ORDEN ===============
-
 // Item de entrada dentro del hold
 // "entradas": [ { "idTarifa": "", "cantidad": "" } ]
 type EntradaOrdenRequest struct {
 	IdTarifa int64 `json:"idTarifa"`
+	IdPerfil int64 `json:"idPerfil"`
+	IdSector int64 `json:"idSector"`
 	Cantidad int64 `json:"cantidad"`
 }
-
-// =============== POST /api/orders/hold ===============
 
 // Request:
 // {
@@ -45,8 +43,6 @@ type CrearOrdenTemporalResponse struct {
 	TTLSeconds int64   `json:"ttlSeconds"` // segundos
 }
 
-// =============== GET /api/orders/{orderId}/hold ===============
-
 // Response 200:
 // {
 //   "orderId": "",
@@ -64,8 +60,6 @@ type ObtenerHoldResponse struct {
 	ExpiresAt     string  `json:"expiresAt"` // RFC3339
 	Total         float64 `json:"total"`
 }
-
-// =============== POST /api/orders/{orderId}/confirm ===============
 
 // Request:
 // { "paymentId": "" }

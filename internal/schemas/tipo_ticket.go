@@ -16,10 +16,11 @@ type TipoTicketUpdateRequest struct {
 }
 
 type TipoTicketTicketResponse struct {
-	ID       int64  `json:"idTipoTicket"`
-	EventoID int64  `json:"idEvento"`
-	Nombre   string `json:"nombre"`
-	FechaIni string `json:"fechaIni"`
-	FechaFin string `json:"fechaFin"`
-	Estado   int16  `json:"estado"`
+	ID       int64                 `json:"idTipoTicket"`
+	EventoID int64                 `json:"idEvento"`
+	Nombre   string                `json:"nombre"`
+	FechaIni string                `json:"fechaIni"`
+	FechaFin string                `json:"fechaFin"`
+	Estado   int16                 `json:"estado"`
+	Tarifas  []TarifaResponseOtros `json:"tarifas"`
 }

@@ -28,8 +28,6 @@ func (a *Api) RegisterRoutes(configEnv *config.ConfigEnv) {
 	corsConfig := middleware.CORSConfig{
 		AllowOrigins:     []string{"*"}, // TODO: allow only authorized origins
 		AllowCredentials: true,
-		AllowHeaders:     []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
-		AllowMethods:     []string{echo.GET, echo.POST, echo.PUT, echo.DELETE, echo.OPTIONS},
 	}
 	a.Echo.Use(middleware.CORSWithConfig(corsConfig))
 
@@ -42,35 +40,27 @@ func (a *Api) RegisterRoutes(configEnv *config.ConfigEnv) {
 	healthCheck := a.Echo.Group("/health-check")
 	healthCheck.GET("/", a.HealthCheck)
 
-	// Document validation endpoint
-	a.Echo.POST("/validar-documento", a.ValidarDocumento)
-
-	// Usuario endpoints
-	a.Echo.POST("/register", a.RegisterUsuario)
-
-	// Autenticación
-	a.Echo.POST("/login", a.AuthenticateUsuario)
-
 	// Eventos endpoints
 	a.Echo.GET("/evento/", a.FetchEventos)
 	a.Echo.GET("/evento/:eventoId/", a.GetEvento)
 	a.Echo.POST("/evento/", a.CreateEvento) //falta usuario creacion
-	a.Echo.GET("/evento/filter", a.FetchEventosWithFilters)
 
 	a.Echo.GET("/categorias/", a.FetchCategorias)
 	a.Echo.POST("/categoria/", a.CreateCategoria)
 	a.Echo.GET("/categoria/:categoriaId/", a.GetCategoria)
-
+	// 2. Reporte Administrativo Global (Dashboard BI)
+	a.Echo.GET("/api/admin/reports", a.GetAdminReports)
 	// Media uploads
 	a.Echo.POST("/media/upload-url", a.GenerateUploadURL)
 
-	// Cupón
+	//Cupon
 	a.Echo.POST("/cupon/:usuarioCreacion", a.CreateCupon)
 	a.Echo.PUT("/cupon/:usuarioModificacion", a.UpdateCupon)
-	a.Echo.GET("/cupon/organizador/:organizadorId", a.FetchCuponPorOrganizador)
 
+	a.Echo.POST("/register", a.RegisterUsuario)
 	a.Echo.GET("/usuario/:id", a.GetUsuario)
 
+	//Orden de compra
 	a.Echo.POST("/orden_de_compra/hold", a.CrearSesionOrdenTemporal)
 	a.Echo.GET("/orden_de_compra/:orderId/hold", a.ObtenerEstadoHold)
 	a.Echo.POST("/orden_de_compra/:orderId/confirm", a.ConfirmarOrden)
@@ -98,16 +88,6 @@ func (a *Api) RegisterRoutes(configEnv *config.ConfigEnv) {
 	a.Echo.POST("/api/tickets/issue", a.EmitirTickets)
 	a.Echo.POST("/api/tickets/cancel", a.CancelarTickets)
 
-	//Roles
-	a.Echo.GET("/roles/", a.FetchRoles)
-	a.Echo.GET("/rol/:nombre/name", a.GetRolPorNombre)
-	a.Echo.GET("/rol/:usuarioId/user", a.GetRolPorUsuario)
-	a.Echo.POST("/rol/:userId/update/:rolId", a.UpdateRol)
-
-	//roles_usuario
-	a.Echo.GET("/api/users/:id/roles", a.ListarRolesDeUsuario)
-	a.Echo.POST("/api/roles/assign", a.CreateRolUser)
-	a.Echo.DELETE("/api/roles/revoke", a.DeleteRolUser)
 }
 
 func (a *Api) RunApi(configEnv *config.ConfigEnv) {

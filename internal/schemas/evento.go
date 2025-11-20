@@ -24,8 +24,8 @@ type EventDateRequest struct {
 type EventDateResponse struct {
 	IdFechaEvento int64  `json:"idFechaEvento"`
 	IdFecha       int64  `json:"idFecha"`
-	Fecha         string `json:"fecha"`
-	HoraInicio    string `json:"horaInicio"`
+	Fecha         string `json:"fecha"`      //fecha del evento
+	HoraInicio    string `json:"horaInicio"` //hora de inicio del evento
 	HoraFin       string `json:"horaFin"`
 }
 
@@ -141,20 +141,24 @@ type EventoResponse struct {
 
 type TipoTicketReporte struct {
 	Nombre       string `json:"nombre"`
-	CantVendida  int64  `json:"cantVendida"`
-	CantIngresos int64  `json:"cantIngresos"`
+	CantVendida  int64  `json:"cantVendida"`  //cantidad de tickets vendidos por este tipo
+	CantIngresos int64  `json:"cantIngresos"` //cant de dinero recaudado por tipo de ticket
 }
-
+type EventDateReporte struct {
+	Fecha      string `json:"fecha"`      //fecha del evento
+	HoraInicio string `json:"horaInicio"` //hora de inicio del evento
+	HoraFin    string `json:"horaFin"`
+}
 type EventoReporte struct {
 	IdEvento  int64  `json:"idEvento"`
 	Titulo    string `json:"titulo"`
 	Lugar     string `json:"lugar"`
 	Capacidad int64  `json:"capacidad"`
 	//estado Agotado
-	IngresoTotal     float64             `json:"ingresoTotal"`
-	TicketsVendidos  int64               `json:"ticketsVendidos"`
+	IngresoTotal     float64             `json:"ingresoTotal"`    //dinero total recaudado por la venta de tickets
+	TicketsVendidos  int64               `json:"ticketsVendidos"` //cant de tickets vendidos
 	VentasPorTipo    []TipoTicketReporte `json:"ventasPorTipo"`
-	Fechas           []EventDateResponse `json:"fechas"`
-	CargosPorServico float64             `json:"cargosPorServicio"`
-	Comisiones       float64             `json:"comisiones"`
+	Fechas           []EventDateReporte  `json:"fechas"`
+	CargosPorServico float64             `json:"cargosPorServicio"` //el total de fee
+	Comisiones       float64             `json:"comisiones"`        // lo que ganamos nosotros como plataforma que es el 5%
 }

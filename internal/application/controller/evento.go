@@ -60,3 +60,13 @@ func (ec *EventoController) FetchEventosWithFilters(
 func (ec *EventoController) GetEventoById(eventoID int64) (*schemas.EventoResponse, *errors.Error) {
 	return ec.EventoAdapter.GetPostgresqlEventoById(eventoID)
 }
+
+// GetReporteEvento genera el reporte de un evento por ID + filtros opcionales.
+func (ec *EventoController) GetReporteEvento(
+	eventoID *int64,
+	fechaDesde *time.Time,
+	fechaHasta *time.Time,
+) ([]*schemas.EventoReporte, *errors.Error) {
+
+	return ec.EventoAdapter.GetPostgresqlReporteEvento(eventoID, fechaDesde, fechaHasta)
+}

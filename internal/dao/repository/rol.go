@@ -96,6 +96,17 @@ func (r *Rol) ObtenerRolPorNombre(nombre string) (*model.Rol, error) {
 	return &rol, nil
 }
 
+func (r *Rol) ObtenerRolPorID(idRol int64) (*model.Rol, error) {
+	var rol model.Rol
+	result := r.PostgresqlDB.
+		Where("rol_id = ?", idRol).
+		First(&rol)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &rol, nil
+}
+
 func (r *Rol) ObtenerRolesDeUsuario(usuarioID int64) ([]*model.Rol, error) {
 	var roles []*model.Rol
 	res := r.PostgresqlDB.

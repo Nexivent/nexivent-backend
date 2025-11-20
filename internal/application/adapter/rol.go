@@ -83,7 +83,7 @@ func (r *Rol) GetPostgresqlRolPorUsuario(usuarioID int64) ([]*schemas.RolRespons
 		response[i] = &schemas.RolResponse{
 			ID:          ro.ID,
 			Nombre:     ro.Nombre,
-			FechaCreacion: ro.FechaCreacion,
+			//FechaCreacion: ro.FechaCreacion,
 		}
 
 	}
@@ -105,7 +105,7 @@ func (r *Rol) ActualizarPostgresqlRol(id int64,
 	rolResponse := &schemas.RolResponse {
 		ID: rolModel.ID,
 		Nombre: rolModel.Nombre,
-		UsuarioModificacion: rolModel.UsuarioModificacion,
+		//UsuarioModificacion: rolModel.UsuarioModificacion,
 	}
 
 	return rolResponse, nil

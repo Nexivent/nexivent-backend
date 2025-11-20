@@ -43,21 +43,23 @@ func (r *RolUsuarioRepo) AsignarRolAUsuario(
 	// INSERT ... ON CONFLICT (usuario_id, rol_id) DO UPDATE SET estado=1, audit...
 	err := r.PostgresqlDB.
 		Clauses(clause.OnConflict{
-			Columns: []clause.Column{{Name: "usuario_id"}, {Name: "rol_id"}},
+			Columns: []clause.Column{
+				{Name: "usuario_id"},
+				{Name: "rol_id"},
+			},
 			DoUpdates: clause.Assignments(map[string]any{
 				"estado":               int16(1),
 				"usuario_modificacion": createdBy,
 				"fecha_modificacion":   now,
 			}),
 		}).
-		Clauses(clause.Returning{}).
 		Create(ru).Error
+	
 	if err != nil {
 		return nil, err
 	}
 	return ru, nil
 }
-
 // Desactivar asignación (pasar 1 a 0) y no hacer nada si ya estaba en 0
 func (r *RolUsuarioRepo) QuitarRolDeUsuario(
 	usuarioID int64,
@@ -72,6 +74,25 @@ func (r *RolUsuarioRepo) QuitarRolDeUsuario(
 			"usuario_modificacion": updatedBy,
 			"fecha_modificacion":   time.Now(),
 		})
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
+}
+
+//borrado fisico god no como la mrd de arriba
+func (r *RolUsuarioRepo) BorrarRolDeUsuario(
+	usuarioID int64,
+	rolID int64,
+	updatedBy int64,
+) error {
+	result := r.PostgresqlDB.
+		Where("usuario_id = ? AND rol_id = ?", usuarioID, rolID).
+		Delete(&model.RolUsuario{})
+	
 	if result.Error != nil {
 		return result.Error
 	}

@@ -27,6 +27,7 @@ type ControllerCollection struct {
 	Token         *TokenController
 	Rol           *RolController
 	ValidacionDocumento *ValidacionDocumentoController
+	RolUsuario    *RolUsuarioController
 }
 
 // Creates BLL controller collection
@@ -52,6 +53,7 @@ func NewControllerCollection(
 	ticketAdapter := adapter.NewTicketAdapter(logger, daoPostgresql)
 	rolAdapter := adapter.NewRolAdapter(logger, daoPostgresql)
 	validacionDocumentoAdapter := adapter.NewValidacionDocumentoAdapter(logger, configEnv.FactilizaToken)
+	rolUsuarioAdapter := adapter.NewRolUsuarioAdapter(logger, daoPostgresql)
 
 	// Services
 	s3Storage, storageErr := storage.NewS3Storage(logger, configEnv)
@@ -71,6 +73,7 @@ func NewControllerCollection(
 	ticketController := NewTicketController(logger, ticketAdapter)
 	rolController := NewRolController(logger, rolAdapter)
 	validacionDocumentoController := NewValidacionDocumentoController(validacionDocumentoAdapter, logger)
+	rolUsuarioController := NewRolUsuarioController(logger, rolUsuarioAdapter)
 
 	var mediaController *MediaController
 	if s3Storage != nil {
@@ -103,5 +106,6 @@ func NewControllerCollection(
 		},
 		Rol: rolController,
 		ValidacionDocumento: validacionDocumentoController,
+		RolUsuario: rolUsuarioController,
 	}, nexiventPsqlDB
 }

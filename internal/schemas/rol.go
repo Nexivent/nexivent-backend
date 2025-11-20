@@ -18,10 +18,10 @@ type RolRequest struct {
 type RolResponse struct {
 	ID                  int64  `json:"id"`
 	Nombre              string `json:"nombre"`
-	UsuarioCreacion     *int64
-	FechaCreacion       time.Time `json:"fecha"`
-	UsuarioModificacion *int64
-	FechaModificacion   *time.Time
+	//UsuarioCreacion     *int64
+	//FechaCreacion       time.Time `json:"fecha"`
+	//UsuarioModificacion *int64
+	//FechaModificacion   *time.Time
 
 	//Usuarios []RolUsuario
 }

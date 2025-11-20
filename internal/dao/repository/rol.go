@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"errors"
 	"time"
 
 	"github.com/Nexivent/nexivent-backend/internal/dao/model"
@@ -33,17 +34,17 @@ func (r *Rol) ObtenerRoles() ([]*model.Rol, error) {
 }
 
 // Crear rol (sugiere UNIQUE(nombre) en BD)
-// func (r *Rol) CrearRol(rol *model.Rol) error {
-// 	if rol == nil {
-// 		return errors.New("CrearRol: rol es nil")
-// 	}
-// 	result := r.PostgresqlDB.Create(rol)
-// 	if result.Error != nil {
-// 		r.logger.Errorf("CrearRol: %v", result.Error)
-// 		return result.Error
-// 	}
-// 	return nil
-// }
+func (r *Rol) CrearRol(rol *model.Rol) error {
+	if rol == nil {
+		return errors.New("CrearRol: rol es nil")
+	}
+	result := r.PostgresqlDB.Create(rol)
+	if result.Error != nil {
+		r.logger.Errorf("CrearRol: %v", result.Error)
+		return result.Error
+	}
+	return nil
+}
 
 // Actualizar nombre con auditoría
 func (r *Rol) ActualizarRol(

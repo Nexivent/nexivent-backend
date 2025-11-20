@@ -10,27 +10,35 @@ import (
 	"github.com/Nexivent/nexivent-backend/internal/dao/model"
 	"github.com/Nexivent/nexivent-backend/internal/dao/repository"
 	"github.com/Nexivent/nexivent-backend/logging"
-	setupDB "github.com/Nexivent/nexivent-backend/utils"
 	"gorm.io/gorm"
 )
 
 func main() {
-	logger := logging.NewLoggerMock()
+	//logger := logging.NewLoggerMock()
+	logger := logging.NewLogger("Migrations", "Version 1.0", logging.FormatText, 4)
 	envSettings := config.NuevoConfigEnv(logger)
 
 	entidad, nexiventPsqlDB := repository.NewNexiventPsqlEntidades(logger, envSettings)
 
-	if isLocalhost(envSettings.PostgresHost) {
-		setupDB.ClearPostgresqlDatabase(logger, nexiventPsqlDB, envSettings, nil)
-	} else {
-		log.Printf("ℹ️ Saltando borrado completo porque el host no es local (%s)\n", envSettings.PostgresHost)
-	}
+	//if isLocalhost(envSettings.PostgresHost) {
+	//	setupDB.ClearPostgresqlDatabase(logger, nexiventPsqlDB, envSettings, nil)
+	//} else {
+	//	log.Printf("ℹ️ Saltando borrado completo porque el host no es local (%s)\n", envSettings.PostgresHost)
+	//}
+//
+	//if err := seedDatabase(logger, nexiventPsqlDB, entidad); err != nil {
+	//	log.Fatalf("❌ Error sembrando datos: %v", err)
+	//}
+//
+	//fmt.Println("✅ Base de datos inicializada con datos semilla.")
+	// 3. SIEMPRE ejecutar seeds independientemente de si es local o no
+    logger.Info("🌱 Iniciando proceso de seeds...")
+    
+    if err := seedDatabase(logger, nexiventPsqlDB, entidad); err != nil {
+        log.Fatalf("❌ Error al ejecutar seeds: %v", err)
+    }
 
-	if err := seedDatabase(logger, nexiventPsqlDB, entidad); err != nil {
-		log.Fatalf("❌ Error sembrando datos: %v", err)
-	}
-
-	fmt.Println("✅ Base de datos inicializada con datos semilla.")
+    logger.Info("✅ Base de datos inicializada con datos semilla.")
 }
 
 func seedDatabase(
@@ -38,14 +46,22 @@ func seedDatabase(
 	db *gorm.DB,
 	entidad *repository.NexiventPsqlEntidades,
 ) error {
-	var eventosExistentes int64
-	if err := db.Model(&model.Evento{}).Count(&eventosExistentes).Error; err != nil {
-		return fmt.Errorf("no se pudo contar eventos existentes: %w", err)
-	}
-	if eventosExistentes > 0 {
-		logger.Infof("Seed omitido: la BD ya tiene %d eventos", eventosExistentes)
-		return nil
-	}
+	//var eventosExistentes int64
+	//if err := db.Model(&model.Evento{}).Count(&eventosExistentes).Error; err != nil {
+	//	return fmt.Errorf("no se pudo contar eventos existentes: %w", err)
+	//}
+	//if eventosExistentes > 0 {
+	//	logger.Infof("Seed omitido: la BD ya tiene %d eventos", eventosExistentes)
+	//	return nil
+	//}
+
+    // Crear roles primero usando el repositorio
+    logger.Info("Iniciando seed de roles...")
+    if err := seedRoles(logger, entidad); err != nil {
+        logger.Errorf("Error al crear roles: %v", err)
+        return fmt.Errorf("error en seedRoles: %w", err)
+    }
+    logger.Info("Roles creados exitosamente")
 
 	usuarios, err := seedUsuarios(entidad)
 	if err != nil {
@@ -63,6 +79,63 @@ func seedDatabase(
 	}
 
 	return nil
+}
+
+func seedRoles(logger logging.Logger, entidad *repository.NexiventPsqlEntidades) error {
+    now := time.Now()
+	roles := []struct {
+        nombre string
+        rol    *model.Rol
+    }{
+        {
+            nombre: "ASISTENTE",
+            rol: &model.Rol{
+                Nombre:        "ASISTENTE",
+                FechaCreacion: now,
+            },
+        },
+        {
+            nombre: "ADMINISTRADOR",
+            rol: &model.Rol{
+                Nombre:        "ADMINISTRADOR",
+                FechaCreacion: now,
+            },
+        },
+        {
+            nombre: "ORGANIZADOR",
+            rol: &model.Rol{
+                Nombre:        "ORGANIZADOR",
+                FechaCreacion: now,
+            },
+        },
+    }
+
+    for _, r := range roles {
+        logger.Infof("Verificando rol: %s", r.nombre)
+        
+        // Verificar si el rol ya existe
+        existente, err := entidad.Roles.ObtenerRolPorNombre(r.nombre)
+        
+        if err != nil && err.Error() != "record not found" {
+            logger.Errorf("Error al buscar rol %s: %v", r.nombre, err)
+            return fmt.Errorf("error al verificar rol %s: %w", r.nombre, err)
+        }
+        
+        if existente != nil {
+            logger.Infof("✅ Rol %s ya existe con ID: %d", r.nombre, existente.ID)
+            continue
+        }
+
+        // Crear el rol usando el repositorio
+        logger.Infof("Creando rol: %s", r.nombre)
+        if err := entidad.Roles.CrearRol(r.rol); err != nil {
+            logger.Errorf("Error al crear rol %s: %v", r.nombre, err)
+            return fmt.Errorf("no se pudo crear rol %s: %w", r.nombre, err)
+        }
+        logger.Infof("✅ Rol %s creado exitosamente con ID: %d", r.nombre, r.rol.ID)
+    }
+
+    return nil
 }
 
 func seedUsuarios(entidad *repository.NexiventPsqlEntidades) ([]model.Usuario, error) {

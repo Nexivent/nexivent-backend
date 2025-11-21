@@ -69,3 +69,8 @@ func (ec *EventoController) GetReporteEvento(organizadorId int64,
 ) ([]*schemas.EventoReporte, *errors.Error) {
 	return ec.EventoAdapter.GetPostgresqlReporteEvento(organizadorId, eventoID, fechaDesde, fechaHasta)
 }
+
+// GenerarReporteAdministrativo genera el reporte global BI para administradores
+func (ec *EventoController) GenerarReporteAdministrativo(req schemas.AdminReportRequest) (*schemas.AdminReportResponse, *errors.Error) {
+	return ec.EventoAdapter.GenerarReporteAdministrativo(req)
+}

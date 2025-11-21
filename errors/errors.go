@@ -32,6 +32,7 @@ var (
 		EventoNotFound              Error
 		CategoriaNotFound           Error
 		CuponNotFound               Error
+		ReportNoDataFound           Error // <--- NUEVO ERROR AGREGADO
 	}{
 		CommunityNotFound: Error{
 			Code:    "COMMUNITY_ERROR_001",
@@ -86,8 +87,17 @@ var (
 			Message: "Categoria not found",
 		},
 		CommunityServiceNotFound: Error{
+			Code:    "COMMUNITY_SERVICE_ERROR_001", // Corregí el código duplicado/erróneo que tenías aquí
+			Message: "Community Service not found",
+		},
+		CuponNotFound: Error{
 			Code:    "CUPON_ERROR_002",
 			Message: "Cupon not found",
+		},
+		// --- NUEVO: Reporte vacío ---
+		ReportNoDataFound: Error{
+			Code:    "NO_DATA",
+			Message: "No se encontraron registros para generar el reporte.",
 		},
 	}
 
@@ -381,7 +391,7 @@ var (
 		InvalidRefreshToken Error
 		InvalidAccessToken  Error
 		InvalidCredentials  Error
-		ExpiredToken       Error
+		ExpiredToken        Error
 	}{
 		UnauthorizedUser: Error{
 			Code:    "AUTHENTICATION_ERROR_001",
@@ -429,7 +439,7 @@ var (
 	InternalServerError = struct {
 		Default               Error
 		PasswordHashingFailed Error
-		TokenCreationFailed    Error
+		TokenCreationFailed   Error
 	}{
 		Default: Error{
 			Code:    "INTERNAL_SERVER_ERROR_001",

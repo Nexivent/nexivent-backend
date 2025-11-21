@@ -93,9 +93,9 @@ func (r *Rol) GetPostgresqlRolPorUsuario(usuarioID int64) ([]*schemas.RolRespons
 
 //Actualizar Rol
 func (r *Rol) ActualizarPostgresqlRol(id int64,
-	nombre *string,
+	nombre string,
 	updatedBy int64 ) ( *schemas.RolResponse, *errors.Error) {
-	rolModel, err := r.DaoPostgresql.Roles.ActualizarRol(id, nombre, updatedBy,)
+	rolModel, err := r.DaoPostgresql.Roles.ActualizarRol(id, &nombre, updatedBy,)
 
 	if err != nil {
 		r.logger.Errorf("Failed to update rol: %v", err)

@@ -15,10 +15,11 @@ type SectorUpdateRequest struct {
 }
 
 type SectorTicketResponse struct {
-	ID            int64  `json:"idSector"`
-	EventoID      int64  `json:"idEvento"`
-	SectorTipo    string `json:"sector"`
-	TotalEntradas int    `json:"totalEntradas"`
-	CantVendidas  int    `json:"cantVendidas"`
-	Estado        int16  `json:"estado"`
+	ID            int64                 `json:"idSector"`
+	EventoID      int64                 `json:"idEvento"`
+	SectorTipo    string                `json:"sector"`
+	TotalEntradas int                   `json:"totalEntradas"`
+	CantVendidas  int                   `json:"cantVendidas"`
+	Estado        int16                 `json:"estado"`
+	Tarifas       []TarifaResponseOtros `json:"tarifas"`
 }

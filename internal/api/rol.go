@@ -88,31 +88,32 @@ func (a *Api) FetchRoles(c echo.Context) error {
 func (a *Api) UpdateRol(c echo.Context) error {
 	// TODO: Add access token validation (from here we will get the `updatedBy` param)
 
-	var rolID *int64
-	if catStr := c.QueryParam("rolId"); catStr != "" {
-		parsed, err := strconv.ParseInt(catStr, 10, 64)
-		if err != nil {
-			return errors.HandleError(errors.UnprocessableEntityError.InvalidParsingInteger, c)
-		}
-		rolID = &parsed
+	var rolID int64
+
+
+	rolIdStr := c.Param("rolId")
+	rolID, parseErr := strconv.ParseInt(rolIdStr, 10, 64)
+	if parseErr != nil {
+		return errors.HandleError(errors.UnprocessableEntityError.InvalidParsingInteger, c)
 	}
 
-	var updatedBy *int64
-	if catStr := c.QueryParam("userId"); catStr != "" {
-		parsed, err := strconv.ParseInt(catStr, 10, 64)
-		if err != nil {
-			return errors.HandleError(errors.UnprocessableEntityError.InvalidParsingInteger, c)
-		}
-		updatedBy = &parsed
+	println("rolid: %v",&rolID,rolID)
+	
+	//var updatedBy int64
+	userIdStr := c.Param("userId")
+	updatedBy, parseErr := strconv.ParseInt(userIdStr, 10, 64)
+	if parseErr != nil {
+		return errors.HandleError(errors.UnprocessableEntityError.InvalidParsingInteger, c)
 	}
-
+	println("paso parseo",&updatedBy,updatedBy)
 	var request *schemas.RolRequest
 	if err := c.Bind(&request); err != nil {
 		return errors.HandleError(errors.UnprocessableEntityError.InvalidRequestBody, c)
 	}
-
-	request.UsuarioModificacion=updatedBy
-	response, newErr := a.BllController.Rol.ActualizarRol(*request, *rolID)
+	println("paso json")
+	request.UsuarioModificacion=&updatedBy
+	response, newErr := a.BllController.Rol.ActualizarRol(request, rolID)
+	println("ya casi")
 	if newErr != nil {
 		return errors.HandleError(*newErr, c)
 	}

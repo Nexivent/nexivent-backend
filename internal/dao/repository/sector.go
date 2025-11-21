@@ -105,8 +105,12 @@ func (r *Sector) ModificarSectorPorCampos(
 
 func (s *Sector) ListarSectorePorIdEvento(eventoID int64) ([]*model.Sector, error) {
 	var sectores []*model.Sector
-	respuesta := s.PostgresqlDB.Where("evento_id = ?", eventoID).
+	// Agregamos .Preload("Tarifa")
+	respuesta := s.PostgresqlDB.
+		Preload("Tarifa"). // <--- nuevo
+		Where("evento_id = ?", eventoID).
 		Find(&sectores)
+
 	if respuesta.Error != nil {
 		return nil, respuesta.Error
 	}

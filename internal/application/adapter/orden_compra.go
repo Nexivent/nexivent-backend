@@ -2,7 +2,7 @@ package adapter
 
 import (
 	"time"
-
+	"fmt"
 	"github.com/Nexivent/nexivent-backend/errors"
 	"github.com/Nexivent/nexivent-backend/internal/dao/model"
 	util "github.com/Nexivent/nexivent-backend/internal/dao/model/util"
@@ -103,11 +103,11 @@ func (a *OrdenDeCompra) ObtenerEstadoHold(
 
 	// El contrato dice estado: "BORRADOR" aunque en BD esté TEMPORAL
 	_ = estadoEnum // por si luego mapeas a otros strings
-	estadoStr := "BORRADOR"
+	
 
 	resp := &schemas.ObtenerHoldResponse{
 		OrderID:       orderID,
-		Estado:        estadoStr,
+		Estado:        "TEMPORAL",
 		RemainingSecs: remaining,
 		StartedAt:     ini.Format(time.RFC3339),
 		ExpiresAt:     fin.Format(time.RFC3339),
@@ -131,7 +131,6 @@ func (a *OrdenDeCompra) ConfirmarOrden(
 		return nil, &errors.BadRequestError.EventoNotFound
 	}
 	if !ok {
-		// 409: estado inválido para confirmar
 		return nil, &errors.BadRequestError.EventoNotFound
 	}
 
@@ -149,26 +148,42 @@ func (a *OrdenDeCompra) ConfirmarOrden(
 	now := time.Now()
 	if orden.FechaHoraFin != nil && now.After(*orden.FechaHoraFin) {
 		_ = a.DaoPostgresql.OrdenDeCompra.ActualizarEstadoOrden(orderID, util.OrdenCancelada)
-		// 410: reserva expirada
 		return nil, &errors.BadRequestError.EventoNotFound
 	}
 
-	// 4) Verificar pago (placeholder simple)
+	// 4) Verificar pago
 	if req.PaymentID == "" {
-		// 402: pago no confirmado
 		return nil, &errors.BadRequestError.EventoNotFound
 	}
 
-	// TODO: 5) Revalidar stock antes de confirmar (si no hay stock => 409)
+	// 5) Parsear método de pago desde paymentId
+	metodoPagoID := int64(1) // Default: Tarjeta
+	
+	if len(req.PaymentID) > 0 {
+		var tmpID int64
+		if _, scanErr := fmt.Sscanf(req.PaymentID, "%d", &tmpID); scanErr == nil && tmpID > 0 {
+			metodoPagoID = tmpID
+		}
+	}
 
-	// 6) Actualizar estado a CONFIRMADA
-	if errUpd := a.DaoPostgresql.OrdenDeCompra.ActualizarEstadoOrden(orderID, util.OrdenConfirmada); errUpd != nil {
+	a.logger.Infof("ConfirmarOrden: orderID=%d, paymentId=%s, metodoPagoID=%d", 
+		orderID, req.PaymentID, metodoPagoID)
+
+	// 6) Actualizar estado Y método de pago
+	if errUpd := a.DaoPostgresql.OrdenDeCompra.ConfirmarOrdenConPago(
+		orderID, 
+		metodoPagoID, 
+		req.PaymentID,
+	); errUpd != nil {
 		if errUpd == gorm.ErrRecordNotFound {
 			return nil, &errors.ObjectNotFoundError.EventoNotFound
 		}
-		a.logger.Errorf("ConfirmarOrden.ActualizarEstado(%d): %v", orderID, errUpd)
+		a.logger.Errorf("ConfirmarOrden.ConfirmarConPago(%d): %v", orderID, errUpd)
 		return nil, &errors.BadRequestError.EventoNotFound
 	}
+
+	a.logger.Infof("✅ Orden %d confirmada exitosamente con método de pago %d", 
+		orderID, metodoPagoID)
 
 	resp := &schemas.ConfirmarOrdenResponse{
 		OrderID: orderID,

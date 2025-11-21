@@ -21,7 +21,7 @@ func (e *Evento) GenerarReporteAdmin(
 	filtros := func(db *gorm.DB) *gorm.DB {
 		// Joins necesarios para filtrar por fecha o categoría
 		query := db.Joins("JOIN evento_fecha ef ON ef.evento_id = evento.evento_id").
-			Joins("LEFT JOIN categoria c ON c.categoria_id = evento.categoria_id")
+			Joins("LEFT JOIN categoria c ON c.id_categoria = evento.categoria_id")
 
 		if fechaInicio != nil {
 			query = query.Where("ef.hora_inicio >= ?", *fechaInicio)
@@ -84,33 +84,31 @@ func (e *Evento) GenerarReporteAdmin(
 	}
 
 	// --- CONSULTA C: TOP EVENTOS (Por Recaudación) ---
+	// --- CONSULTA C: TOP EVENTOS (Por Recaudación) ---
 	err = e.PostgresqlDB.Table("evento").
 		Scopes(filtros).
 		Select(`
-			DISTINCT ON (evento.evento_id) evento.evento_id,
-			evento.titulo,
-			evento.lugar,
-			evento.cant_vendido_total as entradas_vendidas,
-			evento.total_recaudado as recaudacion
-		`).
-		Order("evento.total_recaudado DESC").
-		Limit(5). // Top 5 fijo
+        DISTINCT ON (evento.evento_id) evento.evento_id,
+        evento.titulo,
+        evento.lugar,
+        evento.cant_vendido_total as entradas_vendidas,
+        evento.total_recaudado as recaudacion
+    `).
+		Order("evento.evento_id, evento.total_recaudado DESC"). // ✅ FIX
+		Limit(5).
 		Scan(&response.TopEventos).Error
-	if err != nil {
-		return nil, err
-	}
 
 	// --- CONSULTA D: AGRUPADO POR CATEGORÍA ---
 	err = e.PostgresqlDB.Table("evento").
 		Scopes(filtros).
 		Select(`
-			c.categoria_id as id_categoria,
+			c.id_categoria as id_categoria,
 			c.nombre as categoria,
 			COUNT(DISTINCT evento.evento_id) as cantidad_eventos,
 			COALESCE(SUM(evento.total_recaudado), 0) as recaudacion_total,
 			COALESCE(SUM(evento.cant_vendido_total), 0) as entradas_vendidas
 		`).
-		Group("c.categoria_id, c.nombre").
+		Group("c.id_categoria, c.nombre").
 		Scan(&response.ByCategory).Error
 	if err != nil {
 		return nil, err

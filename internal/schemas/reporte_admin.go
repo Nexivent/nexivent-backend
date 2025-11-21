@@ -21,7 +21,7 @@ type AdminReportSummary struct {
 }
 
 type AdminReportEvent struct {
-	IdEvento         int64   `json:"idEvento"`
+	IdEvento         int64   `json:"idEvento" gorm:"column:evento_id"`
 	Titulo           string  `json:"titulo"`
 	Categoria        string  `json:"categoria"`
 	Lugar            string  `json:"lugar"`

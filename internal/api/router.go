@@ -65,7 +65,7 @@ func (a *Api) RegisterRoutes(configEnv *config.ConfigEnv) {
 	a.Echo.GET("/api/admin/reports", a.GetAdminReports)
 	// Media uploads
 	a.Echo.POST("/media/upload-url", a.GenerateUploadURL)
-
+	//Cupones
 	//Cupon
 	a.Echo.POST("/cupon/:usuarioCreacion", a.CreateCupon)
 	a.Echo.PUT("/cupon/:usuarioModificacion", a.UpdateCupon)

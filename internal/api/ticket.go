@@ -10,28 +10,28 @@ import (
 
 // POST /api/tickets/issue
 
-// @Summary      Emitir tickets de una orden.
-// @Description  Genera los tickets asociados a la orden confirmada, asignando códigos únicos.
+// @Summary      Emitir tickets para una orden confirmada
+// @Description  Genera tickets individuales con código QR único
 // @Tags         Ticket
 // @Accept       json
 // @Produce      json
-// @Param        request body schemas.TicketIssueRequest true "Emitir Tickets Request"
-// @Success      201 {object} schemas.TicketIssueResponse "Created"
-// @Failure      404 {object} map[string]string "Orden no encontrada o ya procesada"
-// @Failure      422 {object} errors.Error "Unprocessable Entity"
-// @Failure      500 {object} errors.Error "Internal Server Error"
+// @Param        request body schemas.EmitirTicketsRequest true "Datos para emitir tickets"
+// @Success      201 {object} schemas.EmitirTicketsResponse "Tickets generados"
+// @Failure      404 {object} map[string]string "Orden no encontrada"
+// @Failure      422 {object} errors.Error "Datos inválidos"
+// @Failure      500 {object} errors.Error "Error interno"
 // @Router       /api/tickets/issue [post]
 func (a *Api) EmitirTickets(c echo.Context) error {
-	var req schemas.TicketIssueRequest
+	var req schemas.EmitirTicketsRequest
 	if err := c.Bind(&req); err != nil {
 		return errors.HandleError(errors.UnprocessableEntityError.InvalidRequestBody, c)
 	}
 
-	resp, ferr := a.BllController.Ticket.EmitirTickets(req.OrderID)
+	resp, ferr := a.BllController.Ticket.EmitirTicketsConInfo(req)
 	if ferr != nil {
 		if *ferr == errors.ObjectNotFoundError.EventoNotFound {
 			return c.JSON(http.StatusNotFound, map[string]string{
-				"error": "Orden no encontrada o ya procesada",
+				"error": "Orden no encontrada o no confirmada",
 			})
 		}
 		return errors.HandleError(*ferr, c)

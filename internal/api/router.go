@@ -28,6 +28,8 @@ func (a *Api) RegisterRoutes(configEnv *config.ConfigEnv) {
 	corsConfig := middleware.CORSConfig{
 		AllowOrigins:     []string{"*"}, // TODO: allow only authorized origins
 		AllowCredentials: true,
+		AllowHeaders:     []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
+		AllowMethods:     []string{echo.GET, echo.POST, echo.PUT, echo.DELETE, echo.OPTIONS},
 	}
 	a.Echo.Use(middleware.CORSWithConfig(corsConfig))
 
@@ -40,10 +42,20 @@ func (a *Api) RegisterRoutes(configEnv *config.ConfigEnv) {
 	healthCheck := a.Echo.Group("/health-check")
 	healthCheck.GET("/", a.HealthCheck)
 
+	// Document validation endpoint
+	a.Echo.POST("/validar-documento", a.ValidarDocumento)
+
+	// Usuario endpoints
+	a.Echo.POST("/register", a.RegisterUsuario)
+
+	// Autenticación
+	a.Echo.POST("/login", a.AuthenticateUsuario)
+
 	// Eventos endpoints
 	a.Echo.GET("/evento/", a.FetchEventos)
 	a.Echo.GET("/evento/:eventoId/", a.GetEvento)
 	a.Echo.POST("/evento/", a.CreateEvento) //falta usuario creacion
+	a.Echo.GET("/evento/filter", a.FetchEventosWithFilters)
 
 	a.Echo.GET("/categorias/", a.FetchCategorias)
 	a.Echo.POST("/categoria/", a.CreateCategoria)
@@ -56,6 +68,7 @@ func (a *Api) RegisterRoutes(configEnv *config.ConfigEnv) {
 	//Cupon
 	a.Echo.POST("/cupon/:usuarioCreacion", a.CreateCupon)
 	a.Echo.PUT("/cupon/:usuarioModificacion", a.UpdateCupon)
+	a.Echo.GET("/cupon/organizador/:organizadorId", a.FetchCuponPorOrganizador)
 
 	a.Echo.POST("/register", a.RegisterUsuario)
 	a.Echo.GET("/usuario/:id", a.GetUsuario)

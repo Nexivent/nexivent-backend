@@ -34,8 +34,8 @@ func (ec *RolController) GetRolPorUsuario(usuarioID int64) ([]*schemas.RolRespon
 	return ec.RolAdapter.GetPostgresqlRolPorUsuario(usuarioID)
 }
 
-func (r *RolController) ActualizarRol(request schemas.RolRequest,rolID int64) (*schemas.RolResponse, *errors.Error) {
+func (r *RolController) ActualizarRol(request *schemas.RolRequest,rolID int64) (*schemas.RolResponse, *errors.Error) {
 		
 	return r.RolAdapter.ActualizarPostgresqlRol(rolID ,
-	&request.Nombre ,
+	request.Nombre ,
 *request.UsuarioModificacion)}

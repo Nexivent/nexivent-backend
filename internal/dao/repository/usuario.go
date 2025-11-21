@@ -1,7 +1,10 @@
 package repository
 
 import (
+	"crypto/rand"
 	"errors"
+	"fmt"
+	"math/big"
 	"time"
 
 	"github.com/Nexivent/nexivent-backend/internal/dao/model"
@@ -219,4 +222,62 @@ func (c *Usuario) ObtenerUsuarioPorNumDocumento(numDocumento string) (*model.Usu
 		return nil, result.Error
 	}
 	return &user, nil
+}
+
+// GenerarCodigoVerificacion genera un código de 6 dígitos
+func GenerarCodigoVerificacion() (string, error) {
+    const digits = "0123456789"
+    code := make([]byte, 6)
+    for i := range code {
+        num, err := rand.Int(rand.Reader, big.NewInt(int64(len(digits))))
+        if err != nil {
+            return "", err
+        }
+        code[i] = digits[num.Int64()]
+    }
+    return string(code), nil
+}
+
+// ActualizarCodigoVerificacion actualiza el código de verificación del usuario
+func (r *Usuario) ActualizarCodigoVerificacion(usuarioID int64, codigo string, expira time.Time) error {
+    result := r.PostgresqlDB.Model(&model.Usuario{}).
+        Where("usuario_id = ?", usuarioID).
+        Updates(map[string]interface{}{
+            "codigo_verificacion":      codigo,
+            "fecha_expiracion_codigo":  expira,
+        })
+    
+    if result.Error != nil {
+        return result.Error
+    }
+    return nil
+}
+
+// VerificarCodigo verifica el código de verificación
+func (r *Usuario) VerificarCodigo(usuarioID int64, codigo string) error {
+    var usuario model.Usuario
+    err := r.PostgresqlDB.Where("usuario_id = ?", usuarioID).First(&usuario).Error
+    if err != nil {
+        return fmt.Errorf("usuario no encontrado")
+    }
+
+    if usuario.CodigoVerificacion == nil || *usuario.CodigoVerificacion != codigo {
+        return fmt.Errorf("código inválido")
+    }
+
+    if usuario.FechaExpiracionCodigo == nil || time.Now().After(*usuario.FechaExpiracionCodigo) {
+        return fmt.Errorf("código expirado")
+    }
+
+    // Marcar como verificado (usando estado_de_cuenta)
+    // estado_de_cuenta: 0=pendiente verificación, 1=verificado, 2=bloqueado
+    result := r.PostgresqlDB.Model(&model.Usuario{}).
+        Where("usuario_id = ?", usuarioID).
+        Updates(map[string]interface{}{
+            "estado_de_cuenta":         1, // Verificado
+            "codigo_verificacion":      nil,
+            "fecha_expiracion_codigo":  nil,
+        })
+
+    return result.Error
 }

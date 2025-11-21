@@ -3,7 +3,7 @@ package repository
 import (
 	"strings"
 	"time"
-
+	"github.com/Nexivent/nexivent-backend/internal/schemas"
 	"github.com/Nexivent/nexivent-backend/internal/dao/model"
 	"github.com/Nexivent/nexivent-backend/logging"
 	"gorm.io/gorm"
@@ -452,4 +452,60 @@ func (e *Evento) ObtenerEventoPorId(id int64) (*model.Evento, error) {
 	}
 
 	return evento, nil
+}
+
+
+func (e *Evento) ObtenerEventoDetalle(eventoId int64) (*schemas.EventoDetalleDTO, error) {
+	// Obtener datos básicos del evento
+	var eventoBase model.Evento
+
+	respuesta := e.PostgresqlDB.
+		Table("evento").
+		Select("evento_id as id_evento, titulo, descripcion, imagen_portada, lugar").
+		Where("evento_id = ?", eventoId).
+		First(&eventoBase)
+
+	if respuesta.Error != nil {
+		return nil, respuesta.Error
+	}
+
+	// Obtener fechas del evento (join evento_fecha con fecha)
+	//var fechas []FechaEventoDTO
+	var fechas []schemas.FechaEventoDTO
+	e.PostgresqlDB.
+		Table("evento_fecha ef").
+		Select(`ef.evento_fecha_id as id_fecha_evento,
+			TO_CHAR(f.fecha_evento, 'YYYY-MM-DD') as fecha,
+			TO_CHAR(ef.hora_inicio, 'HH24:MI') as hora_inicio,
+			'' as hora_fin`).
+		Joins("JOIN fecha f ON ef.fecha_id = f.fecha_id").
+		Where("ef.evento_id = ? AND ef.estado = 1", eventoId).
+		Find(&fechas)
+
+	// Obtener tarifas con joins
+	//var tarifas []TarifaDTO
+	var tarifas []schemas.TarifaDTO
+	e.PostgresqlDB.
+		Table("tarifa t").
+		Select(`t.tarifa_id as id_tarifa,
+			t.precio,
+			s.nombre_sector as tipo_sector,
+			(s.stock - s.cant_vendidas) as stock_disponible,
+			tt.nombre_ticket as tipo_ticket,
+			TO_CHAR(t.fecha_ini, 'YYYY-MM-DD') as fecha_ini,
+			TO_CHAR(t.fecha_fin, 'YYYY-MM-DD') as fecha_fin,
+			pp.perfil`).
+		Joins("JOIN sectores s ON t.sector_id = s.sector_id").
+		Joins("JOIN tipos_ticket tt ON t.tipo_ticket_id = tt.tipo_ticket_id").
+		Joins("JOIN perfil_persona pp ON t.perfil_persona_id = pp.perfil_persona_id").
+		Where("s.evento_id = ?", eventoId).
+		Find(&tarifas)
+
+	return &schemas.EventoDetalleDTO{
+		IDEvento:    eventoBase.ID,
+		Titulo:      eventoBase.Titulo,
+		Descripcion: eventoBase.Descripcion,
+		Fechas:      fechas,
+		Tarifas:     tarifas,
+	}, nil
 }

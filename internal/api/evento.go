@@ -258,3 +258,20 @@ func (a *Api) GetReporteEvento(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, response)
 }
+
+
+
+func (a *Api) GetEventoSummary(c echo.Context) error {
+	eventoIDStr := c.Param("id")
+	eventoID, parseErr := strconv.ParseInt(eventoIDStr, 10, 64)
+	if parseErr != nil {
+		return errors.HandleError(errors.UnprocessableEntityError.InvalidParsingInteger, c)
+	}
+
+	response, err := a.BllController.Evento.GetEventoDetalle(eventoID)
+	if err != nil {
+		return errors.HandleError(*err, c)
+	}
+
+	return c.JSON(http.StatusOK, response)
+}

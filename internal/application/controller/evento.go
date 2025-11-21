@@ -62,11 +62,10 @@ func (ec *EventoController) GetEventoById(eventoID int64) (*schemas.EventoRespon
 }
 
 // GetReporteEvento genera el reporte de un evento por ID + filtros opcionales.
-func (ec *EventoController) GetReporteEvento(
+func (ec *EventoController) GetReporteEvento(organizadorId int64,
 	eventoID *int64,
 	fechaDesde *time.Time,
 	fechaHasta *time.Time,
 ) ([]*schemas.EventoReporte, *errors.Error) {
-
-	return ec.EventoAdapter.GetPostgresqlReporteEvento(eventoID, fechaDesde, fechaHasta)
+	return ec.EventoAdapter.GetPostgresqlReporteEvento(organizadorId, eventoID, fechaDesde, fechaHasta)
 }

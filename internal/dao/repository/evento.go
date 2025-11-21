@@ -388,6 +388,7 @@ func (e *Evento) ReasignarFechaDeEventoFecha(
 	return nil
 }
 
+/*
 func (e *Evento) BuscarEventosParaReporte(
 	fechaDesde, fechaHasta *time.Time,
 	idEvento *int64,
@@ -419,4 +420,36 @@ func (e *Evento) BuscarEventosParaReporte(
 	}
 
 	return eventos, nil
+}*/
+
+func (e *Evento) ObtenerEventosDelOrganizador(idOrganizador int64) ([]*model.Evento, error) {
+	var eventos []*model.Evento
+
+	res := e.PostgresqlDB.Table("evento").
+		Preload("Fechas").
+		Preload("Fechas.Fecha").
+		Where("organizador_id = ? AND evento_estado=1", idOrganizador).
+		Find(&eventos)
+
+	if res != nil {
+		return nil, res.Error
+	}
+
+	return eventos, nil
+}
+
+func (e *Evento) ObtenerEventoPorId(id int64) (*model.Evento, error) {
+	var evento *model.Evento
+
+	res := e.PostgresqlDB.Table("evento").
+		Preload("Fechas").
+		Preload("Fechas.Fecha").
+		Where("evento_estado =1").
+		Find(&evento)
+
+	if res != nil {
+		return nil, res.Error
+	}
+
+	return evento, nil
 }

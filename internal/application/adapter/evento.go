@@ -460,65 +460,46 @@ func (e *Evento) GetPostgresqlEventoById(eventoID int64) (*schemas.EventoRespons
 }
 
 func (e *Evento) GetPostgresqlReporteEvento(
+	organizadorID int64,
 	eventoID *int64,
 	fechaDesde *time.Time,
 	fechaHasta *time.Time,
 ) ([]*schemas.EventoReporte, *errors.Error) {
+	var eventos []*model.Evento
 
-	// 1️⃣ Obtener evento base
-	evento, err := e.DaoPostgresql.Evento.ObtenerEventoPorID(eventoID)
-	if err != nil {
-		return nil, &errors.BadRequestError.EventoNotFound
+	if eventoID != nil {
+		evento, err := e.DaoPostgresql.Evento.ObtenerEventoPorId(*eventoID)
+		if err != nil {
+			return nil, &errors.ObjectNotFoundError.ReservationNotFound
+		}
+
+		eventos = append(eventos, evento)
+	} else {
+		var err error
+		eventos, err = e.DaoPostgresql.Evento.ObtenerEventosDelOrganizador(organizadorID)
+		if err != nil {
+			return nil, &errors.ObjectNotFoundError.ReservationNotFound
+		}
 	}
 
-	// 2️⃣ Obtener fechas del evento
-	fechas, err := e.DaoPostgresql.Evento.ObtenerFechasEvento(eventoID, fechaDesde, fechaHasta)
-	if err != nil {
-		return nil, &errors.InternalServerError.Default
-	}
+	eventoReporte := []*schemas.EventoReporte{}
+	for _, ev := range eventos {
+		capacidadEvento, _ := e.DaoPostgresql.Sector.ObtenerCapacidadPorEvento(ev.ID)
+		ingresoEvento, cargos, ticketVendido := e.DaoPostgresql.OrdenDeCompra.ObtenerIngresoCargoPorFecha(ev.ID, fechaDesde, fechaHasta)
 
-	// 3️⃣ Ventas por tipo (General, VIP, Preventa, etc)
-	ventasPorTipo, err := e.DaoPostgresql.Evento.ObtenerVentasPorTipo(eventoID, fechaDesde, fechaHasta)
-	if err != nil {
-		return nil, &errors.InternalServerError.Default
-	}
-
-	// 4️⃣ Cargos y comisiones
-	cargos, comisiones, err := e.DaoPostgresql.Evento.ObtenerCargosYComisiones(eventoID, fechaDesde, fechaHasta)
-	if err != nil {
-		return nil, &errors.InternalServerError.Default
-	}
-
-	// 5️⃣ Calcular totales
-	var totalVendidos int64
-	var totalIngresos float64
-
-	var ventasTipo []schemas.TipoTicketReporte
-
-	for _, v := range ventasPorTipo {
-		ventasTipo = append(ventasTipo, schemas.TipoTicketReporte{
-			Nombre:       v.Nombre,
-			CantVendida:  v.Cantidad,
-			CantIngresos: int64(v.Ingresos),
+		eventoReporte = append(eventoReporte, &schemas.EventoReporte{
+			IdEvento:         ev.ID,
+			Titulo:           ev.Titulo,
+			Lugar:            ev.Lugar,
+			Capacidad:        capacidadEvento,                 //calcular capacidad con sector
+			IngresoTotal:     ingresoEvento,                   //calcular con orden de compra
+			TicketsVendidos:  ticketVendido,                   //calcular con orden de compra
+			CargosPorServico: cargos,                          //calcular con orden de compra
+			Comisiones:       (ingresoEvento - cargos) * 0.05, //(Ingreso total - cargo)*5%
+			VentasPorTipo:    []schemas.TipoTicketReporte{},
+			Fechas:           []schemas.EventDateReporte{},
 		})
-
-		totalVendidos += v.Cantidad
-		totalIngresos += v.Ingresos
 	}
 
-	// 6️⃣ Preparar respuesta final
-	reporte := &schemas.EventoReporte{
-		IdEvento:         evento.IdEvento,
-		Titulo:           evento.Titulo,
-		Lugar:            evento.Lugar,
-		Capacidad:        evento.Capacidad,
-		IngresoTotal:     totalIngresos,
-		TicketsVendidos:  totalVendidos,
-		VentasPorTipo:    ventasTipo,
-		Fechas:           fechas,
-		CargosPorServico: cargos,
-		Comisiones:       comisiones,
-	}
-
-	return reporte, nil
+	return eventoReporte, nil
 }

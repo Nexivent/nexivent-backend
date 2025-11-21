@@ -112,3 +112,21 @@ func (s *Sector) ListarSectorePorIdEvento(eventoID int64) ([]*model.Sector, erro
 	}
 	return sectores, nil
 }
+
+func (s *Sector) ObtenerCapacidadPorEvento(eventoId int64) (int64, error) {
+
+	var capacidad int64
+
+	err := s.PostgresqlDB.
+		Table("sector").
+		Select("COALESCE(SUM(total_entradas), 0)").
+		Where("evento_id = ? AND estado = 1", eventoId).
+		Scan(&capacidad).Error
+
+	if err != nil {
+		return -1, err
+	}
+
+	return capacidad, nil
+
+}

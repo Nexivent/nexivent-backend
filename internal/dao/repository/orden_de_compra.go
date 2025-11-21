@@ -117,3 +117,44 @@ func (c *OrdenDeCompra) ActualizarEstadoOrden(orderID int64, nuevo util.EstadoOr
 	}
 	return nil
 }
+
+func (o *OrdenDeCompra) ObtenerIngresoCargoPorFecha(eventoID int64, fechaDesde *time.Time, fechaHasta *time.Time) (float64, float64, int64) {
+	if fechaHasta == nil {
+		fecha := time.Now()
+		fechaHasta = &fecha
+	}
+
+	type IngresoCargoDTO struct {
+		IngresoTotal    float64 `gorm:"column:ingreso_total"`
+		CargoServ       float64 `gorm:"column:cargo_serv"`
+		TicketsVendidos int64   `gorm:"column:tickets_vendidos"`
+	}
+	var data IngresoCargoDTO
+
+	query := o.PostgresqlDB.Table("orden_de_compra oc").
+		Select(`
+            SUM(oc.total) AS ingreso_total,
+            SUM(oc.monto_fee_servicio) AS cargo_serv,
+            COUNT(t.ticket_id) AS tickets_vendidos
+        `).
+		Joins("LEFT JOIN tickets t ON t.orden_de_compra_id = oc.orden_de_compra_id").
+		Joins("LEFT JOIN evento_fecha ef ON ef.evento_fecha_id = t.evento_fecha_id").
+		Joins("LEFT JOIN evento e ON e.evento_id = ef.evento_id").
+		Where("e.evento_id = ?", eventoID).
+		Where("oc.estado = 1") // solo órdenes pagadas
+
+	if fechaDesde != nil {
+		query = query.Where("oc.fecha BETWEEN ? AND ?", fechaDesde, fechaHasta)
+	} else {
+		query = query.Where("oc.fecha <= ?", fechaHasta)
+	}
+
+	error := query.Scan(&data)
+
+	if error.Error != nil {
+		return -1, -1, -1
+	}
+
+	return data.IngresoTotal, data.CargoServ, data.TicketsVendidos
+
+}

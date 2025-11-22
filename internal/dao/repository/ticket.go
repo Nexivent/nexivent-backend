@@ -318,3 +318,16 @@ func (c *Ticket) ObtenerTicketsEstadoTarifaPorIDs(ids []int64) ([]TicketEstadoTa
 	}
 	return rows, nil
 }
+
+// Crear un nuevo ticket
+func (c *Ticket) Crear(ticket *model.Ticket) error {
+	if ticket == nil {
+		return gorm.ErrInvalidData
+	}
+	
+	if err := c.PostgresqlDB.Create(ticket).Error; err != nil {
+		c.logger.Errorf("Ticket.Crear: %v", err)
+		return err
+	}
+	return nil
+}

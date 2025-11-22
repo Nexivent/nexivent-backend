@@ -158,3 +158,26 @@ func (o *OrdenDeCompra) ObtenerIngresoCargoPorFecha(eventoID int64, fechaDesde *
 	return data.IngresoTotal, data.CargoServ, data.TicketsVendidos
 
 }
+
+func (c *OrdenDeCompra) ConfirmarOrdenConPago(orderID int64, metodoPagoID int64, paymentReference string) error {
+	updates := map[string]interface{}{
+		"estado_de_orden":   util.OrdenConfirmada.Codigo(),
+		"metodo_de_pago_id": metodoPagoID,
+		// Si tienes un campo para guardar el paymentId, agrégalo aquí
+		// "payment_reference": paymentReference,
+	}
+
+	res := c.PostgresqlDB.
+		Table("orden_de_compra").
+		Where("orden_de_compra_id = ?", orderID).
+		Updates(updates)
+
+	if res.Error != nil {
+		c.logger.Errorf("ConfirmarOrdenConPago(%d): %v", orderID, res.Error)
+		return res.Error
+	}
+	if res.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
+}

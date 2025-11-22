@@ -40,6 +40,8 @@ type ConfigEnv struct {
 
 	// Factiliza
 	FactilizaToken string `env:"FACTILIZA_TOKEN"`
+
+	GoogleClientID string
 }
 
 func NuevoConfigEnv(logger logging.Logger) *ConfigEnv {
@@ -123,5 +125,6 @@ func NuevoConfigEnv(logger logging.Logger) *ConfigEnv {
 		Password:            password,
 		Sender:              sender,
 		FactilizaToken:      factilizaToken,
+		GoogleClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
 	}
 }

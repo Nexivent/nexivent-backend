@@ -9,10 +9,10 @@ import (
 )
 
 type Api struct {
-	Logger           logging.Logger
-	BllController    *controller.ControllerCollection
-	ConfigEnv        *config.ConfigEnv
-	Echo             *echo.Echo
+	Logger        logging.Logger
+	BllController *controller.ControllerCollection
+	ConfigEnv     *config.ConfigEnv
+	Echo          *echo.Echo
 }
 
 /*
@@ -28,10 +28,10 @@ func NewApi(
 	bllController, nexiventPsqlDB := controller.NewControllerCollection(logger, configEnv)
 
 	return &Api{
-		Logger:           logger,
-		BllController:    bllController,
-		ConfigEnv:        configEnv,
-		Echo:             echo.New(),
+		Logger:        logger,
+		BllController: bllController,
+		ConfigEnv:     configEnv,
+		Echo:          echo.New(),
 	}, nexiventPsqlDB
 }
 

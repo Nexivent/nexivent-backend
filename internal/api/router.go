@@ -26,10 +26,16 @@ func (a *Api) HealthCheck(c echo.Context) error {
 func (a *Api) RegisterRoutes(configEnv *config.ConfigEnv) {
 	// CORS
 	corsConfig := middleware.CORSConfig{
-		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:3001"},
+		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:3001", "https://accounts.google.com"},
 		AllowCredentials: true,
-		AllowHeaders:     []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
+		AllowHeaders:     []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization, "X-Requested-With","X-CSRF-Token",},
 		AllowMethods:     []string{echo.GET, echo.POST, echo.PUT, echo.DELETE, echo.OPTIONS},
+        ExposeHeaders: []string{
+            "Content-Length",
+            "Content-Type",
+			"Authorization",
+        },
+        MaxAge: 86400, 
 	}
 	a.Echo.Use(middleware.CORSWithConfig(corsConfig))
 
@@ -47,6 +53,7 @@ func (a *Api) RegisterRoutes(configEnv *config.ConfigEnv) {
 
 	// Usuario endpoints
 	a.Echo.POST("/register", a.RegisterUsuario)
+	a.Echo.POST("/google-auth", a.GoogleAuth)
 	a.Echo.POST("/verify-email", a.VerifyEmail)
 
 	// Autenticación

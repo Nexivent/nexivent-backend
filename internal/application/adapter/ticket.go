@@ -2,7 +2,7 @@ package adapter
 
 import (
 	"fmt"
-	"time"  // ← NECESARIO para time.Now()
+	"time"  
 	
 	"github.com/Nexivent/nexivent-backend/errors"
 	"github.com/Nexivent/nexivent-backend/internal/dao/model"

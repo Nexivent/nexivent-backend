@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/Nexivent/nexivent-backend/errors"
+	"github.com/Nexivent/nexivent-backend/internal/application/controller"
 	"github.com/Nexivent/nexivent-backend/internal/dao/model"
 	"github.com/Nexivent/nexivent-backend/internal/dao/repository"
 	"github.com/labstack/echo/v4"
@@ -219,6 +220,182 @@ func (a *Api) AuthenticateUsuario(c echo.Context) error {
             "num_documento":  usuario.NumDocumento,
             "telefono":       usuario.Telefono,
         },
+    })
+}
+
+func (a *Api) GoogleAuth(c echo.Context) error {
+    var input struct {
+        AccessToken string `json:"access_token"`
+        IdToken     string `json:"id_token"`
+        Email string `json:"email"`
+        Name string `json:"name"`
+        Picture string `json:"picture"`
+        EmailVerified bool `json:"email_verified"`
+        Sub string `json:"sub"`
+        TipoDocumento string `json:"tipo_documento"`
+        NumDocumento  string `json:"num_documento"`
+    }
+
+    if err := c.Bind(&input); err != nil {
+        a.Logger.Errorf("Error binding request: %v", err)
+        return c.JSON(http.StatusBadRequest, map[string]interface{}{
+            "error":   "INVALID_REQUEST",
+            "message": "Solicitud inválida",
+        })
+    }
+
+    var googleUser *controller.GoogleUser
+
+    // ✅ OPCIÓN 1: Si recibimos datos ya validados del frontend (recomendado)
+    if input.Email != "" && input.EmailVerified && input.Sub != "" {
+        a.Logger.Infof("Usando datos validados de Google para: %s", input.Email)
+        googleUser = &controller.GoogleUser{
+            Email:         input.Email,
+            Name:          input.Name,
+            Picture:       input.Picture,
+            Sub:           input.Sub,
+            VerifiedEmail: input.EmailVerified,
+        }
+    } else if input.IdToken != "" {
+        // ✅ OPCIÓN 2: Validar el ID Token si se proporciona
+        a.Logger.Infof("Validando ID Token de Google")
+        var err error
+        googleUser, err = a.BllController.Usuario.VerifyGoogleToken(input.IdToken)
+        if err != nil {
+            a.Logger.Errorf("Error verificando token de Google: %v", err)
+            return c.JSON(http.StatusUnauthorized, map[string]interface{}{
+                "error":   "INVALID_GOOGLE_TOKEN",
+                "message": "Token de Google inválido o expirado",
+            })
+        }
+    } else {
+        // ✅ Sin datos suficientes
+        return c.JSON(http.StatusBadRequest, map[string]interface{}{
+            "error":   "MISSING_DATA",
+            "message": "Se requiere id_token o datos validados de Google",
+        })
+    }
+
+    // Verificar que el email esté verificado por Google
+    if !googleUser.VerifiedEmail {
+        return c.JSON(http.StatusUnauthorized, map[string]interface{}{
+            "error":   "EMAIL_NOT_VERIFIED",
+            "message": "El correo de Google no está verificado",
+        })
+    }
+
+    // ✅ CORRECCIÓN CRÍTICA: Buscar usuario existente correctamente
+    a.Logger.Infof("🔍 Buscando usuario existente con correo: %s", googleUser.Email)
+
+    usuarioExistente, err := a.BllController.Usuario.DB.Usuario.ObtenerUsuarioPorCorreo(googleUser.Email)
+    
+    // ✅ IMPORTANTE: Si encuentra el usuario, autenticar (NO crear nuevo)
+    if err == nil && usuarioExistente != nil {
+        a.Logger.Infof("✅ Usuario EXISTENTE encontrado: ID=%d, Nombre=%s, TipoDoc=%s, NumDoc=%s", 
+            usuarioExistente.ID, 
+            usuarioExistente.Nombre, 
+            usuarioExistente.TipoDocumento, 
+            usuarioExistente.NumDocumento)
+
+        // ✅ Si el usuario existe, NO modificar sus datos de documento
+        // Solo generar token y retornar
+        token, tokenErr := a.BllController.Token.CreateToken(usuarioExistente.ID, 24*time.Hour, "authentication")
+        if tokenErr != nil {
+            a.Logger.Errorf("Error al generar token: %v", tokenErr)
+            return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+                "error":   "TOKEN_GENERATION_ERROR",
+                "message": "Error al generar token de autenticación",
+            })
+        }
+
+        a.Logger.Infof("✅ Usuario existente autenticado con Google: %s (ID: %d)", usuarioExistente.Correo, usuarioExistente.ID)
+
+        return c.JSON(http.StatusOK, map[string]interface{}{
+            "message": "Autenticación con Google exitosa",
+            "token": map[string]interface{}{
+                "token":  token.Plaintext,
+                "expiry": token.Expiry.Unix(),
+            },
+            "usuario": map[string]interface{}{
+                "id":               usuarioExistente.ID,
+                "nombre":           usuarioExistente.Nombre,
+                "correo":           usuarioExistente.Correo,
+                "tipo_documento":   usuarioExistente.TipoDocumento,
+                "num_documento":    usuarioExistente.NumDocumento,
+                "telefono":         usuarioExistente.Telefono,
+                "estado_de_cuenta": usuarioExistente.EstadoDeCuenta,
+            },
+            "is_new_user": false,
+        })
+    }
+
+    // ✅ Solo llegar aquí si NO existe el usuario
+    a.Logger.Infof("📝 Usuario NO existe, creando nuevo usuario con correo: %s", googleUser.Email)
+
+    // Usuario nuevo - Crear usuario con datos de Google
+    var nuevoUsuario model.Usuario
+    
+    nuevoUsuario.Nombre = googleUser.Name
+    nuevoUsuario.Correo = googleUser.Email
+    
+    // ✅ CORRECCIÓN: Documento validado del frontend (si existe)
+    if input.TipoDocumento != "" && input.NumDocumento != "" {
+        a.Logger.Infof("📄 Usando documento del frontend: %s - %s", input.TipoDocumento, input.NumDocumento)
+        nuevoUsuario.TipoDocumento = input.TipoDocumento
+        nuevoUsuario.NumDocumento = input.NumDocumento
+    } else {
+        // ✅ FALLBACK: Solo usar GOOGLE si NO hay documento del frontend
+        a.Logger.Warnf("⚠️ No hay documento del frontend, usando Google Sub como identificador")
+        nuevoUsuario.TipoDocumento = "GOOGLE"
+        nuevoUsuario.NumDocumento = googleUser.Sub
+    }
+    
+    // Email verificado por Google automáticamente
+    nuevoUsuario.EstadoDeCuenta = 1 // Verificado
+    nuevoUsuario.Estado = 1         // Activo
+    nuevoUsuario.Contrasenha = ""   // Sin contraseña para usuarios de Google
+    nuevoUsuario.Telefono = nil
+
+    a.Logger.Infof("🔧 Registrando nuevo usuario: Correo=%s, TipoDoc=%s, NumDoc=%s", 
+        nuevoUsuario.Correo, 
+        nuevoUsuario.TipoDocumento, 
+        nuevoUsuario.NumDocumento)
+
+    // ✅ Registrar usuario usando la función existente
+    usuarioRegistrado, newErr := a.BllController.Usuario.RegisterUsuario(&nuevoUsuario)
+    if newErr != nil {
+        a.Logger.Errorf("❌ Error al registrar usuario de Google: %v", newErr)
+        return errors.HandleError(*newErr, c)
+    }
+
+    // ✅ Generar token
+    token, tokenErr := a.BllController.Token.CreateToken(usuarioRegistrado.ID, 24*time.Hour, "authentication")
+    if tokenErr != nil {
+        a.Logger.Errorf("Error al generar token: %v", tokenErr)
+        return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+            "error":   "TOKEN_GENERATION_ERROR",
+            "message": "Error al generar token de autenticación",
+        })
+    }
+
+    a.Logger.Infof("✅ Usuario registrado exitosamente con Google: %s (ID: %d)", usuarioRegistrado.Correo, usuarioRegistrado.ID)
+
+    return c.JSON(http.StatusCreated, map[string]interface{}{
+        "message": "Registro con Google exitoso",
+        "token": map[string]interface{}{
+            "token":  token.Plaintext,
+            "expiry": token.Expiry.Unix(),
+        },
+        "usuario": map[string]interface{}{
+            "id":             usuarioRegistrado.ID,
+            "nombre":         usuarioRegistrado.Nombre,
+            "correo":         usuarioRegistrado.Correo,
+            "tipo_documento": usuarioRegistrado.TipoDocumento,
+            "num_documento":  usuarioRegistrado.NumDocumento,
+            "telefono":       usuarioRegistrado.Telefono,
+        },
+        "is_new_user": true,
+        "skip_verification": true,
     })
 }
 

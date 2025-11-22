@@ -1,7 +1,10 @@
 package controller
 
 import (
+	"context"
 	"fmt"
+
+	"google.golang.org/api/idtoken"
 
 	"github.com/Nexivent/nexivent-backend/errors"
 	"github.com/Nexivent/nexivent-backend/internal/dao/model"
@@ -11,8 +14,17 @@ import (
 )
 
 type UsuarioController struct {
-	Logger logging.Logger
-	DB     *repository.NexiventPsqlEntidades
+	Logger         logging.Logger
+	DB             *repository.NexiventPsqlEntidades
+	GoogleClientID string
+}
+
+type GoogleUser struct {
+	Email 	      string
+	Name 	      string
+	Picture       string
+	Sub           string
+	VerifiedEmail bool
 }
 
 func (uc *UsuarioController) RegisterUsuario(usuario *model.Usuario) (model.Usuario, *errors.Error) {
@@ -193,3 +205,64 @@ func (uc *UsuarioController) AuthenticateUsuario(correo, contrasenha string) (*m
 
 	return usuario, nil
 }	
+
+func (u *UsuarioController) VerifyGoogleToken(idToken string) (*GoogleUser, error) {
+    ctx := context.Background()
+	// Validar el token usando el Client ID de Google
+	payload, err := idtoken.Validate(ctx, idToken, u.GoogleClientID)
+    if err != nil {
+        u.Logger.Errorf("Error validating Google token: %v", err)
+        return nil, err
+    }
+
+    // Extraer información del payload
+    email, _ := payload.Claims["email"].(string)
+    name, _ := payload.Claims["name"].(string)
+    picture, _ := payload.Claims["picture"].(string)
+    sub, _ := payload.Claims["sub"].(string)
+    emailVerified, _ := payload.Claims["email_verified"].(bool)
+
+    if !emailVerified {
+        return nil, fmt.Errorf("email not verified")
+    }
+
+    return &GoogleUser{
+        Email:   email,
+        Name:    name,
+        Picture: picture,
+        Sub:     sub,
+        VerifiedEmail: emailVerified,
+    }, nil
+}
+
+func (u *UsuarioController) GetOrCreateGoogleUser(googleUser *GoogleUser) (*model.Usuario, *errors.Error) {
+    // Buscar usuario por correo
+    usuario, err := u.DB.Usuario.ObtenerUsuarioPorCorreo(googleUser.Email)
+    
+    if err == nil && usuario != nil {
+        // Usuario existe, actualizar último acceso
+        u.Logger.Infof("Usuario existente de Google: %s", googleUser.Email)
+        return usuario, nil
+    }
+
+    // Crear nuevo usuario con Google
+    u.Logger.Infof("Creando nuevo usuario de Google: %s", googleUser.Email)
+    
+    nuevoUsuario := &model.Usuario{
+        Nombre:          googleUser.Name,
+        Correo:          googleUser.Email,
+        TipoDocumento:   "GOOGLE",
+        NumDocumento:    googleUser.Sub, // Usar Sub de Google como documento único
+        EstadoDeCuenta:  1, // Verificado automáticamente
+        Estado:          1, // Activo
+        Contrasenha:     "", // Sin contraseña para usuarios de Google
+    }
+
+	// Registrar usuario
+	usuarioCreado, newErr := u.RegisterUsuario(nuevoUsuario)
+	if newErr != nil {
+		return nil, newErr
+	}
+
+	return &usuarioCreado, nil
+}

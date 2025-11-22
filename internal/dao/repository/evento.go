@@ -461,7 +461,7 @@ func (e *Evento) ObtenerEventoDetalle(eventoId int64) (*schemas.EventoDetalleDTO
 
 	respuesta := e.PostgresqlDB.
 		Table("evento").
-		Select("evento_id as id_evento, titulo, descripcion, imagen_portada, lugar").
+		Select("evento_id , titulo, descripcion, imagen_portada, lugar").
 		Where("evento_id = ?", eventoId).
 		First(&eventoBase)
 

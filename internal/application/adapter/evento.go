@@ -573,3 +573,14 @@ func (a *Evento) GenerarReporteAdministrativo(req schemas.AdminReportRequest) (*
 
 	return reporte, nil
 }
+
+
+func (e *Evento) GetPostgresqlEventoDetalle(eventoId int64) (*schemas.EventoDetalleDTO, *errors.Error){
+	eventoDetalle, err := e.DaoPostgresql.Evento.ObtenerEventoDetalle(eventoId)
+	if err != nil {
+		e.logger.Errorf("Failed to get evento detallado: %v", err)
+		return nil, &errors.BadRequestError.EventoNotFound
+	}
+	
+	return eventoDetalle, nil
+}

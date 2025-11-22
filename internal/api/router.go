@@ -26,7 +26,7 @@ func (a *Api) HealthCheck(c echo.Context) error {
 func (a *Api) RegisterRoutes(configEnv *config.ConfigEnv) {
 	// CORS
 	corsConfig := middleware.CORSConfig{
-		AllowOrigins:     []string{"*"}, // TODO: allow only authorized origins
+		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:3001"},
 		AllowCredentials: true,
 		AllowHeaders:     []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
 		AllowMethods:     []string{echo.GET, echo.POST, echo.PUT, echo.DELETE, echo.OPTIONS},
@@ -47,9 +47,14 @@ func (a *Api) RegisterRoutes(configEnv *config.ConfigEnv) {
 
 	// Usuario endpoints
 	a.Echo.POST("/register", a.RegisterUsuario)
+	a.Echo.POST("/verify-email", a.VerifyEmail)
 
 	// Autenticación
 	a.Echo.POST("/login", a.AuthenticateUsuario)
+	a.Echo.POST("/logout", a.Logout)
+
+
+	a.Echo.GET("/usuario/:id", a.GetUsuario)	
 
 	// Eventos endpoints
 	a.Echo.GET("/evento/", a.FetchEventos)
@@ -57,6 +62,7 @@ func (a *Api) RegisterRoutes(configEnv *config.ConfigEnv) {
 	a.Echo.POST("/evento/", a.CreateEvento) //falta usuario creacion
 	a.Echo.GET("/evento/filter", a.FetchEventosWithFilters)
 	a.Echo.GET("/evento/reporte", a.GetReporteEvento)
+	a.Echo.GET("/api/events/:id/summary", a.GetEventoSummary)
 
 	a.Echo.GET("/categorias/", a.FetchCategorias)
 	a.Echo.POST("/categoria/", a.CreateCategoria)
@@ -71,8 +77,6 @@ func (a *Api) RegisterRoutes(configEnv *config.ConfigEnv) {
 	a.Echo.PUT("/cupon/:usuarioModificacion", a.UpdateCupon)
 	a.Echo.GET("/cupon/organizador/:organizadorId", a.FetchCuponPorOrganizador)
 
-	a.Echo.POST("/register", a.RegisterUsuario)
-	a.Echo.GET("/usuario/:id", a.GetUsuario)
 
 	//Orden de compra
 	a.Echo.POST("/orden_de_compra/hold", a.CrearSesionOrdenTemporal)

@@ -29,3 +29,9 @@ func (tc *TicketController) EmitirTickets(orderID int64) (*schemas.TicketIssueRe
 func (tc *TicketController) CancelarTickets(req schemas.TicketCancelRequest) (*schemas.TicketCancelResponse, *errors.Error) {
 	return tc.TicketAdapter.CancelarTickets(&req)
 }
+
+func (tc *TicketController) EmitirTicketsConInfo(
+	req schemas.EmitirTicketsRequest,
+) (*schemas.EmitirTicketsResponse, *errors.Error) {
+	return tc.TicketAdapter.EmitirTicketsConInfo(&req)
+}

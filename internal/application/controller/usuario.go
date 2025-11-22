@@ -97,23 +97,38 @@ func (uc *UsuarioController) RegisterUsuario(usuario *model.Usuario) (model.Usua
 
 func (uc *UsuarioController) GetUsuario(id int64) (*model.Usuario, *errors.Error) {
 	var usuario *model.Usuario
+	var transactionErr error
+
 	err := uc.DB.Usuario.PostgresqlDB.Transaction(func(tx *gorm.DB) error {
 		txRepo := uc.DB
-		usuario, err := txRepo.Usuario.ObtenerUsuarioBasicoPorID(id)
+		var err error
+		usuario, err = txRepo.Usuario.ObtenerUsuarioBasicoPorID(id)
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
-				return fmt.Errorf("user not found")
+				transactionErr = fmt.Errorf("user not found")
+				return transactionErr
 			}
+			transactionErr = err
 			return err
 		}
+
+		// Validar que usuario no sea nil
+        if usuario == nil {
+            uc.Logger.Error(fmt.Sprintf("ObtenerUsuarioBasicoPorID retornó nil para ID %d", id))
+            transactionErr = fmt.Errorf("user is nil")
+            return transactionErr
+        }
+
 		comentarios := txRepo.Comentario.PostgresqlDB.Model(&model.Comentario{}).Where("usuario_id = ?", id).Find(&usuario.Comentarios)
 		if comentarios.Error != nil {
 			return comentarios.Error
 		}
+
 		ordenes := txRepo.OrdenDeCompra.PostgresqlDB.Model(&model.OrdenDeCompra{}).Where("usuario_id = ?", id).Find(&usuario.Ordenes)
 		if ordenes.Error != nil {
 			return ordenes.Error
 		}
+
 		// Falta cupones
 		roles, err := txRepo.RolesUsuario.ListarRolesDeUsuario(usuario.ID)
 		if err != nil {
@@ -124,11 +139,25 @@ func (uc *UsuarioController) GetUsuario(id int64) (*model.Usuario, *errors.Error
 		return nil
 	})
 	if err != nil {
-		if err.Error() == "user not found" {
-			return nil, &errors.ObjectNotFoundError.UserNotFound
-		}
-		return nil, &errors.InternalServerError.Default
+		uc.Logger.Error(fmt.Sprintf("Error en GetUsuario para ID %d: %v", id, err))
+        
+        if transactionErr != nil && transactionErr.Error() == "user not found" {
+            return nil, &errors.ObjectNotFoundError.UserNotFound
+        }
+        if transactionErr != nil && transactionErr.Error() == "user is nil" {
+            return nil, &errors.InternalServerError.Default
+        }
+        return nil, &errors.InternalServerError.Default
 	}
+
+	// Validación final por seguridad
+    if usuario == nil {
+        uc.Logger.Error(fmt.Sprintf("Usuario sigue siendo nil después de la transacción para ID %d", id))
+        return nil, &errors.InternalServerError.Default
+    }
+
+    uc.Logger.Infof("Usuario obtenido exitosamente: ID=%d, Nombre=%s, Correo=%s", usuario.ID, usuario.Nombre, usuario.Correo)
+	
 	return usuario, nil
 }
 

@@ -2,10 +2,11 @@ package adapter
 
 import (
 	"fmt"
-
+	"time"  // ← NECESARIO para time.Now()
+	
 	"github.com/Nexivent/nexivent-backend/errors"
 	"github.com/Nexivent/nexivent-backend/internal/dao/model"
-	util "github.com/Nexivent/nexivent-backend/internal/dao/model/util"
+	util "github.com/Nexivent/nexivent-backend/internal/dao/model/util"  
 	daoPostgresql "github.com/Nexivent/nexivent-backend/internal/dao/repository"
 	"github.com/Nexivent/nexivent-backend/internal/schemas"
 	"github.com/Nexivent/nexivent-backend/logging"
@@ -221,6 +222,73 @@ func (t *Ticket) CancelarTickets(req *schemas.TicketCancelRequest) (*schemas.Tic
 		NoEncontrados: noEncontrados,
 		NoCancelables: noCancelables,
 		Mensaje:       "Tickets cancelados correctamente.",
+	}
+	return resp, nil
+}
+
+func (t *Ticket) EmitirTicketsConInfo(
+	req *schemas.EmitirTicketsRequest,
+) (*schemas.EmitirTicketsResponse, *errors.Error) {
+
+	if req.OrderID == 0 || req.UserID == 0 || len(req.Tickets) == 0 {
+		return nil, &errors.UnprocessableEntityError.InvalidRequestBody
+	}
+
+	orden, err := t.DaoPostgresql.OrdenDeCompra.ObtenerOrdenBasica(req.OrderID)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			t.logger.Warnf("Orden %d no encontrada", req.OrderID)
+			return nil, &errors.ObjectNotFoundError.EventoNotFound
+		}
+		t.logger.Errorf("EmitirTicketsConInfo.ObtenerOrden(%d): %v", req.OrderID, err)
+		return nil, &errors.BadRequestError.EventoNotFound
+	}
+
+	if orden.EstadoDeOrden != util.OrdenConfirmada.Codigo() {
+		t.logger.Warnf("Orden %d no está confirmada (estado: %d)", req.OrderID, orden.EstadoDeOrden)
+		return nil, &errors.BadRequestError.EventoNotFound
+	}
+
+	if orden.UsuarioID != req.UserID {
+		t.logger.Warnf("Usuario %d no es dueño de la orden %d", req.UserID, req.OrderID)
+		return nil, &errors.BadRequestError.EventoNotFound
+	}
+
+	var ticketsGenerados []schemas.TicketGenerado
+
+	for _, ticketInfo := range req.Tickets {
+		for i := 0; i < ticketInfo.Cantidad; i++ {
+			timestamp := time.Now().UnixNano()
+			codigoQR := fmt.Sprintf("QR-%d-%d-%d-%d", timestamp, req.OrderID, ticketInfo.IdTarifa, i)
+
+			ordenID := req.OrderID
+			ticket := &model.Ticket{
+				OrdenDeCompraID: &ordenID,
+				EventoFechaID:   req.IdFechaEvento,
+				TarifaID:        ticketInfo.IdTarifa,
+				CodigoQR:        codigoQR,
+				EstadoDeTicket:  int16(1), // 1 = VENDIDO
+			}
+
+			if err := t.DaoPostgresql.Ticket.Crear(ticket); err != nil {
+				t.logger.Errorf("EmitirTicketsConInfo.CrearTicket: %v", err)
+				return nil, &errors.BadRequestError.EventoNotCreated
+			}
+
+			ticketsGenerados = append(ticketsGenerados, schemas.TicketGenerado{
+				IdTicket: fmt.Sprintf("%d", ticket.ID),
+				CodigoQR: ticket.CodigoQR,
+				Estado:   "VENDIDO",
+				Zona:     ticketInfo.NombreZona,
+			})
+		}
+	}
+
+	t.logger.Infof("✅ Tickets generados para orden %d: %d tickets", req.OrderID, len(ticketsGenerados))
+
+	resp := &schemas.EmitirTicketsResponse{
+		Tickets: ticketsGenerados,
+		OrderID: req.OrderID,
 	}
 	return resp, nil
 }

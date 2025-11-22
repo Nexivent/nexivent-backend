@@ -8,6 +8,7 @@ import (
 
 	config "github.com/Nexivent/nexivent-backend/internal/config"
 	"github.com/Nexivent/nexivent-backend/internal/dao/model"
+	util "github.com/Nexivent/nexivent-backend/internal/dao/model/util"
 	"github.com/Nexivent/nexivent-backend/internal/dao/repository"
 	"github.com/Nexivent/nexivent-backend/logging"
 	"gorm.io/gorm"
@@ -73,7 +74,11 @@ func seedDatabase(
 	if err := seedMetodosPago(db); err != nil {
 		return err
 	}
-	if err := seedEventos(logger, db, entidad, usuarios, categorias); err != nil {
+	eventos, err := seedEventos(logger, db, entidad, usuarios, categorias)
+	if err != nil {
+		return err
+	}
+	if err := seedTicketsComprados(logger, db, entidad, eventos, usuarios); err != nil {
 		return err
 	}
 
@@ -227,7 +232,7 @@ func seedEventos(
 	entidad *repository.NexiventPsqlEntidades,
 	usuarios []model.Usuario,
 	categorias []model.Categoria,
-) error {
+) ([]model.Evento, error) {
 	now := time.Now()
 	categoriaPorNombre := make(map[string]int64)
 	for i := range categorias {
@@ -477,14 +482,16 @@ func seedEventos(
 		"Asistente":     1.0,
 	}
 
+	var eventosCreados []model.Evento
+
 	for _, seed := range eventos {
 		if seed.OrganizadorIdx >= len(usuarios) {
-			return fmt.Errorf("organizador fuera de rango para evento %s", seed.Titulo)
+			return nil, fmt.Errorf("organizador fuera de rango para evento %s", seed.Titulo)
 		}
 		organizador := usuarios[seed.OrganizadorIdx]
 		categoriaID := categoriaPorNombre[seed.Categoria]
 		if categoriaID == 0 {
-			return fmt.Errorf("no se encontró categoría %s", seed.Categoria)
+			return nil, fmt.Errorf("no se encontró categoría %s", seed.Categoria)
 		}
 
 		fechaEvento := now.AddDate(0, 0, seed.DiasHastaFecha)
@@ -536,12 +543,12 @@ func seedEventos(
 		}
 
 		if err := entidad.Evento.CrearEvento(&evento); err != nil {
-			return fmt.Errorf("no se pudo crear evento %s: %w", seed.Titulo, err)
+			return nil, fmt.Errorf("no se pudo crear evento %s: %w", seed.Titulo, err)
 		}
 
 		fecha := &model.Fecha{FechaEvento: fechaEvento}
 		if err := db.Create(fecha).Error; err != nil {
-			return fmt.Errorf("no se pudo crear fecha para %s: %w", seed.Titulo, err)
+			return nil, fmt.Errorf("no se pudo crear fecha para %s: %w", seed.Titulo, err)
 		}
 
 		horaInicio := time.Date(
@@ -563,20 +570,20 @@ func seedEventos(
 			FechaCreacion:   now,
 		}
 		if err := db.Create(eventoFecha).Error; err != nil {
-			return fmt.Errorf("no se pudo crear evento_fecha para %s: %w", seed.Titulo, err)
+			return nil, fmt.Errorf("no se pudo crear evento_fecha para %s: %w", seed.Titulo, err)
 		}
 
 		var sectores []model.Sector
 		if err := db.Where("evento_id = ?", evento.ID).Find(&sectores).Error; err != nil {
-			return fmt.Errorf("no se pudo obtener sectores de %s: %w", seed.Titulo, err)
+			return nil, fmt.Errorf("no se pudo obtener sectores de %s: %w", seed.Titulo, err)
 		}
 		var perfiles []model.PerfilDePersona
 		if err := db.Where("evento_id = ?", evento.ID).Find(&perfiles).Error; err != nil {
-			return fmt.Errorf("no se pudo obtener perfiles de %s: %w", seed.Titulo, err)
+			return nil, fmt.Errorf("no se pudo obtener perfiles de %s: %w", seed.Titulo, err)
 		}
 		var tickets []model.TipoDeTicket
 		if err := db.Where("evento_id = ?", evento.ID).Find(&tickets).Error; err != nil {
-			return fmt.Errorf("no se pudo obtener tickets de %s: %w", seed.Titulo, err)
+			return nil, fmt.Errorf("no se pudo obtener tickets de %s: %w", seed.Titulo, err)
 		}
 
 		sectorPrecio := make(map[string]float64)
@@ -611,7 +618,7 @@ func seedEventos(
 						FechaCreacion:     now,
 					}
 					if err := entidad.Tarifa.CrearTarifa(tarifa); err != nil {
-						return fmt.Errorf("no se pudo crear tarifa de %s: %w", seed.Titulo, err)
+						return nil, fmt.Errorf("no se pudo crear tarifa de %s: %w", seed.Titulo, err)
 					}
 				}
 			}
@@ -632,16 +639,123 @@ func seedEventos(
 				EventoID:        evento.ID,
 			}
 			if err := entidad.Cupon.CrearCupon(cupon); err != nil {
-				return fmt.Errorf("no se pudo crear cupón %s: %w", seed.Cupon.Codigo, err)
+				return nil, fmt.Errorf("no se pudo crear cupón %s: %w", seed.Cupon.Codigo, err)
 			}
 		}
 
+		eventosCreados = append(eventosCreados, evento)
 		logger.Infof("Evento %s creado con %d sectores y %d tickets", seed.Titulo, len(sectores), len(tickets))
 	}
 
-	return nil
+	return eventosCreados, nil
 }
 
 func isLocalhost(host string) bool {
 	return host == "localhost" || host == "127.0.0.1"
+}
+
+func seedTicketsComprados(
+	logger logging.Logger,
+	db *gorm.DB,
+	entidad *repository.NexiventPsqlEntidades,
+	eventos []model.Evento,
+	usuarios []model.Usuario,
+) error {
+	if len(usuarios) == 0 {
+		return fmt.Errorf("no hay usuarios para asignar compras seed")
+	}
+
+	var ticketsExistentes int64
+	if err := db.Model(&model.Ticket{}).Count(&ticketsExistentes).Error; err != nil {
+		return fmt.Errorf("no se pudo contar tickets existentes: %w", err)
+	}
+	if ticketsExistentes > 0 {
+		logger.Infof("Seed de tickets comprados omitido: ya hay %d tickets", ticketsExistentes)
+		return nil
+	}
+
+	var metodoPago model.MetodoDePago
+	if err := db.First(&metodoPago).Error; err != nil {
+		return fmt.Errorf("no se pudo obtener método de pago para seeds: %w", err)
+	}
+
+	horaCompra := time.Now()
+	maxEventos := len(eventos)
+	if maxEventos > 3 {
+		maxEventos = 3
+	}
+
+	for i := 0; i < maxEventos; i++ {
+		ev := eventos[i]
+		comprador := usuarios[i%len(usuarios)]
+
+		var eventoFecha model.EventoFecha
+		if err := db.Where("evento_id = ?", ev.ID).First(&eventoFecha).Error; err != nil {
+			logger.Warnf("No se encontró evento_fecha para evento %s: %v", ev.Titulo, err)
+			continue
+		}
+
+		var tarifas []model.Tarifa
+		if err := db.
+			Joins("JOIN tipo_de_ticket tdt ON tdt.tipo_de_ticket_id = tarifa.tipo_de_ticket_id").
+			Where("tdt.evento_id = ?", ev.ID).
+			Order("tarifa_id").
+			Find(&tarifas).Error; err != nil {
+			return fmt.Errorf("no se pudieron obtener tarifas para %s: %w", ev.Titulo, err)
+		}
+		if len(tarifas) == 0 {
+			logger.Warnf("Evento %s no tiene tarifas para seed de tickets", ev.Titulo)
+			continue
+		}
+
+		ticketsPorOrden := 2
+		if len(tarifas) < ticketsPorOrden {
+			ticketsPorOrden = len(tarifas)
+		}
+
+		seleccion := tarifas[:ticketsPorOrden]
+		var total float64
+		for _, tf := range seleccion {
+			total += tf.Precio
+		}
+
+		orden := model.OrdenDeCompra{
+			UsuarioID:        comprador.ID,
+			MetodoDePagoID:   metodoPago.ID,
+			Fecha:            horaCompra,
+			FechaHoraIni:     horaCompra,
+			Total:            math.Round(total*100) / 100,
+			MontoFeeServicio: math.Round(total*0.05*100) / 100,
+			EstadoDeOrden:    util.OrdenConfirmada.Codigo(),
+		}
+		if err := db.Create(&orden).Error; err != nil {
+			return fmt.Errorf("no se pudo crear orden seed para %s: %w", ev.Titulo, err)
+		}
+
+		var tickets []model.Ticket
+		for idxTf, tf := range seleccion {
+			qr := fmt.Sprintf("SEED-%d-%d-%d", ev.ID, orden.ID, idxTf+1)
+			tickets = append(tickets, model.Ticket{
+				OrdenDeCompraID: &orden.ID,
+				EventoFechaID:   eventoFecha.ID,
+				TarifaID:        tf.ID,
+				CodigoQR:        qr,
+				EstadoDeTicket:  util.TicketVendido.Codigo(),
+			})
+		}
+
+		if err := entidad.Ticket.CrearTicketsBatch(tickets); err != nil {
+			return fmt.Errorf("no se pudieron crear tickets seed para %s: %w", ev.Titulo, err)
+		}
+
+		for _, tf := range seleccion {
+			if err := entidad.Ticket.IncrementarVendidasPorSector(tf.SectorID, 1); err != nil {
+				logger.Warnf("No se pudo incrementar vendidas para sector %d: %v", tf.SectorID, err)
+			}
+		}
+
+		logger.Infof("Seed: orden %d con %d tickets vendidos para evento %s", orden.ID, len(tickets), ev.Titulo)
+	}
+
+	return nil
 }

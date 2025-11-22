@@ -246,7 +246,6 @@ func (a *Api) GoogleAuth(c echo.Context) error {
 
     var googleUser *controller.GoogleUser
 
-    // ✅ OPCIÓN 1: Si recibimos datos ya validados del frontend (recomendado)
     if input.Email != "" && input.EmailVerified && input.Sub != "" {
         a.Logger.Infof("Usando datos validados de Google para: %s", input.Email)
         googleUser = &controller.GoogleUser{
@@ -257,7 +256,6 @@ func (a *Api) GoogleAuth(c echo.Context) error {
             VerifiedEmail: input.EmailVerified,
         }
     } else if input.IdToken != "" {
-        // ✅ OPCIÓN 2: Validar el ID Token si se proporciona
         a.Logger.Infof("Validando ID Token de Google")
         var err error
         googleUser, err = a.BllController.Usuario.VerifyGoogleToken(input.IdToken)
@@ -269,7 +267,6 @@ func (a *Api) GoogleAuth(c echo.Context) error {
             })
         }
     } else {
-        // ✅ Sin datos suficientes
         return c.JSON(http.StatusBadRequest, map[string]interface{}{
             "error":   "MISSING_DATA",
             "message": "Se requiere id_token o datos validados de Google",
@@ -284,12 +281,10 @@ func (a *Api) GoogleAuth(c echo.Context) error {
         })
     }
 
-    // ✅ CORRECCIÓN CRÍTICA: Buscar usuario existente correctamente
     a.Logger.Infof("🔍 Buscando usuario existente con correo: %s", googleUser.Email)
 
     usuarioExistente, err := a.BllController.Usuario.DB.Usuario.ObtenerUsuarioPorCorreo(googleUser.Email)
     
-    // ✅ IMPORTANTE: Si encuentra el usuario, autenticar (NO crear nuevo)
     if err == nil && usuarioExistente != nil {
         a.Logger.Infof("✅ Usuario EXISTENTE encontrado: ID=%d, Nombre=%s, TipoDoc=%s, NumDoc=%s", 
             usuarioExistente.ID, 
@@ -297,8 +292,6 @@ func (a *Api) GoogleAuth(c echo.Context) error {
             usuarioExistente.TipoDocumento, 
             usuarioExistente.NumDocumento)
 
-        // ✅ Si el usuario existe, NO modificar sus datos de documento
-        // Solo generar token y retornar
         token, tokenErr := a.BllController.Token.CreateToken(usuarioExistente.ID, 24*time.Hour, "authentication")
         if tokenErr != nil {
             a.Logger.Errorf("Error al generar token: %v", tokenErr)
@@ -329,28 +322,23 @@ func (a *Api) GoogleAuth(c echo.Context) error {
         })
     }
 
-    // ✅ Solo llegar aquí si NO existe el usuario
     a.Logger.Infof("📝 Usuario NO existe, creando nuevo usuario con correo: %s", googleUser.Email)
 
-    // Usuario nuevo - Crear usuario con datos de Google
     var nuevoUsuario model.Usuario
     
     nuevoUsuario.Nombre = googleUser.Name
     nuevoUsuario.Correo = googleUser.Email
     
-    // ✅ CORRECCIÓN: Documento validado del frontend (si existe)
     if input.TipoDocumento != "" && input.NumDocumento != "" {
         a.Logger.Infof("📄 Usando documento del frontend: %s - %s", input.TipoDocumento, input.NumDocumento)
         nuevoUsuario.TipoDocumento = input.TipoDocumento
         nuevoUsuario.NumDocumento = input.NumDocumento
     } else {
-        // ✅ FALLBACK: Solo usar GOOGLE si NO hay documento del frontend
         a.Logger.Warnf("⚠️ No hay documento del frontend, usando Google Sub como identificador")
         nuevoUsuario.TipoDocumento = "GOOGLE"
         nuevoUsuario.NumDocumento = googleUser.Sub
     }
     
-    // Email verificado por Google automáticamente
     nuevoUsuario.EstadoDeCuenta = 1 // Verificado
     nuevoUsuario.Estado = 1         // Activo
     nuevoUsuario.Contrasenha = ""   // Sin contraseña para usuarios de Google
@@ -361,14 +349,12 @@ func (a *Api) GoogleAuth(c echo.Context) error {
         nuevoUsuario.TipoDocumento, 
         nuevoUsuario.NumDocumento)
 
-    // ✅ Registrar usuario usando la función existente
     usuarioRegistrado, newErr := a.BllController.Usuario.RegisterUsuario(&nuevoUsuario)
     if newErr != nil {
         a.Logger.Errorf("❌ Error al registrar usuario de Google: %v", newErr)
         return errors.HandleError(*newErr, c)
     }
 
-    // ✅ Generar token
     token, tokenErr := a.BllController.Token.CreateToken(usuarioRegistrado.ID, 24*time.Hour, "authentication")
     if tokenErr != nil {
         a.Logger.Errorf("Error al generar token: %v", tokenErr)

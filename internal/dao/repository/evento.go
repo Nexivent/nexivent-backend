@@ -484,7 +484,7 @@ func (e *Evento) ObtenerEventoDetalle(eventoId int64) (*schemas.EventoDetalleDTO
 
 	// Obtener tarifas con joins
 	//var tarifas []TarifaDTO
-	var tarifas []schemas.TarifaDTO
+	/*var tarifas []schemas.TarifaDTO
 	e.PostgresqlDB.
 		Table("tarifa t").
 		Select(`t.tarifa_id as id_tarifa,
@@ -500,11 +500,29 @@ func (e *Evento) ObtenerEventoDetalle(eventoId int64) (*schemas.EventoDetalleDTO
 		Joins("JOIN perfil_persona pp ON t.perfil_persona_id = pp.perfil_persona_id").
 		Where("s.evento_id = ?", eventoId).
 		Find(&tarifas)
+	*/
+	var tarifas []schemas.TarifaDTO
+	e.PostgresqlDB.
+		Table("tarifa t").
+		Select(`t.tarifa_id as id_tarifa,
+			t.precio,
+			s.sector_tipo as tipo_sector,
+			(s.total_entradas - s.cant_vendidas) as stock_disponible,
+			tt.nombre as tipo_ticket,
+			TO_CHAR(tt.fecha_ini, 'YYYY-MM-DD') as fecha_ini,
+			TO_CHAR(tt.fecha_fin, 'YYYY-MM-DD') as fecha_fin,
+			COALESCE(pp.nombre, '') as perfil`).
+		Joins("JOIN sector s ON t.sector_id = s.sector_id").
+		Joins("JOIN tipo_de_ticket tt ON t.tipo_de_ticket_id = tt.tipo_de_ticket_id").
+		Joins("LEFT JOIN perfil_de_persona pp ON t.perfil_de_persona_id = pp.perfil_de_persona_id").
+		Where("s.evento_id = ? AND t.estado = 1", eventoId).
+		Find(&tarifas)
 
 	return &schemas.EventoDetalleDTO{
 		IDEvento:    eventoBase.ID,
 		Titulo:      eventoBase.Titulo,
 		Descripcion: eventoBase.Descripcion,
+		Lugar:       eventoBase.Lugar,
 		Fechas:      fechas,
 		Tarifas:     tarifas,
 	}, nil

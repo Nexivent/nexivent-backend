@@ -523,6 +523,7 @@ func (e *Evento) ObtenerEventoDetalle(eventoId int64) (*schemas.EventoDetalleDTO
 		Titulo:      eventoBase.Titulo,
 		Descripcion: eventoBase.Descripcion,
 		Lugar:       eventoBase.Lugar,
+		ImagenPortada: eventoBase.ImagenPortada,
 		Fechas:      fechas,
 		Tarifas:     tarifas,
 	}, nil

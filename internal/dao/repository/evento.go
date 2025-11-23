@@ -69,6 +69,12 @@ func (e *Evento) ObtenerEventosDisponiblesConFiltros(
 
 	// Construcción base del query
 	query := e.PostgresqlDB.
+		Preload("Fechas.Fecha").
+		Preload("Sectores").
+		Preload("Sectores.Tarifa").
+		Preload("Sectores.Tarifa.TipoDeTicket").
+		Preload("Sectores.Tarifa.PerfilPersona").
+		Preload("TiposTicket").
 		Joins("JOIN evento_fecha ef ON ef.evento_id = evento.evento_id").
 		Joins("JOIN fecha f ON f.fecha_id = ef.fecha_id")
 

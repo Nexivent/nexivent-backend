@@ -33,7 +33,3 @@ func (ru *RolUsuarioController) AsignarRolUser(request schemas.RolUsuarioRequest
 func (ru *RolUsuarioController) RevokeRolUser(request schemas.RolUsuarioRequest) (string, *errors.Error) {
 	return ru.RolUsuarioAdapter.RevokePostgresqlRolUser(request)
 }
-
-func (ru *RolUsuarioController) GetUsersByRol(idRol int64) ([]schemas.UsuarioRolResponse, *errors.Error) {
-	return ru.RolUsuarioAdapter.GetUserSPostgresqlByRol(idRol)
-}

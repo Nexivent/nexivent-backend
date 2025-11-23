@@ -5,7 +5,6 @@ import (
 
 	"github.com/Nexivent/nexivent-backend/internal/dao/model"
 	util "github.com/Nexivent/nexivent-backend/internal/dao/model/util"
-	//"github.com/Nexivent/nexivent-backend/internal/schemas"
 	"github.com/Nexivent/nexivent-backend/logging"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -127,22 +126,6 @@ func (r *RolUsuarioRepo) ExisteRolUsuario(usuarioID int64, rolID int64) (bool, e
 		return false, result.Error
 	}
 	return count > 0, nil
-}
-
-func (ru * RolUsuarioRepo) ObtenerUsuariosPorRol(rolId int64) ([]model.Usuario, error){
-
-	var usuarios []model.Usuario 
-	respuesta := ru.PostgresqlDB.
-		Table("usuario").
-		Joins("JOIN rol_usuario r ON r.usuario_id = usuario.usuario_id").
-		Where("r.rol_id = ? AND r.estado = 1 AND usuario.estado = 1", rolId).
-		Find(&usuarios)
-	print("rolid: ",&rolId," - ",rolId)
-	if respuesta.Error != nil {
-		return nil, respuesta.Error
-	}
-
-	return usuarios, nil
 }
 
 // Actualizar estado de una asignación por id (útil para admin)

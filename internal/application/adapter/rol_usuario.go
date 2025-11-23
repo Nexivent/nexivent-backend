@@ -86,25 +86,3 @@ func (ru *RolUsuario) RevokePostgresqlRolUser(rolUser schemas.RolUsuarioRequest)
 	return mensaje, nil
 }
 
-
-func (ru *RolUsuario) GetUserSPostgresqlByRol( rolId int64) ( []schemas.UsuarioRolResponse, *errors.Error) {
-	usuarios, err := ru.DaoPostgresql.RolesUsuario.ObtenerUsuariosPorRol(rolId)
-	if err != nil {
-		ru.logger.Errorf("Failed to list users by Rol: %v", err)
-		return nil , &errors.BadRequestError.EventoNotFound
-	}
-
-	usuariosByRol := make([]schemas.UsuarioRolResponse,len(usuarios))
-	for i, c := range usuarios {
-
-		usuariosByRol[i] = schemas.UsuarioRolResponse{
-			IDUsuario: c.ID,
-			Nombre: c.Nombre,
-			Correo: c.Correo,
-			Estado: c.Estado,
-		}
-	}
-
-
-	return usuariosByRol, nil
-}

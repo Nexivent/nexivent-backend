@@ -3,9 +3,8 @@ package repository
 import (
 	"strings"
 	"time"
-
-	"github.com/Nexivent/nexivent-backend/internal/dao/model"
 	"github.com/Nexivent/nexivent-backend/internal/schemas"
+	"github.com/Nexivent/nexivent-backend/internal/dao/model"
 	"github.com/Nexivent/nexivent-backend/logging"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -66,7 +65,8 @@ func (e *Evento) ObtenerEventosDisponiblesConFiltros(
 	// Construcción base del query
 	query := e.PostgresqlDB.
 		Joins("JOIN evento_fecha ef ON ef.evento_id = evento.evento_id").
-		Joins("JOIN fecha f ON f.fecha_id = ef.fecha_id")
+		Joins("JOIN fecha f ON f.fecha_id = ef.fecha_id").
+		Where("evento.evento_estado = 1 AND f.fecha_evento > NOW()")
 
 	// Aplicar filtros dinámicamente
 	if categoriaID != nil {
@@ -454,6 +454,7 @@ func (e *Evento) ObtenerEventoPorId(id int64) (*model.Evento, error) {
 	return evento, nil
 }
 
+
 func (e *Evento) ObtenerEventoDetalle(eventoId int64) (*schemas.EventoDetalleDTO, error) {
 	// Obtener datos básicos del evento
 	var eventoBase model.Evento
@@ -518,12 +519,12 @@ func (e *Evento) ObtenerEventoDetalle(eventoId int64) (*schemas.EventoDetalleDTO
 		Find(&tarifas)
 
 	return &schemas.EventoDetalleDTO{
-		IDEvento:      eventoBase.ID,
-		Titulo:        eventoBase.Titulo,
-		Descripcion:   eventoBase.Descripcion,
-		Lugar:         eventoBase.Lugar,
+		IDEvento:    eventoBase.ID,
+		Titulo:      eventoBase.Titulo,
+		Descripcion: eventoBase.Descripcion,
+		Lugar:       eventoBase.Lugar,
 		ImagenPortada: eventoBase.ImagenPortada,
-		Fechas:        fechas,
-		Tarifas:       tarifas,
+		Fechas:      fechas,
+		Tarifas:     tarifas,
 	}, nil
 }

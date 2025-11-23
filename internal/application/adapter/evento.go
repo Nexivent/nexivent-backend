@@ -424,38 +424,9 @@ func (e *Evento) GetPostgresqlEventoById(eventoID int64) (*schemas.EventoRespons
 		})
 	}
 
-	// Fetch and build precios desde las tarifas activas del evento
-	tarifas, tarifaErr := e.DaoPostgresql.Tarifa.ListarTarifasPorEvento(eventoID)
-	if tarifaErr != nil {
-		e.logger.Errorf("Failed to list tarifas for evento %d: %v", eventoID, tarifaErr)
-		return nil, &errors.InternalServerError.Default
-	}
-
+	// Fetch and build precios (this requires fetching tarifas)
+	// For now, returning empty map - you may want to implement this based on your needs
 	precios := make(schemas.PreciosSector)
-	for _, tarifa := range tarifas {
-		sectorKey := fmt.Sprintf("%d", tarifa.SectorID)
-
-		perfilKey := "0"
-		if tarifa.PerfilDePersonaID != nil {
-			perfilKey = fmt.Sprintf("%d", *tarifa.PerfilDePersonaID)
-		}
-
-		tipoTicketKey := fmt.Sprintf("%d", tarifa.TipoDeTicketID)
-
-		perfilMap, ok := precios[sectorKey]
-		if !ok {
-			perfilMap = make(schemas.PreciosPerfil)
-			precios[sectorKey] = perfilMap
-		}
-
-		precioDetalle, ok := perfilMap[perfilKey]
-		if !ok {
-			precioDetalle = make(schemas.PrecioDetalle)
-			perfilMap[perfilKey] = precioDetalle
-		}
-
-		precioDetalle[tipoTicketKey] = tarifa.Precio
-	}
 
 	response := &schemas.EventoResponse{
 		IdEvento:          eventoModel.ID,
@@ -603,12 +574,13 @@ func (a *Evento) GenerarReporteAdministrativo(req schemas.AdminReportRequest) (*
 	return reporte, nil
 }
 
-func (e *Evento) GetPostgresqlEventoDetalle(eventoId int64) (*schemas.EventoDetalleDTO, *errors.Error) {
+
+func (e *Evento) GetPostgresqlEventoDetalle(eventoId int64) (*schemas.EventoDetalleDTO, *errors.Error){
 	eventoDetalle, err := e.DaoPostgresql.Evento.ObtenerEventoDetalle(eventoId)
 	if err != nil {
 		e.logger.Errorf("Failed to get evento detallado: %v", err)
 		return nil, &errors.BadRequestError.EventoNotFound
 	}
-
+	
 	return eventoDetalle, nil
 }

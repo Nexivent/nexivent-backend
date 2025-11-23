@@ -135,30 +135,6 @@ func (t *Tarifa) MapTarifaPrecioSector(ids []int64) (map[int64]float64, map[int6
 	return outPrecio, outSector, nil
 }
 
-// ListarTarifasPorEvento retorna las tarifas activas asociadas a un evento.
-func (t *Tarifa) ListarTarifasPorEvento(eventoID int64) ([]*model.Tarifa, error) {
-	if eventoID <= 0 {
-		return nil, gorm.ErrInvalidData
-	}
-
-	var tarifas []*model.Tarifa
-	res := t.PostgresqlDB.
-		Model(&model.Tarifa{}).
-		Joins("JOIN sector s ON s.sector_id = tarifa.sector_id").
-		Joins("JOIN tipo_de_ticket tt ON tt.tipo_de_ticket_id = tarifa.tipo_de_ticket_id").
-		Where("tarifa.estado = 1").
-		Where("s.evento_id = ?", eventoID).
-		Where("tt.evento_id = ?", eventoID).
-		Find(&tarifas)
-
-	if res.Error != nil {
-		t.logger.Errorf("ListarTarifasPorEvento(id=%d): %v", eventoID, res.Error)
-		return nil, res.Error
-	}
-
-	return tarifas, nil
-}
-
 func (r *Tarifa) ModificarTarifaPorCampos(
 	id int64,
 	sectorID *int64,

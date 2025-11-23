@@ -8,7 +8,7 @@ import (
 )
 
 type RolUsuarioController struct {
-	Logger       logging.Logger
+	Logger            logging.Logger
 	RolUsuarioAdapter *adapter.RolUsuario
 }
 
@@ -17,7 +17,7 @@ func NewRolUsuarioController(
 	rolUsuarioAdapter *adapter.RolUsuario,
 ) *RolUsuarioController {
 	return &RolUsuarioController{
-		Logger:       logger,
+		Logger:            logger,
 		RolUsuarioAdapter: rolUsuarioAdapter,
 	}
 }
@@ -34,6 +34,6 @@ func (ru *RolUsuarioController) RevokeRolUser(request schemas.RolUsuarioRequest)
 	return ru.RolUsuarioAdapter.RevokePostgresqlRolUser(request)
 }
 
-func (ru *RolUsuarioController) GetUsersByRol(idRol int64) ([]schemas.UsuarioRolResponse, *errors.Error) {
+func (ru *RolUsuarioController) GetUsersByRol(idRol *int64) ([]schemas.UsuarioRolResponse, *errors.Error) {
 	return ru.RolUsuarioAdapter.GetUserSPostgresqlByRol(idRol)
 }

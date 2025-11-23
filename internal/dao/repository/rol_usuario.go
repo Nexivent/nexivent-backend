@@ -5,7 +5,6 @@ import (
 
 	"github.com/Nexivent/nexivent-backend/internal/dao/model"
 	util "github.com/Nexivent/nexivent-backend/internal/dao/model/util"
-	//"github.com/Nexivent/nexivent-backend/internal/schemas"
 	"github.com/Nexivent/nexivent-backend/logging"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -55,12 +54,13 @@ func (r *RolUsuarioRepo) AsignarRolAUsuario(
 			}),
 		}).
 		Create(ru).Error
-	
+
 	if err != nil {
 		return nil, err
 	}
 	return ru, nil
 }
+
 // Desactivar asignación (pasar 1 a 0) y no hacer nada si ya estaba en 0
 func (r *RolUsuarioRepo) QuitarRolDeUsuario(
 	usuarioID int64,
@@ -84,7 +84,7 @@ func (r *RolUsuarioRepo) QuitarRolDeUsuario(
 	return nil
 }
 
-//borrado fisico god no como la mrd de arriba
+// borrado fisico
 func (r *RolUsuarioRepo) BorrarRolDeUsuario(
 	usuarioID int64,
 	rolID int64,
@@ -93,7 +93,7 @@ func (r *RolUsuarioRepo) BorrarRolDeUsuario(
 	result := r.PostgresqlDB.
 		Where("usuario_id = ? AND rol_id = ?", usuarioID, rolID).
 		Delete(&model.RolUsuario{})
-	
+
 	if result.Error != nil {
 		return result.Error
 	}
@@ -129,15 +129,29 @@ func (r *RolUsuarioRepo) ExisteRolUsuario(usuarioID int64, rolID int64) (bool, e
 	return count > 0, nil
 }
 
-func (ru * RolUsuarioRepo) ObtenerUsuariosPorRol(rolId int64) ([]model.Usuario, error){
-
-	var usuarios []model.Usuario 
+// Obtener usuarios por un rol específico
+func (ru *RolUsuarioRepo) ObtenerUsuariosPorRol(rolId int64) ([]model.Usuario, error) {
+	var usuarios []model.Usuario
 	respuesta := ru.PostgresqlDB.
 		Table("usuario").
 		Joins("JOIN rol_usuario r ON r.usuario_id = usuario.usuario_id").
 		Where("r.rol_id = ? AND r.estado = 1 AND usuario.estado = 1", rolId).
 		Find(&usuarios)
-	//print("rolid: ",&rolId," - ",rolId)
+
+	if respuesta.Error != nil {
+		return nil, respuesta.Error
+	}
+
+	return usuarios, nil
+}
+
+// Obtener TODOS los usuarios activos (sin importar sus roles)
+func (ru *RolUsuarioRepo) ObtenerTodosLosUsuariosActivos() ([]model.Usuario, error) {
+	var usuarios []model.Usuario
+	respuesta := ru.PostgresqlDB.
+		Where("estado = 1").
+		Find(&usuarios)
+
 	if respuesta.Error != nil {
 		return nil, respuesta.Error
 	}

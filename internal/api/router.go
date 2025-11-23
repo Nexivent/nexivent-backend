@@ -127,6 +127,11 @@ func (a *Api) RegisterRoutes(configEnv *config.ConfigEnv) {
 	a.Echo.DELETE("/api/roles/revoke", a.DeleteRolUser)
 	a.Echo.GET("/api/users", a.ListarUsuariosPorRol)
 
+	// Gestión de estado de usuarios
+	a.Echo.POST("/api/users/:id/status", a.CambiarEstadoUsuario)
+	a.Echo.POST("/api/users/:id/activate", a.ActivarUsuario)
+	a.Echo.POST("/api/users/:id/deactivate", a.DesactivarUsuario)
+
 }
 
 func (a *Api) RunApi(configEnv *config.ConfigEnv) {

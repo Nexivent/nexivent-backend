@@ -627,3 +627,119 @@ func (a *Api) Logout(c echo.Context) error {
         "message": "Sesión cerrada exitosamente",
     })
 }
+
+// ===================================================
+// GESTIÓN DE ESTADO DE USUARIOS
+// ===================================================
+
+// ActivarUsuario activa un usuario (estado = 1)
+// POST /api/users/:id/activate
+func (a *Api) ActivarUsuario(c echo.Context) error {
+	idParam := c.Param("id")
+	usuarioID, err := strconv.ParseInt(idParam, 10, 64)
+	if err != nil {
+		a.Logger.Warnf("ID de usuario inválido: %s", idParam)
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"error": "ID de usuario inválido",
+		})
+	}
+
+	// TODO: Obtener del contexto/sesión
+	updatedBy := int64(1)
+
+	apiErr := a.BllController.Usuario.ActivarUsuario(usuarioID, updatedBy)
+	if apiErr != nil {
+		a.Logger.Errorf("Error activando usuario %d: %v", usuarioID, apiErr)
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+			"error": apiErr.Message,
+		})
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"message": "Usuario activado correctamente",
+	})
+}
+
+// DesactivarUsuario desactiva un usuario (estado = 0)
+// POST /api/users/:id/deactivate
+func (a *Api) DesactivarUsuario(c echo.Context) error {
+	idParam := c.Param("id")
+	usuarioID, err := strconv.ParseInt(idParam, 10, 64)
+	if err != nil {
+		a.Logger.Warnf("ID de usuario inválido: %s", idParam)
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"error": "ID de usuario inválido",
+		})
+	}
+
+	updatedBy := int64(1)
+
+	apiErr := a.BllController.Usuario.DesactivarUsuario(usuarioID, updatedBy)
+	if apiErr != nil {
+		a.Logger.Errorf("Error desactivando usuario %d: %v", usuarioID, apiErr)
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+			"error": apiErr.Message,
+		})
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"message": "Usuario desactivado correctamente",
+	})
+}
+
+// CambiarEstadoUsuario cambia el estado de un usuario
+// POST /api/users/:id/status
+// Body: { "estado": 1 } o { "estado": 0 }
+func (a *Api) CambiarEstadoUsuario(c echo.Context) error {
+	idParam := c.Param("id")
+	usuarioID, err := strconv.ParseInt(idParam, 10, 64)
+	if err != nil {
+		a.Logger.Warnf("ID de usuario inválido: %s", idParam)
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"error": "ID de usuario inválido",
+		})
+	}
+
+	var request struct {
+		Estado int16 `json:"estado"`
+	}
+	if err := c.Bind(&request); err != nil {
+		a.Logger.Warnf("Error parseando request: %v", err)
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"error": "El campo 'estado' es requerido (0 o 1)",
+		})
+	}
+
+	if request.Estado != 0 && request.Estado != 1 {
+		a.Logger.Warnf("Estado inválido: %d", request.Estado)
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"error": "El estado debe ser 0 (inactivo) o 1 (activo)",
+		})
+	}
+
+	updatedBy := int64(1)
+
+	// Llamar al controller directamente
+	var apiErr *errors.Error
+	if request.Estado == 1 {
+		apiErr = a.BllController.Usuario.ActivarUsuario(usuarioID, updatedBy)
+	} else {
+		apiErr = a.BllController.Usuario.DesactivarUsuario(usuarioID, updatedBy)
+	}
+
+	if apiErr != nil {
+		a.Logger.Errorf("Error cambiando estado del usuario %d: %v", usuarioID, apiErr)
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+			"error": apiErr.Message,
+		})
+	}
+
+	estadoTexto := "activado"
+	if request.Estado == 0 {
+		estadoTexto = "desactivado"
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"message": fmt.Sprintf("Usuario %s correctamente", estadoTexto),
+	})
+}

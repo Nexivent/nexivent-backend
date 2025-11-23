@@ -300,3 +300,71 @@ func (u *UsuarioController) GetOrCreateGoogleUser(googleUser *GoogleUser) (*mode
 
 	return &usuarioCreado, nil
 }
+
+// ActivarUsuario activa un usuario (estado = 1)
+func (uc *UsuarioController) ActivarUsuario(usuarioID int64, updatedBy int64) *errors.Error {
+	// Verificar que el usuario que realiza la modificación existe
+	_, err := uc.DB.Usuario.ObtenerUsuarioBasicoPorID(updatedBy)
+	if err != nil {
+		uc.Logger.Errorf("Usuario modificador no encontrado: %v", err)
+		return &errors.Error{
+			Code:    "INVALID_MODIFIER",
+			Message: "Usuario modificador no encontrado",
+		}
+	}
+
+	// Verificar que el usuario a modificar existe
+	_, err = uc.DB.Usuario.ObtenerUsuarioBasicoPorID(usuarioID)
+	if err != nil {
+		uc.Logger.Errorf("Usuario a modificar no encontrado: %v", err)
+		return &errors.ObjectNotFoundError.UserNotFound
+	}
+
+	// Actualizar el estado a 1 (activo)
+	estado := int16(1)
+	_, err = uc.DB.Usuario.ActualizarUsuario(
+		usuarioID,
+		nil,     // nombre
+		nil,     // tipoDocumento
+		nil,     // numDocumento
+		nil,     // correo
+		nil,     // contrasenha
+		nil,     // telefono
+		nil,     // estadoDeCuenta
+		nil,     // codigoVerificacion
+		nil,     // fechaExpiracionCodigo
+		&estado, // estado = 1 (activo)
+		updatedBy,
+	)
+
+	if err != nil {
+		uc.Logger.Errorf("Error activando usuario %d: %v", usuarioID, err)
+		return &errors.InternalServerError.Default
+	}
+
+	uc.Logger.Infof("Usuario %d activado exitosamente por usuario %d", usuarioID, updatedBy)
+	return nil
+}
+
+// DesactivarUsuario desactiva un usuario (estado = 0)
+func (uc *UsuarioController) DesactivarUsuario(usuarioID int64, updatedBy int64) *errors.Error {
+	// Verificar que el usuario que realiza la modificación existe
+	_, err := uc.DB.Usuario.ObtenerUsuarioBasicoPorID(updatedBy)
+	if err != nil {
+		uc.Logger.Errorf("Usuario modificador no encontrado: %v", err)
+		return &errors.Error{
+			Code:    "INVALID_MODIFIER",
+			Message: "Usuario modificador no encontrado",
+		}
+	}
+
+	// Usar la función existente DesactivarUsuario
+	err = uc.DB.Usuario.DesactivarUsuario(usuarioID, updatedBy)
+	if err != nil {
+		uc.Logger.Errorf("Error desactivando usuario %d: %v", usuarioID, err)
+		return &errors.ObjectNotFoundError.UserNotFound
+	}
+
+	uc.Logger.Infof("Usuario %d desactivado exitosamente por usuario %d", usuarioID, updatedBy)
+	return nil
+}

@@ -45,7 +45,9 @@ func (ec *EventoController) FetchEventosWithFilters(
 	descripcion *string,
 	lugar *string,
 	fecha *time.Time,
-	horaInicio *time.Time) (*schemas.EventosPaginados, *errors.Error) {
+	horaInicio *time.Time,
+	estado *int16,
+	soloFuturos bool) (*schemas.EventosPaginados, *errors.Error) {
 	return ec.EventoAdapter.FetchPostgresqlEventosWithFilters(
 		categoriaID,
 		organizadorID,
@@ -53,7 +55,9 @@ func (ec *EventoController) FetchEventosWithFilters(
 		descripcion,
 		lugar,
 		fecha,
-		horaInicio)
+		horaInicio,
+		estado,
+		soloFuturos)
 }
 
 // GetEventoById retrieves an event by its ID with all related entities

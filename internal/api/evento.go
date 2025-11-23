@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/Nexivent/nexivent-backend/errors"
 	"github.com/Nexivent/nexivent-backend/internal/schemas"
+	"github.com/Nexivent/nexivent-backend/utils/convert"
 	"github.com/labstack/echo/v4"
 )
 
@@ -70,6 +72,8 @@ func (a *Api) FetchEventos(c echo.Context) error {
 // @Param        lugar         query   string  false  "Lugar del evento (coincidencia parcial)"
 // @Param        fecha         query   string  false  "Fecha del evento (YYYY-MM-DD)"
 // @Param        horaInicio    query   string  false  "Hora de inicio (HH:MM)"
+// @Param        estado        query   string  false  "Estado del evento (BORRADOR|PUBLICADO|CANCELADO)"
+// @Param        soloFuturos   query   bool    false  "Si es true, solo eventos con fecha desde hoy"
 // @Success      200  {object}  schemas.EventosPaginados  "OK"
 // @Failure      400  {object}  errors.Error              "Bad Request"
 // @Failure      404  {object}  errors.Error              "Not Found"
@@ -130,6 +134,30 @@ func (a *Api) FetchEventosWithFilters(c echo.Context) error {
 		horaInicio = &parsed
 	}
 
+	var estado *int16
+	if eStr := c.QueryParam("estado"); eStr != "" {
+		upper := strings.ToUpper(strings.TrimSpace(eStr))
+		switch upper {
+		case "BORRADOR", "PUBLICADO", "CANCELADO":
+			val := convert.MapEstadoToInt16(upper)
+			estado = &val
+		default:
+			return errors.HandleError(errors.BadRequestError.InvalidIDParam, c)
+		}
+	}
+
+	soloFuturos := false
+	if sf := c.QueryParam("soloFuturos"); sf != "" {
+		switch strings.ToLower(sf) {
+		case "true", "1", "yes", "y":
+			soloFuturos = true
+		case "false", "0", "no", "n":
+			soloFuturos = false
+		default:
+			return errors.HandleError(errors.BadRequestError.InvalidIDParam, c)
+		}
+	}
+
 	response, err := a.BllController.Evento.FetchEventosWithFilters(
 		categoriaID,
 		organizadorID,
@@ -138,6 +166,8 @@ func (a *Api) FetchEventosWithFilters(c echo.Context) error {
 		lugar,
 		fecha,
 		horaInicio,
+		estado,
+		soloFuturos,
 	)
 	if err != nil {
 		return errors.HandleError(*err, c)

@@ -332,7 +332,9 @@ func (e *Evento) FetchPostgresqlEventosWithFilters(
 	descripcion *string,
 	lugar *string,
 	fecha *time.Time,
-	horaInicio *time.Time) (*schemas.EventosPaginados, *errors.Error) {
+	horaInicio *time.Time,
+	estado *int16,
+	soloFuturos bool) (*schemas.EventosPaginados, *errors.Error) {
 	eventos, err := e.DaoPostgresql.Evento.ObtenerEventosDisponiblesConFiltros(
 		categoriaID,
 		organizadorID,
@@ -340,7 +342,9 @@ func (e *Evento) FetchPostgresqlEventosWithFilters(
 		descripcion,
 		lugar,
 		fecha,
-		horaInicio)
+		horaInicio,
+		estado,
+		soloFuturos)
 
 	if err != nil {
 		e.logger.Errorf("Failed to fetch eventos: %v", err)

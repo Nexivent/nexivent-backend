@@ -58,6 +58,7 @@ func (a *Api) RegisterRoutes(configEnv *config.ConfigEnv) {
 
 	// Autenticación
 	a.Echo.POST("/login", a.AuthenticateUsuario)
+	a.Echo.POST("/loginorg", a.AuthenticateOrganizador)
 	a.Echo.POST("/logout", a.Logout)
 
 	a.Echo.GET("/usuario/:id", a.GetUsuario)

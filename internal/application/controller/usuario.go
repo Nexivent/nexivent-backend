@@ -73,7 +73,13 @@ func (uc *UsuarioController) RegisterUsuario(usuario *model.Usuario) (model.Usua
 		if defaultRole == nil {
 			return fmt.Errorf("rol por defecto 'asistente' no encontrado")
 		}
-
+		if usuario.TipoDocumento == "RUC_PERSONA" || usuario.TipoDocumento == "RUC_EMPRESA" {
+			defaultRole, err = txRepo.Roles.ObtenerRolPorNombre("ORGANIZADOR")
+			if err != nil {
+				return err
+			}
+			usuario.EstadoDeCuenta = 0	
+		}
 		rolAsignado, err := txRepo.RolesUsuario.AsignarRolAUsuario(usuario.ID, defaultRole.ID, usuario.ID)
 		if err != nil {
 			return err
@@ -187,6 +193,9 @@ func (uc *UsuarioController) GetUsuarioConRoles(id int64) ([]*model.Usuario, *er
 
 func (uc *UsuarioController) AuthenticateUsuario(correo, contrasenha string) (*model.Usuario, *errors.Error) {
 	usuario, err := uc.DB.Usuario.ObtenerUsuarioPorCorreo(correo)
+	if usuario.TipoDocumento == "RUC_PERSONA" || usuario.TipoDocumento == "RUC_EMPRESA" {
+		return nil, &errors.AuthenticationError.InvalidCredentials
+	}
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, &errors.ObjectNotFoundError.UserNotFound
@@ -205,6 +214,31 @@ func (uc *UsuarioController) AuthenticateUsuario(correo, contrasenha string) (*m
 
 	return usuario, nil
 }	
+
+func (uc *UsuarioController) AuthenticateOrganizador(ruc, contrasenha string) (*model.Usuario, *errors.Error) {
+	usuario, err := uc.DB.Usuario.ObtenerUsuarioPorNumDocumento(ruc)
+
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, &errors.ObjectNotFoundError.UserNotFound
+		}
+		return nil, &errors.InternalServerError.Default
+	}
+	if usuario.TipoDocumento != "RUC_PERSONA" && usuario.TipoDocumento != "RUC_EMPRESA" {
+        uc.Logger.Warnf("Intento de login organizador con documento incorrecto: %s", usuario.TipoDocumento)
+        return nil, &errors.AuthenticationError.InvalidCredentials
+    }
+	ok, err := model.VerifyPassword(contrasenha, usuario.Contrasenha)
+	if err != nil {
+		return nil, &errors.InternalServerError.Default
+	}
+
+	if !ok {
+		return nil, &errors.AuthenticationError.InvalidCredentials
+	}
+
+	return usuario, nil
+}
 
 func (u *UsuarioController) VerifyGoogleToken(idToken string) (*GoogleUser, error) {
     ctx := context.Background()

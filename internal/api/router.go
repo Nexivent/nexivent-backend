@@ -2,6 +2,8 @@ package api
 
 import (
 	"fmt"
+	"os"
+	"strings"
 
 	config "github.com/Nexivent/nexivent-backend/internal/config"
 	"github.com/labstack/echo/v4"
@@ -24,9 +26,24 @@ func (a *Api) HealthCheck(c echo.Context) error {
 }
 
 func (a *Api) RegisterRoutes(configEnv *config.ConfigEnv) {
+	allowOrigins := []string{"http://localhost:3000", "http://localhost:3001", "https://accounts.google.com"}
+
+	if extraOrigins := os.Getenv("CORS_ALLOWED_ORIGINS"); extraOrigins != "" {
+		if extraOrigins == "*" {
+			allowOrigins = []string{"*"}
+		} else {
+			for _, origin := range strings.Split(extraOrigins, ",") {
+				trimmed := strings.TrimSpace(origin)
+				if trimmed != "" {
+					allowOrigins = append(allowOrigins, trimmed)
+				}
+			}
+		}
+	}
+
 	// CORS
 	corsConfig := middleware.CORSConfig{
-		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:3001", "https://accounts.google.com"},
+		AllowOrigins:     allowOrigins,
 		AllowCredentials: true,
 		AllowHeaders:     []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization, "X-Requested-With", "X-CSRF-Token"},
 		AllowMethods:     []string{echo.GET, echo.POST, echo.PUT, echo.DELETE, echo.OPTIONS},

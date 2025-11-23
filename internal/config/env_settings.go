@@ -1,8 +1,10 @@
 package config
 
 import (
+	"net/url"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/Nexivent/nexivent-backend/logging"
 	"github.com/Nexivent/nexivent-backend/utils/env"
@@ -46,10 +48,12 @@ type ConfigEnv struct {
 
 func NuevoConfigEnv(logger logging.Logger) *ConfigEnv {
 	if ambiente := os.Getenv("NEXIVENT_POSTGRES_HOST"); ambiente == "local" || ambiente == "" {
-		if envPath, err := env.FindEnvPath(); err != nil {
-			logger.Panicln("Error finding .env file", err)
-		} else if err := godotenv.Load(envPath); err != nil {
-			logger.Panicln("Error loading .env file", err)
+		if envPath, err := env.FindEnvPath(); err == nil {
+			if err := godotenv.Load(envPath); err != nil {
+				logger.Warnln("No se pudo cargar .env:", err)
+			}
+		} else if !os.IsNotExist(err) {
+			logger.Warnln("Error buscando .env:", err)
 		}
 	}
 	enableSqlLogs, err := strconv.ParseBool(os.Getenv("ENABLE_SQL_LOGS"))
@@ -63,11 +67,10 @@ func NuevoConfigEnv(logger logging.Logger) *ConfigEnv {
 	}
 
 	mainPort := os.Getenv("MAIN_PORT")
-	// Railway uses PORT environment variable
+	// Railway exposes the port through PORT
 	if mainPort == "" {
-		mainPort = os.Getenv("MAIN_PORT")
+		mainPort = os.Getenv("PORT")
 	}
-	// Default port if none is specified
 	if mainPort == "" {
 		mainPort = "8098"
 	}
@@ -78,6 +81,59 @@ func NuevoConfigEnv(logger logging.Logger) *ConfigEnv {
 	PostgresPassword := os.Getenv("NEXIVENT_POSTGRES_PASSWORD")
 	PostgresDBName := os.Getenv("NEXIVENT_POSTGRES_NAME")
 	PostgresPsqlMode := os.Getenv("ASTRO_CAT_PSQL_SSL_MODE")
+
+	// Fallback to common PG_* variables (Railway/Postgres plugins)
+	if PostgresHost == "" {
+		PostgresHost = os.Getenv("PGHOST")
+	}
+	if PostgresPort == "" {
+		PostgresPort = os.Getenv("PGPORT")
+	}
+	if PostgresUser == "" {
+		PostgresUser = os.Getenv("PGUSER")
+	}
+	if PostgresPassword == "" {
+		PostgresPassword = os.Getenv("PGPASSWORD")
+	}
+	if PostgresDBName == "" {
+		PostgresDBName = os.Getenv("PGDATABASE")
+	}
+	if PostgresPsqlMode == "" {
+		PostgresPsqlMode = os.Getenv("PGSSLMODE")
+	}
+
+	// Fallback to DATABASE_URL if provided
+	if dbURL := os.Getenv("DATABASE_URL"); dbURL != "" {
+		if parsed, err := url.Parse(dbURL); err == nil {
+			if PostgresHost == "" {
+				PostgresHost = parsed.Hostname()
+			}
+			if PostgresPort == "" {
+				PostgresPort = parsed.Port()
+			}
+			if PostgresUser == "" && parsed.User != nil {
+				PostgresUser = parsed.User.Username()
+			}
+			if PostgresPassword == "" && parsed.User != nil {
+				if pwd, exists := parsed.User.Password(); exists {
+					PostgresPassword = pwd
+				}
+			}
+			if PostgresDBName == "" {
+				PostgresDBName = strings.TrimPrefix(parsed.Path, "/")
+			}
+			if PostgresPsqlMode == "" {
+				PostgresPsqlMode = parsed.Query().Get("sslmode")
+			}
+		} else {
+			logger.Warnln("Could not parse DATABASE_URL:", err)
+		}
+	}
+
+	// Default port if still unset
+	if PostgresPort == "" {
+		PostgresPort = "5432"
+	}
 
 	// AWS S3 config
 	awsRegion := os.Getenv("AWS_REGION")
@@ -125,6 +181,6 @@ func NuevoConfigEnv(logger logging.Logger) *ConfigEnv {
 		Password:            password,
 		Sender:              sender,
 		FactilizaToken:      factilizaToken,
-		GoogleClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
+		GoogleClientID:      os.Getenv("GOOGLE_CLIENT_ID"),
 	}
 }

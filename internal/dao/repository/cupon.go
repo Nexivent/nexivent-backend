@@ -78,6 +78,19 @@ func (c *Cupon) ObtenerCuponesPorOrganizador(organizadorId int64) ([]*model.Cupo
 	return cupones, nil
 }
 
+func (c *Cupon) ObtenerCuponPorCodYIdEvento(eventoId int64, codigo string) (*model.Cupon, error) {
+	var cupon *model.Cupon
+	respuesta := c.PostgresqlDB.Table("cupon").
+		Where("cupon.codigo = ? AND cupon.evento_id = ?", codigo, eventoId).
+		Find(&cupon)
+
+	if respuesta.Error != nil {
+		return nil, respuesta.Error
+	}
+
+	return cupon, nil
+}
+
 /*
 func (c *Cupon) BorrarCupon(CuponId int64) error {
 	respuesta := c.PostgresqlDB.Where("id = ?", CuponId).Delete(&model.Cupon{})

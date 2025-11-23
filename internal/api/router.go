@@ -28,14 +28,14 @@ func (a *Api) RegisterRoutes(configEnv *config.ConfigEnv) {
 	corsConfig := middleware.CORSConfig{
 		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:3001", "https://accounts.google.com"},
 		AllowCredentials: true,
-		AllowHeaders:     []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization, "X-Requested-With","X-CSRF-Token",},
+		AllowHeaders:     []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization, "X-Requested-With", "X-CSRF-Token"},
 		AllowMethods:     []string{echo.GET, echo.POST, echo.PUT, echo.DELETE, echo.OPTIONS},
-        ExposeHeaders: []string{
-            "Content-Length",
-            "Content-Type",
+		ExposeHeaders: []string{
+			"Content-Length",
+			"Content-Type",
 			"Authorization",
-        },
-        MaxAge: 86400, 
+		},
+		MaxAge: 86400,
 	}
 	a.Echo.Use(middleware.CORSWithConfig(corsConfig))
 
@@ -61,8 +61,7 @@ func (a *Api) RegisterRoutes(configEnv *config.ConfigEnv) {
 	a.Echo.POST("/loginorg", a.AuthenticateOrganizador)
 	a.Echo.POST("/logout", a.Logout)
 
-
-	a.Echo.GET("/usuario/:id", a.GetUsuario)	
+	a.Echo.GET("/usuario/:id", a.GetUsuario)
 
 	// Eventos endpoints
 	a.Echo.GET("/evento/", a.FetchEventos)
@@ -85,7 +84,8 @@ func (a *Api) RegisterRoutes(configEnv *config.ConfigEnv) {
 	a.Echo.POST("/cupon/:usuarioCreacion", a.CreateCupon)
 	a.Echo.PUT("/cupon/:usuarioModificacion", a.UpdateCupon)
 	a.Echo.GET("/cupon/organizador/:organizadorId", a.FetchCuponPorOrganizador)
-
+	a.Echo.GET("/cupon/validar", a.ValidateCupon)
+	a.Echo.POST("/cupon/usuario", a.CreateUsuarioCuponForOrdenCompra)
 
 	//Orden de compra
 	a.Echo.POST("/orden_de_compra/hold", a.CrearSesionOrdenTemporal)

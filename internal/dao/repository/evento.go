@@ -431,7 +431,7 @@ func (e *Evento) ObtenerEventosDelOrganizador(idOrganizador int64) ([]*model.Eve
 		Where("organizador_id = ? AND evento_estado=1", idOrganizador).
 		Find(&eventos)
 
-	if res != nil {
+	if res.Error != nil {
 		return nil, res.Error
 	}
 
@@ -444,10 +444,10 @@ func (e *Evento) ObtenerEventoPorId(id int64) (*model.Evento, error) {
 	res := e.PostgresqlDB.Table("evento").
 		Preload("Fechas").
 		Preload("Fechas.Fecha").
-		Where("evento_estado =1").
+		Where("evento_id = ? AND evento_estado = 1", id).
 		Find(&evento)
 
-	if res != nil {
+	if res.Error != nil {
 		return nil, res.Error
 	}
 

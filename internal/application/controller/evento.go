@@ -70,12 +70,20 @@ func (ec *EventoController) GetReporteEvento(organizadorId int64,
 	return ec.EventoAdapter.GetPostgresqlReporteEvento(organizadorId, eventoID, fechaDesde, fechaHasta)
 }
 
+// GetReporteEventosOrganizador genera el reporte resumido de todos los eventos de un organizador.
+func (ec *EventoController) GetReporteEventosOrganizador(
+	organizadorID int64,
+	fechaDesde *time.Time,
+	fechaHasta *time.Time,
+) ([]schemas.EventoOrganizadorReporte, *errors.Error) {
+	return ec.EventoAdapter.GetPostgresqlReporteEventosOrganizador(organizadorID, fechaDesde, fechaHasta)
+}
+
 // GenerarReporteAdministrativo genera el reporte global BI para administradores
 func (ec *EventoController) GenerarReporteAdministrativo(req schemas.AdminReportRequest) (*schemas.AdminReportResponse, *errors.Error) {
 	return ec.EventoAdapter.GenerarReporteAdministrativo(req)
 }
 
-
-func (ec *EventoController) GetEventoDetalle(eventoId int64) (*schemas.EventoDetalleDTO, *errors.Error){
+func (ec *EventoController) GetEventoDetalle(eventoId int64) (*schemas.EventoDetalleDTO, *errors.Error) {
 	return ec.EventoAdapter.GetPostgresqlEventoDetalle(eventoId)
 }

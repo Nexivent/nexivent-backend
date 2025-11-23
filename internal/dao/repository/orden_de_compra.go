@@ -133,15 +133,15 @@ func (o *OrdenDeCompra) ObtenerIngresoCargoPorFecha(eventoID int64, fechaDesde *
 
 	query := o.PostgresqlDB.Table("orden_de_compra oc").
 		Select(`
-            SUM(oc.total) AS ingreso_total,
-            SUM(oc.monto_fee_servicio) AS cargo_serv,
+            COALESCE(SUM(oc.total), 0) AS ingreso_total,
+            COALESCE(SUM(oc.monto_fee_servicio), 0) AS cargo_serv,
             COUNT(t.ticket_id) AS tickets_vendidos
         `).
-		Joins("LEFT JOIN tickets t ON t.orden_de_compra_id = oc.orden_de_compra_id").
-		Joins("LEFT JOIN evento_fecha ef ON ef.evento_fecha_id = t.evento_fecha_id").
-		Joins("LEFT JOIN evento e ON e.evento_id = ef.evento_id").
-		Where("e.evento_id = ?", eventoID).
-		Where("oc.estado = 1") // solo órdenes pagadas
+		Joins("JOIN ticket t ON t.orden_de_compra_id = oc.orden_de_compra_id").
+		Joins("JOIN evento_fecha ef ON ef.evento_fecha_id = t.evento_fecha_id").
+		Where("ef.evento_id = ?", eventoID).
+		Where("oc.estado_de_orden = ?", util.OrdenConfirmada.Codigo()).
+		Where("t.estado_de_ticket <> ?", util.TicketCancelado.Codigo())
 
 	if fechaDesde != nil {
 		query = query.Where("oc.fecha BETWEEN ? AND ?", fechaDesde, fechaHasta)
@@ -149,14 +149,56 @@ func (o *OrdenDeCompra) ObtenerIngresoCargoPorFecha(eventoID int64, fechaDesde *
 		query = query.Where("oc.fecha <= ?", fechaHasta)
 	}
 
-	error := query.Scan(&data)
-
-	if error.Error != nil {
-		return -1, -1, -1
+	if err := query.Scan(&data).Error; err != nil {
+		o.logger.Errorf("ObtenerIngresoCargoPorFecha evento_id=%d: %v", eventoID, err)
+		return 0, 0, 0
 	}
 
 	return data.IngresoTotal, data.CargoServ, data.TicketsVendidos
+}
 
+// VentaPorSectorDTO resume ventas por sector para un evento.
+type VentaPorSectorDTO struct {
+	Sector          string  `gorm:"column:sector"`
+	TicketsVendidos int64   `gorm:"column:tickets_vendidos"`
+	Ingresos        float64 `gorm:"column:ingresos"`
+}
+
+func (o *OrdenDeCompra) ObtenerVentasPorSector(eventoID int64, fechaDesde *time.Time, fechaHasta *time.Time) ([]VentaPorSectorDTO, error) {
+	if fechaHasta == nil {
+		fecha := time.Now()
+		fechaHasta = &fecha
+	}
+
+	var data []VentaPorSectorDTO
+
+	query := o.PostgresqlDB.Table("ticket t").
+		Select(`
+			s.sector_tipo AS sector,
+			COUNT(t.ticket_id) AS tickets_vendidos,
+			COALESCE(SUM(tf.precio), 0) AS ingresos
+		`).
+		Joins("JOIN orden_de_compra oc ON oc.orden_de_compra_id = t.orden_de_compra_id").
+		Joins("JOIN evento_fecha ef ON ef.evento_fecha_id = t.evento_fecha_id").
+		Joins("JOIN tarifa tf ON tf.tarifa_id = t.tarifa_id").
+		Joins("JOIN sector s ON s.sector_id = tf.sector_id").
+		Where("ef.evento_id = ?", eventoID).
+		Where("oc.estado_de_orden = ?", util.OrdenConfirmada.Codigo()).
+		Where("t.estado_de_ticket <> ?", util.TicketCancelado.Codigo()).
+		Group("s.sector_tipo")
+
+	if fechaDesde != nil {
+		query = query.Where("oc.fecha BETWEEN ? AND ?", fechaDesde, fechaHasta)
+	} else {
+		query = query.Where("oc.fecha <= ?", fechaHasta)
+	}
+
+	if err := query.Find(&data).Error; err != nil {
+		o.logger.Errorf("ObtenerVentasPorTipo evento_id=%d: %v", eventoID, err)
+		return nil, err
+	}
+
+	return data, nil
 }
 
 func (c *OrdenDeCompra) ConfirmarOrdenConPago(orderID int64, metodoPagoID int64, paymentReference string) error {

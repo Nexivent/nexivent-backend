@@ -7,7 +7,7 @@ func MapEstadoToInt16(estado string) int16 {
 		return 0
 	case "PUBLICADO":
 		return 1
-	case "FINALIZADO":
+	case "CANCELADO":
 		return 2
 	default:
 		return 0
@@ -22,7 +22,7 @@ func MapEstadoToString(estado int16) string {
 	case 1:
 		return "PUBLICADO"
 	case 2:
-		return "FINALIZADO"
+		return "CANCELADO"
 	default:
 		return "BORRADOR"
 	}

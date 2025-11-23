@@ -259,7 +259,52 @@ func (a *Api) GetReporteEvento(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
+// @Summary             Reporte por Organizador
+// @Description         Devuelve el resumen de todos los eventos de un organizador.
+// @Tags                Evento
+// @Accept              json
+// @Produce             json
+// @Param               organizadorId path int   true  "ID del Organizador"
+// @Param               fechaDesde    query string false "Fecha desde (YYYY-MM-DD)"
+// @Param               fechaHasta    query string false "Fecha hasta (YYYY-MM-DD)"
+// @Success             200 {array}  schemas.EventoOrganizadorReporte "OK"
+// @Failure             400 {object} errors.Error "Bad Request"
+// @Failure             404 {object} errors.Error "Not Found"
+// @Failure             422 {object} errors.Error "Unprocessable Entity"
+// @Failure             500 {object} errors.Error "Internal Server Error"
+// @Router              /organizador/{organizadorId}/eventos/reporte [get]
+func (a *Api) GetReporteEventosOrganizador(c echo.Context) error {
+	organizadorStr := c.Param("organizadorId")
+	organizadorID, parseErr := strconv.ParseInt(organizadorStr, 10, 64)
+	if parseErr != nil || organizadorID <= 0 {
+		return errors.HandleError(errors.UnprocessableEntityError.InvalidParsingInteger, c)
+	}
 
+	var fechaDesde *time.Time
+	if q := c.QueryParam("fechaDesde"); q != "" {
+		fd, err := time.Parse("2006-01-02", q)
+		if err != nil {
+			return errors.HandleError(errors.BadRequestError.InvalidIDParam, c)
+		}
+		fechaDesde = &fd
+	}
+
+	var fechaHasta *time.Time
+	if q := c.QueryParam("fechaHasta"); q != "" {
+		fh, err := time.Parse("2006-01-02", q)
+		if err != nil {
+			return errors.HandleError(errors.BadRequestError.InvalidIDParam, c)
+		}
+		fechaHasta = &fh
+	}
+
+	resp, newErr := a.BllController.Evento.GetReporteEventosOrganizador(organizadorID, fechaDesde, fechaHasta)
+	if newErr != nil {
+		return errors.HandleError(*newErr, c)
+	}
+
+	return c.JSON(http.StatusOK, resp)
+}
 
 func (a *Api) GetEventoSummary(c echo.Context) error {
 	eventoIDStr := c.Param("id")

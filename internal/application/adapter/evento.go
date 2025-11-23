@@ -533,6 +533,100 @@ func (e *Evento) GetPostgresqlReporteEvento(
 	return eventoReporte, nil
 }
 
+// reporte mamadisimo del organizador
+func (e *Evento) GetPostgresqlReporteEventosOrganizador(
+	organizadorID int64,
+	fechaDesde *time.Time,
+	fechaHasta *time.Time,
+) ([]schemas.EventoOrganizadorReporte, *errors.Error) {
+	eventos, err := e.DaoPostgresql.Evento.ObtenerEventosDelOrganizador(organizadorID)
+	if err != nil {
+		e.logger.Errorf("Failed to fetch eventos for organizer %d: %v", organizadorID, err)
+		return nil, &errors.BadRequestError.EventoNotFound
+	}
+
+	reportes := make([]schemas.EventoOrganizadorReporte, 0, len(eventos))
+
+	for _, ev := range eventos {
+		capacidadEvento, capErr := e.DaoPostgresql.Sector.ObtenerCapacidadPorEvento(ev.ID)
+		if capErr != nil {
+			e.logger.Warnf("Capacidad no disponible para evento %d: %v", ev.ID, capErr)
+			capacidadEvento = 0
+		}
+
+		ingresoTotal, cargosServicio, ticketsVendidos := e.DaoPostgresql.OrdenDeCompra.ObtenerIngresoCargoPorFecha(ev.ID, fechaDesde, fechaHasta)
+
+		ventasPorSectorDTO, ventasErr := e.DaoPostgresql.OrdenDeCompra.ObtenerVentasPorSector(ev.ID, fechaDesde, fechaHasta)
+		if ventasErr != nil {
+			ventasPorSectorDTO = []daoPostgresql.VentaPorSectorDTO{}
+		}
+
+		ventasPorSector := make([]schemas.VentaPorSectorOrganizador, 0, len(ventasPorSectorDTO))
+		for _, v := range ventasPorSectorDTO {
+			ventasPorSector = append(ventasPorSector, schemas.VentaPorSectorOrganizador{
+				Sector:   v.Sector,
+				Vendidos: v.TicketsVendidos,
+				Ingresos: v.Ingresos,
+			})
+		}
+
+		fechas := make([]schemas.EventoFechaOrganizadorReporte, 0, len(ev.Fechas))
+		for _, f := range ev.Fechas {
+			fechaStr := ""
+			if f.Fecha != nil {
+				fechaStr = f.Fecha.FechaEvento.Format("2006-01-02")
+			}
+
+			horaInicio := ""
+			if !f.HoraInicio.IsZero() {
+				horaInicio = f.HoraInicio.Format("15:04")
+			}
+
+			fechas = append(fechas, schemas.EventoFechaOrganizadorReporte{
+				IdFechaEvento: f.ID,
+				Fecha:         fechaStr,
+				HoraInicio:    horaInicio,
+				HoraFin:       "",
+			})
+		}
+
+		estado := deriveEstadoEventoOrganizador(ev.EventoEstado, capacidadEvento, ticketsVendidos)
+		comisiones := (ingresoTotal - cargosServicio) * 0.05
+
+		reportes = append(reportes, schemas.EventoOrganizadorReporte{
+			IdEvento:        ev.ID,
+			Nombre:          ev.Titulo,
+			Ubicacion:       ev.Lugar,
+			Capacidad:       capacidadEvento,
+			Estado:          estado,
+			IngresosTotales: ingresoTotal,
+			TicketsVendidos: ticketsVendidos,
+			VentasPorSector: ventasPorSector,
+			Fechas:          fechas,
+			CargosServicio:  cargosServicio,
+			Comisiones:      comisiones,
+		})
+	}
+
+	return reportes, nil
+}
+
+func deriveEstadoEventoOrganizador(eventoEstado int16, capacidad int64, ticketsVendidos int64) string {
+	if eventoEstado == convert.MapEstadoToInt16("CANCELADO") {
+		return "CANCELADO"
+	}
+
+	if capacidad > 0 && ticketsVendidos >= capacidad {
+		return "AGOTADO"
+	}
+
+	if eventoEstado == convert.MapEstadoToInt16("PUBLICADO") {
+		return "EN_VENTA"
+	}
+
+	return "BORRADOR"
+}
+
 func (a *Evento) GenerarReporteAdministrativo(req schemas.AdminReportRequest) (*schemas.AdminReportResponse, *errors.Error) {
 
 	// 1. Validaciones y Defaults

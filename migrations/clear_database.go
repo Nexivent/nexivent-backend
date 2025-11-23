@@ -433,8 +433,8 @@ func seedEventos(
 			DiasHastaFecha:    53,
 			HoraInicio:        20,
 			MinutoInicio:      0,
-			ImagenDescripcion: "https://imagendelgolfo.mx/img/2025/06/11/20250611_051250039_Ariatopxa_de_Aria_Belax_xCxmo_se_llaman_sus_nuevas_canciones_y_cuxndo_se_estrenanx.jpg",
-			ImagenPortada:     "https://imagendelgolfo.mx/img/2025/06/11/20250611_051250039_Ariatopxa_de_Aria_Belax_xCxmo_se_llaman_sus_nuevas_canciones_y_cuxndo_se_estrenanx.jpg",
+			ImagenDescripcion: "https://oem.com.mx/lavozdelafrontera/img/23335586/1747399584/BASE_LANDSCAPE/480/image.webp",
+			ImagenPortada:     "https://oem.com.mx/lavozdelafrontera/img/23335586/1747399584/BASE_LANDSCAPE/480/image.webp",
 			VideoPresentacion: "https://nexivent-multimedia.s3.us-east-2.amazonaws.com/aria+bela.mp4",
 			ImagenEscenario:   "https://cdn.teleticket.com.pe/especiales/lascazadoraskpop/images/mapa.png",
 			Sectores: []sectorSeed{

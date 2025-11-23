@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/Nexivent/nexivent-backend/errors"
 	"github.com/Nexivent/nexivent-backend/internal/schemas"
@@ -105,4 +106,93 @@ func (a *Api) FetchCuponPorOrganizador(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, response)
+}
+
+// @Summary         Validar un cupón para una orden de compra.
+// @Description     Valida que el cupón exista, pertenezca al evento, esté vigente y no haya superado su límite de uso por usuario.
+// @Tags            Cupon
+// @Accept          json
+// @Produce         json
+// @Param           usuarioId     query int true  "ID del usuario que intenta usar el cupón"
+// @Param           eventoId      query int true  "ID del evento al que pertenece el cupón"
+// @Param           codigo        query string true "Código del cupón"
+// @Param           fechaActual   query string false "Fecha actual (ISO-8601). Si no se envía, se toma la del servidor"
+// @Success         200 {object} schemas.CuponResponse
+// @Failure         400 {object} errors.Error "Parámetros inválidos"
+// @Failure         404 {object} errors.Error "Usuario, evento o cupón no encontrados"
+// @Failure         422 {object} errors.Error "Error en el request"
+// @Failure         500 {object} errors.Error "Internal Server Error"
+// @Router          /cupon/validar [get]
+func (a *Api) ValidateCupon(c echo.Context) error {
+
+	// ---------------------------
+	// 1. Leer y validar parámetros
+	// ---------------------------
+	usuarioIdParam := c.QueryParam("usuarioId")
+	eventoIdParam := c.QueryParam("eventoId")
+	codigoCupon := c.QueryParam("codigo")
+
+	if usuarioIdParam == "" || eventoIdParam == "" || codigoCupon == "" {
+		return errors.HandleError(errors.BadRequestError.InvalidUpdatedByValue, c)
+	}
+
+	usuarioId, err := strconv.ParseInt(usuarioIdParam, 10, 64)
+	if err != nil || usuarioId <= 0 {
+		return errors.HandleError(errors.BadRequestError.InvalidUpdatedByValue, c)
+	}
+
+	eventoId, err := strconv.ParseInt(eventoIdParam, 10, 64)
+	if err != nil || eventoId <= 0 {
+		return errors.HandleError(errors.BadRequestError.InvalidUpdatedByValue, c)
+	}
+
+	// Obtener fecha actual
+	fechaActual := time.Now()
+
+	// ---------------------------
+	// 3. Llamar al BLL
+	// ---------------------------
+	response, newErr := a.BllController.Cupon.FetchValidarCuponParaOrdenDeCompra(
+		usuarioId,
+		fechaActual,
+		eventoId,
+		codigoCupon,
+	)
+
+	if newErr != nil {
+		return errors.HandleError(*newErr, c)
+	}
+
+	// ---------------------------
+	// 4. Respuesta final
+	// ---------------------------
+	return c.JSON(http.StatusOK, response)
+}
+
+// @Summary Registrar uso de cupón por usuario.
+// @Description Registra que un usuario usó un cupón en una orden de compra.
+// @Tags Cupon
+// @Accept json
+// @Produce json
+// @Param body body schemas.UsuarioCuponRes true "Datos del uso del cupón"
+// @Success 201 {object} schemas.UsuarioCuponRes
+// @Failure 400 {object} errors.Error
+// @Failure 422 {object} errors.Error
+// @Failure 500 {object} errors.Error
+// @Router /cupon/usuario [post]
+func (a *Api) CreateUsuarioCuponForOrdenCompra(c echo.Context) error {
+
+	var request schemas.UsuarioCuponRes
+
+	if err := c.Bind(&request); err != nil {
+		return errors.HandleError(errors.UnprocessableEntityError.InvalidRequestBody, c)
+	}
+
+	response, newErr := a.BllController.Cupon.CreateUsuarioCuponParaOrdenDeCompra(&request)
+
+	if newErr != nil {
+		return errors.HandleError(*newErr, c)
+	}
+
+	return c.JSON(http.StatusCreated, response)
 }

@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"time"
+
 	"github.com/Nexivent/nexivent-backend/errors"
 	"github.com/Nexivent/nexivent-backend/internal/application/adapter"
 	"github.com/Nexivent/nexivent-backend/internal/schemas"
@@ -38,4 +40,12 @@ func (cc *CuponController) UpdateCupon(
 
 func (cc *CuponController) FetchCuponPorOrganizador(organizadorId int64) (*schemas.CuponesOrganizator, *errors.Error) {
 	return cc.CuponAdapter.FetchPostresqlCuponPorOrganizador(organizadorId)
+}
+
+func (cc *CuponController) FetchValidarCuponParaOrdenDeCompra(usuarioId int64, fechaActual time.Time, eventoId int64, codigoCupon string) (*schemas.CuponResponseOrdenDePago, *errors.Error) {
+	return cc.CuponAdapter.FetchPostresqlValidarCuponParaOrdenDeCompra(usuarioId, fechaActual, eventoId, codigoCupon)
+}
+
+func (cc *CuponController) CreateUsuarioCuponParaOrdenDeCompra(usarioCuponReq *schemas.UsuarioCuponRes) (*schemas.UsuarioCuponRes, *errors.Error) {
+	return cc.CuponAdapter.CreatePostgresqlUsuarioCuponParaOrdenDeCompra(usarioCuponReq)
 }

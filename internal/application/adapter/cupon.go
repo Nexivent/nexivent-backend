@@ -187,3 +187,68 @@ func (c *Cupon) FetchPostresqlCuponPorOrganizador(oranizadorId int64) (*schemas.
 
 	return cuponesRes, nil
 }
+
+func (c *Cupon) FetchPostresqlValidarCuponParaOrdenDeCompra(usuarioId int64, fechaActual time.Time, eventoId int64, codigoCupon string) (*schemas.CuponResponseOrdenDePago, *errors.Error) {
+	_, usuarioErr := c.DaoPostgresql.Usuario.ObtenerUsuarioBasicoPorID(usuarioId)
+
+	if usuarioErr != nil { // el usuario no existe
+		return nil, &errors.ObjectNotFoundError.UserNotFound
+	}
+
+	_, eventoErr := c.DaoPostgresql.Evento.ObtenerEventoPorId(eventoId)
+
+	if eventoErr != nil { // el evento no existe
+		return nil, &errors.ObjectNotFoundError.EventoNotFound
+	}
+
+	cuponModel, cuponEventoErr := c.DaoPostgresql.Cupon.ObtenerCuponPorCodYIdEvento(eventoId, codigoCupon)
+
+	if cuponEventoErr != nil { // el cupón no existe o no existe en este evento
+		return nil, &errors.ObjectNotFoundError.CuponNotFound
+	}
+
+	if fechaActual.After(cuponModel.FechaFin) || fechaActual.Before(cuponModel.FechaInicio) {
+		//No se puede usar el cupón en esta fecha
+		return nil, &errors.BadRequestError.InvalidFechaCupon
+	}
+
+	usuarioCuponModel, usuarioCuponErr := c.DaoPostgresql.UsuarioCupon.ObtenerUsuarioCuponPorId(usuarioId, cuponModel.ID)
+
+	cuponRes := &schemas.CuponResponseOrdenDePago{
+		ID:        cuponModel.ID,
+		Tipo:      util.TipoCupon(cuponModel.Tipo),
+		Valor:     cuponModel.Valor,
+		CantUsada: 0,
+	}
+
+	if usuarioCuponErr != nil {
+		//el usuario nunca usó el cupón
+		return cuponRes, nil
+	}
+
+	cuponRes.CantUsada = usuarioCuponModel.CantUsada
+
+	if usuarioCuponModel.CantUsada >= cuponModel.UsoPorUsuario {
+		// el usuario ya utilizó el cupón hasta el límite de veces válidas
+		return nil, &errors.BadRequestError.CantLimitUseCupon
+	}
+
+	return cuponRes, nil
+}
+
+func (c *Cupon) CreatePostgresqlUsuarioCuponParaOrdenDeCompra(usarioCuponReq *schemas.UsuarioCuponRes) (*schemas.UsuarioCuponRes, *errors.Error) {
+
+	usuarioCuponModel := &model.UsuarioCupon{
+		CuponID:   usarioCuponReq.UsuarioID,
+		UsuarioID: usarioCuponReq.UsuarioID,
+		CantUsada: usarioCuponReq.CantUsada,
+	}
+
+	usuarioCuponErr := c.DaoPostgresql.UsuarioCupon.ActualizarUsuarioCupon(usuarioCuponModel)
+
+	if usuarioCuponErr != nil { // no existe
+		return nil, &errors.BadRequestError.UsuarioCuponNotUpdate
+	}
+
+	return usarioCuponReq, nil
+}

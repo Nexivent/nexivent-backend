@@ -42,6 +42,7 @@ func NewNexiventPsqlEntidades(
 		configEnv.PostgresDBName,
 		configEnv.PostgresPort,
 		configEnv.EnableSqlLogs,
+		configEnv.PostgresPsqlMode,
 	)
 	if err != nil {
 		logger.Panicln("Failed to connect to AstroCat Postgresql database")

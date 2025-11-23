@@ -1,0 +1,14 @@
+.git
+.vscode
+.idea
+.env
+.env.*
+config.env
+tmp
+vendor
+node_modules
+dist
+bin
+*.log
+docker-compose.yaml
+railway.schema.json

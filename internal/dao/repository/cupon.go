@@ -52,7 +52,7 @@ func (c *Cupon) ActualizarCupon(Cupon *model.Cupon) error {
 
 func (c *Cupon) ObtenerCuponPorIdYIdEvento(id int64, eventoId int64) (*model.Cupon, error) {
 	var cupon *model.Cupon
-	respuesta := c.PostgresqlDB.
+	respuesta := c.PostgresqlDB.Table("cupon").
 		Where("cupon.cupon_id = ? AND cupon.evento_id = ?", id, eventoId).
 		Find(&cupon)
 

@@ -66,3 +66,31 @@ func (a *Api) DeleteRolUser(c echo.Context) error {
 
 	return c.JSON(http.StatusCreated, response)
 }
+
+
+func (a *Api) ListarUsuariosPorRol(c echo.Context) error {
+
+	/*userStr := c.QueryParam("rol")
+
+	rol, parseErr := strconv.ParseInt(userStr, 10, 64)
+	if parseErr != nil {
+		return errors.HandleError(errors.UnprocessableEntityError.InvalidParsingInteger, c)
+	}*/
+
+	var rol *int64
+	if orgStr := c.QueryParam("rol"); orgStr != "" {
+		parsed, err := strconv.ParseInt(orgStr, 10, 64)
+		if err != nil {
+			return errors.HandleError(errors.UnprocessableEntityError.InvalidParsingInteger, c)
+		}
+		rol = &parsed
+	}
+
+	//println("gaa",rol," - ",&rol)
+	response, err := a.BllController.RolUsuario.GetUsersByRol(*rol)
+	if err != nil {
+		return errors.HandleError(*err, c)
+	}
+
+	return c.JSON(http.StatusOK, response)
+}

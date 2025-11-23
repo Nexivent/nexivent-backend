@@ -14,11 +14,6 @@ import (
 
 const ttlReservaSegundos int64 = 600 // 10 minutos de hold
 
-type StockReservado struct {
-	SectorID int64
-	Cantidad int64
-}
-
 type OrdenDeCompra struct {
 	logger        logging.Logger
 	DaoPostgresql *daoPostgresql.NexiventPsqlEntidades
@@ -38,70 +33,15 @@ func (a *OrdenDeCompra) CrearSesionOrdenTemporal(
 	req *schemas.CrearOrdenTemporalRequest,
 ) (*schemas.CrearOrdenTemporalResponse, *errors.Error) {
 
+	// Validación mínima según contrato
 	if req.IdUsuario == 0 || req.IdEvento == 0 || req.IdFechaEvento == 0 || len(req.Entradas) == 0 {
+		// 400: datos inválidos
 		return nil, &errors.UnprocessableEntityError.InvalidRequestBody
 	}
 
-	// ============================================================================
-	// Verificar y reservar stock ANTES de crear la orden
-	// ============================================================================
-	
+	// TODO: validar stock de cada tarifa / cantidad
+	// TODO: calcular total = sum(precioTarifa * cantidad)
 	var total float64 = 0
-	stocksReservados := []StockReservado{}
-
-	// 1. Validar stock disponible para cada entrada
-	for _, entrada := range req.Entradas {
-		sectorID := entrada.IdSector
-		
-		a.logger.Infof("🔍 Validando stock: Sector %d, Cantidad solicitada %d", sectorID, entrada.Cantidad)
-
-		// Verificar que haya stock disponible
-		var totalEntradas, cantVendidas int64
-		row := a.DaoPostgresql.OrdenDeCompra.PostgresqlDB.
-			Table("sector").
-			Select("total_Entradas, cant_vendidas").
-			Where("sector_id = ?", sectorID).
-			Row()
-
-		if err := row.Scan(&totalEntradas, &cantVendidas); err != nil {
-			a.logger.Errorf("Hold.ObtenerStockSector(sector=%d): %v", sectorID, err)
-			a.rollbackStockReservado(stocksReservados)
-			return nil, &errors.InternalServerError.Default
-		}
-
-		disponible := (cantVendidas + entrada.Cantidad) <= totalEntradas
-		
-		if !disponible {
-			a.logger.Warnf("❌ Stock insuficiente para sector %d (solicitado: %d, disponible: %d)", 
-				sectorID, entrada.Cantidad, totalEntradas-cantVendidas)
-			a.rollbackStockReservado(stocksReservados)
-			return nil, &errors.BadRequestError.EventoNotFound
-		}
-
-		// Reservar stock (incrementar cant_vendidas)
-		res := a.DaoPostgresql.OrdenDeCompra.PostgresqlDB.
-			Table("sector").
-			Where("sector_id = ?", sectorID).
-			UpdateColumn("cant_vendidas", gorm.Expr("cant_vendidas + ?", entrada.Cantidad))
-
-		if res.Error != nil {
-			a.logger.Errorf("Hold.IncrementarVendidasPorSector(sector=%d): %v", sectorID, res.Error)
-			a.rollbackStockReservado(stocksReservados)
-			return nil, &errors.InternalServerError.Default
-		}
-
-		// Guardar para posible rollback
-		stocksReservados = append(stocksReservados, StockReservado{
-			SectorID: sectorID,
-			Cantidad: entrada.Cantidad,
-		})
-
-		a.logger.Infof("📉 Stock reservado: Sector %d, Cantidad %d", sectorID, entrada.Cantidad)
-	}
-
-	// ============================================================================
-	// Crear la orden temporal
-	// ============================================================================
 
 	now := time.Now()
 	expiresAt := now.Add(time.Duration(ttlReservaSegundos) * time.Second)
@@ -113,16 +53,14 @@ func (a *OrdenDeCompra) CrearSesionOrdenTemporal(
 		FechaHoraFin:     &expiresAt,
 		Total:            total,
 		MontoFeeServicio: 0,
-		EstadoDeOrden:    util.OrdenTemporal.Codigo(),
+		EstadoDeOrden:    util.OrdenTemporal.Codigo(), // el DAO igual lo refuerza
 	}
 
 	if err := a.DaoPostgresql.OrdenDeCompra.CrearOrdenTemporal(orden); err != nil {
 		a.logger.Errorf("CrearSesionOrdenTemporal: %v", err)
-		a.rollbackStockReservado(stocksReservados)
+		// Ajusta este error a algo tipo OrdenNotCreated si lo creas
 		return nil, &errors.BadRequestError.EventoNotCreated
 	}
-
-	a.logger.Infof("✅ Orden temporal %d creada con stock reservado", orden.ID)
 
 	resp := &schemas.CrearOrdenTemporalResponse{
 		OrderID:    orden.ID,
@@ -135,23 +73,6 @@ func (a *OrdenDeCompra) CrearSesionOrdenTemporal(
 	return resp, nil
 }
 
-func (a *OrdenDeCompra) rollbackStockReservado(stocks []StockReservado) {
-	for _, stock := range stocks {
-		res := a.DaoPostgresql.OrdenDeCompra.PostgresqlDB.
-			Table("sector").
-			Where("id = ?", stock.SectorID).
-			UpdateColumn("cant_vendidas", gorm.Expr("cant_vendidas - ?", stock.Cantidad))
-			
-		if res.Error != nil {
-			a.logger.Errorf("⚠️ Error al hacer rollback de stock: Sector %d, Cantidad %d: %v", 
-				stock.SectorID, stock.Cantidad, res.Error)
-		} else {
-			a.logger.Infof("📈 Rollback stock: Sector %d, Cantidad %d", 
-				stock.SectorID, stock.Cantidad)
-		}
-	}
-}
-
 func (a *OrdenDeCompra) ObtenerEstadoHold(
 	orderID int64,
 ) (*schemas.ObtenerHoldResponse, *errors.Error) {
@@ -159,6 +80,7 @@ func (a *OrdenDeCompra) ObtenerEstadoHold(
 	estadoEnum, ini, fin, total, err := a.DaoPostgresql.OrdenDeCompra.ObtenerMetaTemporal(orderID)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
+			// 404: reserva no encontrada
 			return nil, &errors.ObjectNotFoundError.EventoNotFound
 		}
 		a.logger.Errorf("ObtenerEstadoHold(%d): %v", orderID, err)
@@ -167,7 +89,10 @@ func (a *OrdenDeCompra) ObtenerEstadoHold(
 
 	now := time.Now()
 	if fin == nil || now.After(*fin) {
-		_ = a.CancelarOrdenYLiberarStock(orderID)
+		// opcional: marcar como cancelada
+		_ = a.DaoPostgresql.OrdenDeCompra.ActualizarEstadoOrden(orderID, util.OrdenCancelada)
+		// 410: reserva expirada
+		// (usa un error más específico si lo defines)
 		return nil, &errors.BadRequestError.EventoNotFound
 	}
 
@@ -176,7 +101,9 @@ func (a *OrdenDeCompra) ObtenerEstadoHold(
 		remaining = 0
 	}
 
-	_ = estadoEnum
+	// El contrato dice estado: "BORRADOR" aunque en BD esté TEMPORAL
+	_ = estadoEnum // por si luego mapeas a otros strings
+	
 
 	resp := &schemas.ObtenerHoldResponse{
 		OrderID:       orderID,
@@ -194,6 +121,7 @@ func (a *OrdenDeCompra) ConfirmarOrden(
 	req *schemas.ConfirmarOrdenRequest,
 ) (*schemas.ConfirmarOrdenResponse, *errors.Error) {
 
+	// 1) Verificar que exista y esté en estado TEMPORAL
 	ok, err := a.DaoPostgresql.OrdenDeCompra.VerificarOrdenExisteYEstado(orderID, util.OrdenTemporal)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -206,6 +134,7 @@ func (a *OrdenDeCompra) ConfirmarOrden(
 		return nil, &errors.BadRequestError.EventoNotFound
 	}
 
+	// 2) Lock de la fila (FOR UPDATE) sobre la orden temporal
 	orden, err := a.DaoPostgresql.OrdenDeCompra.CerrarOrdenTemporal(orderID)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -215,17 +144,20 @@ func (a *OrdenDeCompra) ConfirmarOrden(
 		return nil, &errors.BadRequestError.EventoNotFound
 	}
 
+	// 3) Verificar expiración
 	now := time.Now()
 	if orden.FechaHoraFin != nil && now.After(*orden.FechaHoraFin) {
-		_ = a.CancelarOrdenYLiberarStock(orderID)
+		_ = a.DaoPostgresql.OrdenDeCompra.ActualizarEstadoOrden(orderID, util.OrdenCancelada)
 		return nil, &errors.BadRequestError.EventoNotFound
 	}
 
+	// 4) Verificar pago
 	if req.PaymentID == "" {
 		return nil, &errors.BadRequestError.EventoNotFound
 	}
 
-	metodoPagoID := int64(1)
+	// 5) Parsear método de pago desde paymentId
+	metodoPagoID := int64(1) // Default: Tarjeta
 	
 	if len(req.PaymentID) > 0 {
 		var tmpID int64
@@ -237,6 +169,7 @@ func (a *OrdenDeCompra) ConfirmarOrden(
 	a.logger.Infof("ConfirmarOrden: orderID=%d, paymentId=%s, metodoPagoID=%d", 
 		orderID, req.PaymentID, metodoPagoID)
 
+	// 6) Actualizar estado Y método de pago
 	if errUpd := a.DaoPostgresql.OrdenDeCompra.ConfirmarOrdenConPago(
 		orderID, 
 		metodoPagoID, 
@@ -258,58 +191,4 @@ func (a *OrdenDeCompra) ConfirmarOrden(
 		Mensaje: "Compra confirmada",
 	}
 	return resp, nil
-}
-
-func (a *OrdenDeCompra) CancelarOrdenYLiberarStock(orderID int64) *errors.Error {
-	ok, err := a.DaoPostgresql.OrdenDeCompra.VerificarOrdenExisteYEstado(orderID, util.OrdenTemporal)
-	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return &errors.ObjectNotFoundError.EventoNotFound
-		}
-		a.logger.Errorf("CancelarOrden.Verificar(%d): %v", orderID, err)
-		return &errors.InternalServerError.Default
-	}
-	if !ok {
-		a.logger.Warnf("Orden %d no está en estado TEMPORAL", orderID)
-		return &errors.BadRequestError.EventoNotFound
-	}
-
-	// Obtener detalles de la orden para liberar stock
-	type DetalleConSector struct {
-		SectorID int64
-		Cantidad int64
-	}
-	var detalles []DetalleConSector
-	
-	err = a.DaoPostgresql.OrdenDeCompra.PostgresqlDB.
-		Table("orden_de_compra_detalle").
-		Select("id_sector as sector_id, cantidad").
-		Where("orden_de_compra_id = ?", orderID).
-		Find(&detalles).Error
-
-	if err != nil {
-		a.logger.Errorf("CancelarOrden.ObtenerDetalles(%d): %v", orderID, err)
-	} else {
-		for _, d := range detalles {
-			res := a.DaoPostgresql.OrdenDeCompra.PostgresqlDB.
-				Table("sector").
-				Where("id = ?", d.SectorID).
-				UpdateColumn("cant_vendidas", gorm.Expr("cant_vendidas - ?", d.Cantidad))
-				
-			if res.Error != nil {
-				a.logger.Errorf("CancelarOrden.DecrementarStock(sector=%d): %v", d.SectorID, res.Error)
-			} else {
-				a.logger.Infof("📈 Stock liberado: Sector %d, Cantidad %d (Orden %d cancelada)", 
-					d.SectorID, d.Cantidad, orderID)
-			}
-		}
-	}
-
-	if err := a.DaoPostgresql.OrdenDeCompra.ActualizarEstadoOrden(orderID, util.OrdenCancelada); err != nil {
-		a.logger.Errorf("CancelarOrden.ActualizarEstado(%d): %v", orderID, err)
-		return &errors.InternalServerError.Default
-	}
-
-	a.logger.Infof("✅ Orden %d cancelada y stock liberado", orderID)
-	return nil
 }

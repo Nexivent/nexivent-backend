@@ -123,6 +123,7 @@ func (a *Api) RegisterRoutes(configEnv *config.ConfigEnv) {
 	a.Echo.GET("/api/users/:id/roles", a.ListarRolesDeUsuario)
 	a.Echo.POST("/api/roles/assign", a.CreateRolUser)
 	a.Echo.DELETE("/api/roles/revoke", a.DeleteRolUser)
+	a.Echo.GET("/api/users", a.ListarUsuariosPorRol)
 
 }
 

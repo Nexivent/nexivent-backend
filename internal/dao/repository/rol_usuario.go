@@ -137,7 +137,7 @@ func (ru * RolUsuarioRepo) ObtenerUsuariosPorRol(rolId int64) ([]model.Usuario, 
 		Joins("JOIN rol_usuario r ON r.usuario_id = usuario.usuario_id").
 		Where("r.rol_id = ? AND r.estado = 1 AND usuario.estado = 1", rolId).
 		Find(&usuarios)
-	print("rolid: ",&rolId," - ",rolId)
+	//print("rolid: ",&rolId," - ",rolId)
 	if respuesta.Error != nil {
 		return nil, respuesta.Error
 	}

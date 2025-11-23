@@ -11,11 +11,14 @@ type FechaEventoDTO struct {
 type TarifaDTO struct {
 	IDTarifa        int64   `json:"idTarifa"`
 	Precio          float64 `json:"precio"`
+	IDSector        int64   `json:"idTipoSector"`
 	TipoSector      string  `json:"tipoSector"`
 	StockDisponible int     `json:"stockDisponible"`
+	IDTipoTicket    int64   `json:"idTipoTicket"`
 	TipoTicket      string  `json:"tipoTicket"`
 	FechaIni        string  `json:"fechaIni"`
 	FechaFin        string  `json:"fechaFin"`
+	IDPerfil        int64   `json:"idPerfil"`
 	Perfil          string  `json:"perfil"`
 }
 

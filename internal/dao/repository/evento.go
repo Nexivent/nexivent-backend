@@ -504,12 +504,12 @@ func (e *Evento) ObtenerEventoDetalle(eventoId int64) (*schemas.EventoDetalleDTO
 	e.PostgresqlDB.
 		Table("tarifa t").
 		Select(`t.tarifa_id as id_tarifa,
-			t.precio,
+			t.precio, s.sector_id as id_sector,
 			s.sector_tipo as tipo_sector,
-			(s.total_entradas - s.cant_vendidas) as stock_disponible,
+			(s.total_entradas - s.cant_vendidas) as stock_disponible, tt.tipo_de_ticket_id as id_tipo_ticket,
 			tt.nombre as tipo_ticket,
 			TO_CHAR(tt.fecha_ini, 'YYYY-MM-DD') as fecha_ini,
-			TO_CHAR(tt.fecha_fin, 'YYYY-MM-DD') as fecha_fin,
+			TO_CHAR(tt.fecha_fin, 'YYYY-MM-DD') as fecha_fin, pp.perfil_de_persona_id as id_perfil,
 			COALESCE(pp.nombre, '') as perfil`).
 		Joins("JOIN sector s ON t.sector_id = s.sector_id").
 		Joins("JOIN tipo_de_ticket tt ON t.tipo_de_ticket_id = tt.tipo_de_ticket_id").

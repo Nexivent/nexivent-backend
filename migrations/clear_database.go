@@ -685,9 +685,9 @@ func seedTicketsComprados(
 
 	horaCompra := time.Now()
 	maxEventos := len(eventos)
-	if maxEventos > 3 {
-		maxEventos = 3
-	}
+	//if maxEventos > 3 {
+	//	maxEventos = 3
+	//}
 
 	for i := 0; i < maxEventos; i++ {
 		ev := eventos[i]

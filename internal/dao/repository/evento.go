@@ -41,9 +41,11 @@ func (e *Evento) ObtenerEventosDisponiblesSinFiltros() ([]*model.Evento, error) 
 	var lugar *string
 	var fecha *time.Time
 	var horaInicio *time.Time
+	var estado *int16
+	soloFuturos := false
 
 	eventos, respuesta := e.ObtenerEventosDisponiblesConFiltros(
-		categoriaID, nil, titulo, descripcion, lugar, fecha, horaInicio,
+		categoriaID, nil, titulo, descripcion, lugar, fecha, horaInicio, estado, soloFuturos,
 	)
 	if respuesta != nil {
 		return nil, respuesta
@@ -60,6 +62,8 @@ func (e *Evento) ObtenerEventosDisponiblesConFiltros(
 	lugar *string,
 	fecha *time.Time,
 	horaInicio *time.Time,
+	estado *int16,
+	soloFuturos bool,
 ) ([]*model.Evento, error) {
 	var eventos []*model.Evento
 
@@ -78,8 +82,15 @@ func (e *Evento) ObtenerEventosDisponiblesConFiltros(
 	if horaInicio != nil {
 		query = query.Where("ef.hora_inicio = ?", *horaInicio)
 	}
+	if soloFuturos {
+		hoy := time.Now().Truncate(24 * time.Hour)
+		query = query.Where("f.fecha_evento >= ?", hoy)
+	}
 	if organizadorID != nil {
 		query = query.Where("evento.organizador_id = ?", *organizadorID)
+	}
+	if estado != nil {
+		query = query.Where("evento.evento_estado = ?", *estado)
 	}
 
 	// Filtro OR agrupado para búsqueda textual
@@ -431,7 +442,7 @@ func (e *Evento) ObtenerEventosDelOrganizador(idOrganizador int64) ([]*model.Eve
 		Where("organizador_id = ? AND evento_estado=1", idOrganizador).
 		Find(&eventos)
 
-	if res != nil {
+	if res.Error != nil {
 		return nil, res.Error
 	}
 
@@ -444,10 +455,10 @@ func (e *Evento) ObtenerEventoPorId(id int64) (*model.Evento, error) {
 	res := e.PostgresqlDB.Table("evento").
 		Preload("Fechas").
 		Preload("Fechas.Fecha").
-		Where("evento_estado =1").
+		Where("evento_id = ? AND evento_estado = 1", id).
 		Find(&evento)
 
-	if res != nil {
+	if res.Error != nil {
 		return nil, res.Error
 	}
 

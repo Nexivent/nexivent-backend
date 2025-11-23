@@ -162,3 +162,31 @@ type EventoReporte struct {
 	CargosPorServico float64             `json:"cargosPorServicio"` //el total de fee
 	Comisiones       float64             `json:"comisiones"`        // lo que ganamos nosotros como plataforma que es el 5%
 }
+
+// Reporte resumido por evento para un organizador.
+type EventoOrganizadorReporte struct {
+	IdEvento        int64                           `json:"idEvento"`
+	Nombre          string                          `json:"nombre"`
+	Ubicacion       string                          `json:"ubicacion"`
+	Capacidad       int64                           `json:"capacidad"`
+	Estado          string                          `json:"estado"`
+	IngresosTotales float64                         `json:"ingresosTotales"`
+	TicketsVendidos int64                           `json:"ticketsVendidos"`
+	VentasPorSector []VentaPorSectorOrganizador     `json:"ventasPorSector"`
+	Fechas          []EventoFechaOrganizadorReporte `json:"fechas"`
+	CargosServicio  float64                         `json:"cargosServicio"`
+	Comisiones      float64                         `json:"comisiones"`
+}
+
+type VentaPorSectorOrganizador struct {
+	Sector   string  `json:"sector"`
+	Vendidos int64   `json:"vendidos"`
+	Ingresos float64 `json:"ingresos"`
+}
+
+type EventoFechaOrganizadorReporte struct {
+	IdFechaEvento int64  `json:"idFechaEvento"`
+	Fecha         string `json:"fecha"`
+	HoraInicio    string `json:"horaInicio"`
+	HoraFin       string `json:"horaFin"`
+}

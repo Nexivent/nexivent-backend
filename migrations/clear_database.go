@@ -289,7 +289,7 @@ func seedEventos(
 			MinutoInicio:      0,
 			ImagenDescripcion: "https://cdn.teleticket.com.pe/images/eventos/csi006_rs.jpg",
 			ImagenPortada:     "https://cdn.teleticket.com.pe/images/eventos/csi006_rs.jpg",
-			VideoPresentacion: "https://www.youtube.com/watch?v=2Ndra-1Pwug",
+			VideoPresentacion: "https://nexivent-multimedia.s3.us-east-2.amazonaws.com/shakira.mp4",
 			ImagenEscenario:   "https://cdn.teleticket.com.pe/especiales/shakira-estoy-aqui-2025/images/mapa.png",
 			Sectores: []sectorSeed{
 				{Nombre: "VIP", Capacidad: 500, PrecioBase: 280},

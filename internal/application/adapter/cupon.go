@@ -207,6 +207,16 @@ func (c *Cupon) FetchPostresqlValidarCuponParaOrdenDeCompra(usuarioId int64, fec
 		return nil, &errors.ObjectNotFoundError.CuponNotFound
 	}
 
+	if cuponModel == nil {
+		c.logger.Error("cuponModel es nil después de búsqueda sin error", "eventoId", eventoId, "codigo", codigoCupon)
+		return nil, &errors.ObjectNotFoundError.CuponNotFound
+	}
+
+	if cuponModel.FechaInicio.IsZero() || cuponModel.FechaFin.IsZero() {
+		c.logger.Error("Cupón tiene fechas inválidas", "cuponId", cuponModel.ID)
+		return nil, &errors.BadRequestError.InvalidFechaCupon
+	}
+
 	if fechaActual.After(cuponModel.FechaFin) || fechaActual.Before(cuponModel.FechaInicio) {
 		//No se puede usar el cupón en esta fecha
 		return nil, &errors.BadRequestError.InvalidFechaCupon

@@ -131,6 +131,7 @@ func (a *Api) RegisterRoutes(configEnv *config.ConfigEnv) {
 	// Tickets
 	a.Echo.POST("/api/tickets/issue", a.EmitirTickets)
 	a.Echo.POST("/api/tickets/cancel", a.CancelarTickets)
+	a.Echo.GET("/member/tickets/:id", a.GetTicketsByUser)
 
 	//Roles
 	a.Echo.GET("/rol/:nombre/name", a.GetRolPorNombre)

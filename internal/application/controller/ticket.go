@@ -35,3 +35,8 @@ func (tc *TicketController) EmitirTicketsConInfo(
 ) (*schemas.EmitirTicketsResponse, *errors.Error) {
 	return tc.TicketAdapter.EmitirTicketsConInfo(&req)
 }
+
+
+func (tc *TicketController) ObtenerTicketsPorUsuario(idUser int64) ([]schemas.TicketDetalle, *errors.Error) {
+	return tc.TicketAdapter.ObtenerTicketsPostesqlPorUsuario(idUser)
+}

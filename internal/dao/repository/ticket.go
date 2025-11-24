@@ -3,7 +3,7 @@ package repository
 import (
 	"errors"
 	"time"
-
+	//"github.com/Nexivent/nexivent-backend/internal/schemas"
 	"github.com/Nexivent/nexivent-backend/internal/dao/model"
 	util "github.com/Nexivent/nexivent-backend/internal/dao/model/util"
 	"github.com/Nexivent/nexivent-backend/logging"
@@ -330,4 +330,48 @@ func (c *Ticket) Crear(ticket *model.Ticket) error {
 		return err
 	}
 	return nil
+}
+
+type TicketRaro struct {
+	IDTicket    int64     //`json:"ticket_id"`
+	TipoSector  string    //`json:"sector_tipo"`
+	//Evento      EventoMini    `json:"evento"`
+	IDEvento      int64  //`json:"evento_id"`
+	Titulo        string //`json:"titulo"`
+	Lugar         string //`json:"lugar"`
+	ImagenPortada string //`json:"imagenPortada"`
+	FechaInicio string //`json:"hora_inicio"`
+}
+
+
+func (t *Ticket) ObternerTicketsPorUsuario (idUser int64) ([]*TicketRaro, error) {
+
+    var tickets []*TicketRaro
+	res := t.PostgresqlDB.
+		Table("ticket t").
+		Select(
+			"t.ticket_id as id_ticket",
+			"s.sector_tipo as tipo_sector",
+			"e.evento_id as id_evento",
+			"e.titulo",
+			"e.lugar",
+			"e.imagen_portada",
+			"ef.hora_inicio as fecha_inicio",
+		).
+		Joins("INNER JOIN orden_de_compra oc ON t.orden_de_compra_id = oc.orden_de_compra_id").
+		Joins("INNER JOIN tarifa tar ON t.tarifa_id = tar.tarifa_id").
+		Joins("INNER JOIN sector s ON tar.sector_id = s.sector_id").
+		Joins("INNER JOIN evento e ON s.evento_id = e.evento_id").
+		Joins("INNER JOIN evento_fecha ef ON t.evento_fecha_id = ef.evento_fecha_id").
+		Joins("LEFT JOIN perfil_de_persona pp ON tar.perfil_de_persona_id = pp.perfil_de_persona_id").
+		Where("oc.usuario_id = ?", idUser).
+		Where("e.estado = 1").
+		Where("ef.estado = 1").
+		Find(&tickets)
+
+	if res.Error != nil {
+		t.logger.Errorf("ObtenerTickets de usuario: %v", res.Error)
+		return nil, res.Error
+	}
+	return tickets, nil
 }

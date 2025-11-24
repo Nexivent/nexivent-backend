@@ -713,3 +713,206 @@ func (e *Evento) GetPostgresqlEventoDetalle(eventoId int64) (*schemas.EventoDeta
 
 	return eventoDetalle, nil
 }
+
+// EditarEvento aplica cambios a:
+// - Evento (ubicación, estados)
+// - Fechas (fecha calendario, hora inicio, reasignar fecha_id)
+// - Sectores
+// - Perfiles de persona
+// - Tipos de ticket
+// y devuelve el detalle actualizado del evento.
+func (e *Evento) EditarEvento(
+	req *schemas.EditarEventoRequest,
+) (*schemas.EventoDetalleDTO, *errors.Error) {
+
+	if req.IdEvento <= 0 {
+		return nil, &errors.BadRequestError.InvalidIDParam
+	}
+
+	now := time.Now()
+	userID := req.UsuarioModificacion
+	// Ubicación
+	if req.NuevoLugar != nil && *req.NuevoLugar != "" {
+		_, err := e.DaoPostgresql.Evento.ActualizarUbicacionEvento(
+			req.IdEvento,
+			*req.NuevoLugar,
+			&userID,
+			&now,
+		)
+		if err != nil {
+			e.logger.Errorf("EditarEvento.ActualizarUbicacionEvento(%d): %v", req.IdEvento, err)
+			return nil, &errors.InternalServerError.Default
+		}
+	}
+
+	// Estado workflow (borrador/publicado/finalizado)
+	if req.NuevoEstadoWorkflow != nil {
+		_, err := e.DaoPostgresql.Evento.ActualizarEstadoWorkflowEvento(
+			req.IdEvento,
+			*req.NuevoEstadoWorkflow,
+			&userID,
+			&now,
+		)
+		if err != nil {
+			e.logger.Errorf("EditarEvento.ActualizarEstadoWorkflowEvento(%d): %v", req.IdEvento, err)
+			return nil, &errors.InternalServerError.Default
+		}
+	}
+
+	// Estado flag (on/off)
+	if req.NuevoEstadoFlag != nil {
+		_, err := e.DaoPostgresql.Evento.ActualizarEstadoFlagEvento(
+			req.IdEvento,
+			*req.NuevoEstadoFlag,
+			&userID,
+			&now,
+		)
+		if err != nil {
+			e.logger.Errorf("EditarEvento.ActualizarEstadoFlagEvento(%d): %v", req.IdEvento, err)
+			return nil, &errors.InternalServerError.Default
+		}
+	}
+
+	for _, f := range req.Fechas {
+		// Cambiar fecha del calendario (tabla FECHA)
+		if f.IdFecha != nil && f.NuevaFecha != nil && *f.NuevaFecha != "" {
+			parsedDate, err := time.Parse("2006-01-02", *f.NuevaFecha)
+			if err != nil {
+				e.logger.Errorf("EditarEvento.Fecha parse error fecha=%s: %v", *f.NuevaFecha, err)
+				return nil, &errors.UnprocessableEntityError.InvalidRequestBody
+			}
+			if err := e.DaoPostgresql.Evento.ActualizarFechaCalendario(
+				*f.IdFecha,
+				parsedDate,
+				&userID,
+				&now,
+			); err != nil {
+				e.logger.Errorf("EditarEvento.ActualizarFechaCalendario(fecha_id=%d): %v", *f.IdFecha, err)
+				return nil, &errors.InternalServerError.Default
+			}
+		}
+
+		// Cambiar hora inicio para un evento_fecha
+		if f.IdFechaEvento > 0 && f.NuevaHoraInicio != nil && *f.NuevaHoraInicio != "" {
+			parsedTime, err := time.Parse("15:04", *f.NuevaHoraInicio)
+			if err != nil {
+				e.logger.Errorf("EditarEvento.Hora parse error hora=%s: %v", *f.NuevaHoraInicio, err)
+				return nil, &errors.UnprocessableEntityError.InvalidRequestBody
+			}
+			if err := e.DaoPostgresql.Evento.ActualizarHoraInicioEventoFecha(
+				f.IdFechaEvento,
+				parsedTime,
+				&userID,
+				&now,
+			); err != nil {
+				e.logger.Errorf("EditarEvento.ActualizarHoraInicioEventoFecha(evento_fecha_id=%d): %v", f.IdFechaEvento, err)
+				return nil, &errors.InternalServerError.Default
+			}
+		}
+
+		// Reasignar a otra fecha_id
+		if f.IdFechaEvento > 0 && f.NuevoFechaID != nil && *f.NuevoFechaID > 0 {
+			if err := e.DaoPostgresql.Evento.ReasignarFechaDeEventoFecha(
+				f.IdFechaEvento,
+				*f.NuevoFechaID,
+				&userID,
+				&now,
+			); err != nil {
+				e.logger.Errorf("EditarEvento.ReasignarFechaDeEventoFecha(evento_fecha_id=%d, nuevo_fecha_id=%d): %v",
+					f.IdFechaEvento, *f.NuevoFechaID, err)
+				return nil, &errors.InternalServerError.Default
+			}
+		}
+	}
+
+	for _, s := range req.Sectores {
+		_, err := e.DaoPostgresql.Sector.ModificarSectorPorCampos(
+			s.IdSector,
+			s.SectorTipo,
+			s.TotalEntradas,
+			s.CantVendidas,
+			s.Estado,
+			&userID,
+			&now,
+		)
+		if err != nil {
+			if err == gorm.ErrRecordNotFound {
+				e.logger.Warnf("EditarEvento.ModificarSectorPorCampos: sector no encontrado id=%d", s.IdSector)
+				return nil, &errors.ObjectNotFoundError.EventoNotFound
+			}
+			e.logger.Errorf("EditarEvento.ModificarSectorPorCampos(id=%d): %v", s.IdSector, err)
+			return nil, &errors.InternalServerError.Default
+		}
+	}
+
+	for _, p := range req.Perfiles {
+		_, err := e.DaoPostgresql.PerfilDePersona.ModificarPerfilDePersonaPorCampos(
+			p.IdPerfil,
+			nil, // eventoID lo dejas igual; si quieres permitir cambiarlo, mándalo en el request
+			p.Nombre,
+			p.Estado,
+			&userID,
+			&now,
+		)
+		if err != nil {
+			if err == gorm.ErrRecordNotFound {
+				e.logger.Warnf("EditarEvento.ModificarPerfilDePersona: perfil no encontrado id=%d", p.IdPerfil)
+				return nil, &errors.ObjectNotFoundError.EventoNotFound
+			}
+			e.logger.Errorf("EditarEvento.ModificarPerfilDePersona(id=%d): %v", p.IdPerfil, err)
+			return nil, &errors.InternalServerError.Default
+		}
+	}
+
+	for _, ttReq := range req.TiposTicket {
+		// 1) Obtener el TipoDeTicket actual de BD
+		var tt model.TipoDeTicket
+		if err := e.DaoPostgresql.TipoDeTicket.PostgresqlDB.
+			First(&tt, "tipo_de_ticket_id = ?", ttReq.IdTipoTicket).Error; err != nil {
+			if err == gorm.ErrRecordNotFound {
+				e.logger.Warnf("EditarEvento.TipoDeTicket no encontrado id=%d", ttReq.IdTipoTicket)
+				return nil, &errors.ObjectNotFoundError.EventoNotFound
+			}
+			e.logger.Errorf("EditarEvento.BuscarTipoDeTicket(id=%d): %v", ttReq.IdTipoTicket, err)
+			return nil, &errors.InternalServerError.Default
+		}
+
+		// 2) Aplicar cambios parciales
+		if ttReq.Nombre != nil {
+			tt.Nombre = *ttReq.Nombre
+		}
+		if ttReq.FechaIni != nil && *ttReq.FechaIni != "" {
+			if tIni, err := time.Parse("2006-01-02", *ttReq.FechaIni); err == nil {
+				tt.FechaIni = tIni
+			} else {
+				e.logger.Errorf("EditarEvento.TipoDeTicket fechaIni parse error=%s: %v", *ttReq.FechaIni, err)
+				return nil, &errors.UnprocessableEntityError.InvalidRequestBody
+			}
+		}
+		if ttReq.FechaFin != nil && *ttReq.FechaFin != "" {
+			if tFin, err := time.Parse("2006-01-02", *ttReq.FechaFin); err == nil {
+				tt.FechaFin = tFin
+			} else {
+				e.logger.Errorf("EditarEvento.TipoDeTicket fechaFin parse error=%s: %v", *ttReq.FechaFin, err)
+				return nil, &errors.UnprocessableEntityError.InvalidRequestBody
+			}
+		}
+		if ttReq.Estado != nil {
+			tt.Estado = *ttReq.Estado
+		}
+
+		// 3) Guardar
+		if err := e.DaoPostgresql.TipoDeTicket.ActualizarTipoDeTicketr(&tt); err != nil {
+			e.logger.Errorf("EditarEvento.ActualizarTipoDeTicketr(id=%d): %v", ttReq.IdTipoTicket, err)
+			return nil, &errors.InternalServerError.Default
+		}
+	}
+
+	detalle, err := e.DaoPostgresql.Evento.ObtenerEventoDetalle(req.IdEvento)
+	if err != nil {
+		e.logger.Errorf("EditarEvento.ObtenerEventoDetalle(idEvento=%d): %v", req.IdEvento, err)
+		return nil, &errors.InternalServerError.Default
+	}
+
+	return detalle, nil
+}

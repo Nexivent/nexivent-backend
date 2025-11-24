@@ -350,3 +350,34 @@ func (a *Api) GetEventoSummary(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, response)
 }
+func (a *Api) EditarEvento(c echo.Context) error {
+	// 1) Tomar el ID desde el path :id
+	idStr := c.Param("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		return errors.HandleError(errors.BadRequestError.InvalidIDParam, c)
+	}
+
+	// 2) Parsear body
+	var req schemas.EditarEventoRequest
+	if err := c.Bind(&req); err != nil {
+		return errors.HandleError(errors.UnprocessableEntityError.InvalidRequestBody, c)
+	}
+
+	// 3) Forzar que el ID venga del path (por seguridad)
+	req.IdEvento = id
+
+	// (Opcional) si luego lees el usuario del token:
+	// if userID, ok := c.Get("userID").(int64); ok {
+	//     req.UsuarioModificacion = &userID
+	// }
+
+	// 4) Llamar al BO / controller
+	resp, errBll := a.BllController.Evento.EditarEvento(&req)
+	if errBll != nil {
+		return errors.HandleError(*errBll, c)
+	}
+
+	// 5) Devolver el detalle actualizado del evento
+	return c.JSON(http.StatusOK, resp)
+}

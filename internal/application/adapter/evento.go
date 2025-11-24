@@ -559,7 +559,6 @@ func (e *Evento) GetPostgresqlReporteEventosOrganizador(
 		}
 
 		ingresoTotal, cargosServicio, ticketsVendidos := e.DaoPostgresql.OrdenDeCompra.ObtenerIngresoCargoPorFecha(ev.ID, fechaDesde, fechaHasta)
-
 		ventasPorSectorDTO, ventasErr := e.DaoPostgresql.OrdenDeCompra.ObtenerVentasPorSector(ev.ID, fechaDesde, fechaHasta)
 		if ventasErr != nil {
 			ventasPorSectorDTO = []daoPostgresql.VentaPorSectorDTO{}
@@ -595,8 +594,11 @@ func (e *Evento) GetPostgresqlReporteEventosOrganizador(
 		}
 
 		estado := deriveEstadoEventoOrganizador(ev.EventoEstado, capacidadEvento, ticketsVendidos)
-		comisiones := (ingresoTotal - cargosServicio) * 0.05
-
+		gananciaNeta := ingresoTotal - cargosServicio
+		comisiones := gananciaNeta * 0.05
+		if gananciaNeta < 0 {
+			gananciaNeta = 0 // por si acaso, evitar negativos raros
+		}
 		reportes = append(reportes, schemas.EventoOrganizadorReporte{
 			IdEvento:        ev.ID,
 			Nombre:          ev.Titulo,
@@ -604,6 +606,7 @@ func (e *Evento) GetPostgresqlReporteEventosOrganizador(
 			Capacidad:       capacidadEvento,
 			Estado:          estado,
 			IngresosTotales: ingresoTotal,
+			GananciaNeta:    gananciaNeta,
 			TicketsVendidos: ticketsVendidos,
 			VentasPorSector: ventasPorSector,
 			Fechas:          fechas,

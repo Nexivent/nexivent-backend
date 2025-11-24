@@ -2,6 +2,8 @@ package api
 
 import (
 	"fmt"
+	"os"
+	"strings"
 
 	config "github.com/Nexivent/nexivent-backend/internal/config"
 	"github.com/labstack/echo/v4"
@@ -24,18 +26,33 @@ func (a *Api) HealthCheck(c echo.Context) error {
 }
 
 func (a *Api) RegisterRoutes(configEnv *config.ConfigEnv) {
+	allowOrigins := []string{"http://localhost:3000", "http://localhost:3001", "https://accounts.google.com"}
+
+	if extraOrigins := os.Getenv("CORS_ALLOWED_ORIGINS"); extraOrigins != "" {
+		if extraOrigins == "*" {
+			allowOrigins = []string{"*"}
+		} else {
+			for _, origin := range strings.Split(extraOrigins, ",") {
+				trimmed := strings.TrimSpace(origin)
+				if trimmed != "" {
+					allowOrigins = append(allowOrigins, trimmed)
+				}
+			}
+		}
+	}
+
 	// CORS
 	corsConfig := middleware.CORSConfig{
-		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:3001", "https://accounts.google.com"},
+		AllowOrigins:     allowOrigins,
 		AllowCredentials: true,
-		AllowHeaders:     []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization, "X-Requested-With","X-CSRF-Token",},
+		AllowHeaders:     []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization, "X-Requested-With", "X-CSRF-Token"},
 		AllowMethods:     []string{echo.GET, echo.POST, echo.PUT, echo.DELETE, echo.OPTIONS},
-        ExposeHeaders: []string{
-            "Content-Length",
-            "Content-Type",
+		ExposeHeaders: []string{
+			"Content-Length",
+			"Content-Type",
 			"Authorization",
-        },
-        MaxAge: 86400, 
+		},
+		MaxAge: 86400,
 	}
 	a.Echo.Use(middleware.CORSWithConfig(corsConfig))
 
@@ -58,10 +75,10 @@ func (a *Api) RegisterRoutes(configEnv *config.ConfigEnv) {
 
 	// Autenticación
 	a.Echo.POST("/login", a.AuthenticateUsuario)
+	a.Echo.POST("/loginorg", a.AuthenticateOrganizador)
 	a.Echo.POST("/logout", a.Logout)
 
-
-	a.Echo.GET("/usuario/:id", a.GetUsuario)	
+	a.Echo.GET("/usuario/:id", a.GetUsuario)
 
 	// Eventos endpoints
 	a.Echo.GET("/evento/", a.FetchEventos)
@@ -84,7 +101,8 @@ func (a *Api) RegisterRoutes(configEnv *config.ConfigEnv) {
 	a.Echo.POST("/cupon/:usuarioCreacion", a.CreateCupon)
 	a.Echo.PUT("/cupon/:usuarioModificacion", a.UpdateCupon)
 	a.Echo.GET("/cupon/organizador/:organizadorId", a.FetchCuponPorOrganizador)
-
+	a.Echo.GET("/cupon/validar", a.ValidateCupon)
+	a.Echo.POST("/cupon/usuario", a.CreateUsuarioCuponForOrdenCompra)
 
 	//Orden de compra
 	a.Echo.POST("/orden_de_compra/hold", a.CrearSesionOrdenTemporal)
@@ -126,6 +144,11 @@ func (a *Api) RegisterRoutes(configEnv *config.ConfigEnv) {
 	a.Echo.POST("/api/roles/assign", a.CreateRolUser)
 	a.Echo.DELETE("/api/roles/revoke", a.DeleteRolUser)
 	a.Echo.GET("/api/users", a.ListarUsuariosPorRol)
+
+	// Gestión de estado de usuarios
+	a.Echo.POST("/api/users/:id/status", a.CambiarEstadoUsuario)
+	a.Echo.POST("/api/users/:id/activate", a.ActivarUsuario)
+	a.Echo.POST("/api/users/:id/deactivate", a.DesactivarUsuario)
 
 }
 

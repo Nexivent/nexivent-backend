@@ -73,7 +73,13 @@ func (uc *UsuarioController) RegisterUsuario(usuario *model.Usuario) (model.Usua
 		if defaultRole == nil {
 			return fmt.Errorf("rol por defecto 'asistente' no encontrado")
 		}
-
+		if usuario.TipoDocumento == "RUC_PERSONA" || usuario.TipoDocumento == "RUC_EMPRESA" {
+			defaultRole, err = txRepo.Roles.ObtenerRolPorNombre("ORGANIZADOR")
+			if err != nil {
+				return err
+			}
+			usuario.EstadoDeCuenta = 0	
+		}
 		rolAsignado, err := txRepo.RolesUsuario.AsignarRolAUsuario(usuario.ID, defaultRole.ID, usuario.ID)
 		if err != nil {
 			return err
@@ -187,6 +193,9 @@ func (uc *UsuarioController) GetUsuarioConRoles(id int64) ([]*model.Usuario, *er
 
 func (uc *UsuarioController) AuthenticateUsuario(correo, contrasenha string) (*model.Usuario, *errors.Error) {
 	usuario, err := uc.DB.Usuario.ObtenerUsuarioPorCorreo(correo)
+	if usuario.TipoDocumento == "RUC_PERSONA" || usuario.TipoDocumento == "RUC_EMPRESA" {
+		return nil, &errors.AuthenticationError.InvalidCredentials
+	}
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, &errors.ObjectNotFoundError.UserNotFound
@@ -205,6 +214,31 @@ func (uc *UsuarioController) AuthenticateUsuario(correo, contrasenha string) (*m
 
 	return usuario, nil
 }	
+
+func (uc *UsuarioController) AuthenticateOrganizador(ruc, contrasenha string) (*model.Usuario, *errors.Error) {
+	usuario, err := uc.DB.Usuario.ObtenerUsuarioPorNumDocumento(ruc)
+
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, &errors.ObjectNotFoundError.UserNotFound
+		}
+		return nil, &errors.InternalServerError.Default
+	}
+	if usuario.TipoDocumento != "RUC_PERSONA" && usuario.TipoDocumento != "RUC_EMPRESA" {
+        uc.Logger.Warnf("Intento de login organizador con documento incorrecto: %s", usuario.TipoDocumento)
+        return nil, &errors.AuthenticationError.InvalidCredentials
+    }
+	ok, err := model.VerifyPassword(contrasenha, usuario.Contrasenha)
+	if err != nil {
+		return nil, &errors.InternalServerError.Default
+	}
+
+	if !ok {
+		return nil, &errors.AuthenticationError.InvalidCredentials
+	}
+
+	return usuario, nil
+}
 
 func (u *UsuarioController) VerifyGoogleToken(idToken string) (*GoogleUser, error) {
     ctx := context.Background()
@@ -265,4 +299,72 @@ func (u *UsuarioController) GetOrCreateGoogleUser(googleUser *GoogleUser) (*mode
 	}
 
 	return &usuarioCreado, nil
+}
+
+// ActivarUsuario activa un usuario (estado = 1)
+func (uc *UsuarioController) ActivarUsuario(usuarioID int64, updatedBy int64) *errors.Error {
+	// Verificar que el usuario que realiza la modificación existe
+	_, err := uc.DB.Usuario.ObtenerUsuarioBasicoPorID(updatedBy)
+	if err != nil {
+		uc.Logger.Errorf("Usuario modificador no encontrado: %v", err)
+		return &errors.Error{
+			Code:    "INVALID_MODIFIER",
+			Message: "Usuario modificador no encontrado",
+		}
+	}
+
+	// Verificar que el usuario a modificar existe
+	_, err = uc.DB.Usuario.ObtenerUsuarioBasicoPorID(usuarioID)
+	if err != nil {
+		uc.Logger.Errorf("Usuario a modificar no encontrado: %v", err)
+		return &errors.ObjectNotFoundError.UserNotFound
+	}
+
+	// Actualizar el estado a 1 (activo)
+	estado := int16(1)
+	_, err = uc.DB.Usuario.ActualizarUsuario(
+		usuarioID,
+		nil,     // nombre
+		nil,     // tipoDocumento
+		nil,     // numDocumento
+		nil,     // correo
+		nil,     // contrasenha
+		nil,     // telefono
+		nil,     // estadoDeCuenta
+		nil,     // codigoVerificacion
+		nil,     // fechaExpiracionCodigo
+		&estado, // estado = 1 (activo)
+		updatedBy,
+	)
+
+	if err != nil {
+		uc.Logger.Errorf("Error activando usuario %d: %v", usuarioID, err)
+		return &errors.InternalServerError.Default
+	}
+
+	uc.Logger.Infof("Usuario %d activado exitosamente por usuario %d", usuarioID, updatedBy)
+	return nil
+}
+
+// DesactivarUsuario desactiva un usuario (estado = 0)
+func (uc *UsuarioController) DesactivarUsuario(usuarioID int64, updatedBy int64) *errors.Error {
+	// Verificar que el usuario que realiza la modificación existe
+	_, err := uc.DB.Usuario.ObtenerUsuarioBasicoPorID(updatedBy)
+	if err != nil {
+		uc.Logger.Errorf("Usuario modificador no encontrado: %v", err)
+		return &errors.Error{
+			Code:    "INVALID_MODIFIER",
+			Message: "Usuario modificador no encontrado",
+		}
+	}
+
+	// Usar la función existente DesactivarUsuario
+	err = uc.DB.Usuario.DesactivarUsuario(usuarioID, updatedBy)
+	if err != nil {
+		uc.Logger.Errorf("Error desactivando usuario %d: %v", usuarioID, err)
+		return &errors.ObjectNotFoundError.UserNotFound
+	}
+
+	uc.Logger.Infof("Usuario %d desactivado exitosamente por usuario %d", usuarioID, updatedBy)
+	return nil
 }

@@ -50,3 +50,15 @@ type CuponOrganizator struct {
 type CuponesOrganizator struct {
 	Cupones []*CuponOrganizator `json:"cupones"`
 }
+
+type CuponResponseOrdenDePago struct {
+	ID        int64          `json:"id"`
+	Tipo      util.TipoCupon `json:"tipo"`
+	Valor     float64        `json:"valor"`
+	CantUsada int64          `json:"cantUsadaPorElUsuario"`
+}
+type UsuarioCuponRes struct {
+	CuponID   int64 `json:"cuponId"`
+	UsuarioID int64 `json:"usuarioId"`
+	CantUsada int64 `json:"cantUsada"`
+}

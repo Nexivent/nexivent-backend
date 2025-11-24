@@ -223,6 +223,101 @@ func (a *Api) AuthenticateUsuario(c echo.Context) error {
     })
 }
 
+func (a *Api) AuthenticateOrganizador(c echo.Context) error {
+
+    var input struct {
+        Ruc      string `json:"ruc"`
+        Contrasenha string `json:"contrasenha"`
+    }
+
+    if err := c.Bind(&input); err != nil {
+        a.Logger.Errorf("Error al parsear request: %v", err)
+        return errors.HandleError(errors.UnprocessableEntityError.InvalidRequestBody, c)
+    }
+    
+    // Validar que los campos no estén vacíos
+    if input.Ruc == "" || input.Contrasenha == "" {
+        a.Logger.Warnf("Intento de login con credenciales vacías")
+        return c.JSON(http.StatusBadRequest, map[string]interface{}{
+            "error":   "EMPTY_CREDENTIALS",
+            "message": "RUC y contraseña son requeridos",
+        })
+    }
+
+    // Validar formato de RUC (11 dígitos numéricos)
+    if len(input.Ruc) != 11 {
+        return c.JSON(http.StatusBadRequest, map[string]interface{}{
+            "error":   "INVALID_RUC_FORMAT",
+            "message": "El RUC debe tener 11 dígitos",
+        })
+    }
+
+    a.Logger.Infof("Intento de login de organizador con RUC: %s", input.Ruc)
+
+    usuario, newErr := a.BllController.Usuario.AuthenticateOrganizador(input.Ruc, input.Contrasenha)
+    if newErr != nil {
+        a.Logger.Warnf("Error de autenticación para RUC %s: %v", input.Ruc, newErr)
+        return errors.HandleError(*newErr, c)
+    }
+
+    // Validar que el usuario exista
+    if usuario == nil {
+        a.Logger.Errorf("AuthenticateOrganizador retornó nil para RUC: %s", input.Ruc)
+        return c.JSON(http.StatusUnauthorized, map[string]interface{}{
+            "error":   "INVALID_CREDENTIALS",
+            "message": "Credenciales incorrectas",
+        })
+    }
+
+    // Validar que la cuenta esté activa (aprobada por admin)
+    if usuario.EstadoDeCuenta != 1 {
+        a.Logger.Warnf("Intento de login de cuenta no activa: RUC=%s, Estado=%d", input.Ruc, usuario.EstadoDeCuenta)
+        return c.JSON(http.StatusForbidden, map[string]interface{}{
+            "error":   "ACCOUNT_NOT_ACTIVE",
+            "message": "Tu cuenta está pendiente de aprobación por un administrador. Recibirás un correo cuando sea activada.",
+            "estado_cuenta": usuario.EstadoDeCuenta,
+        })
+    }
+
+    // Validar que el usuario esté activo
+    if usuario.Estado != 1 {
+        a.Logger.Warnf("Intento de login de cuenta deshabilitada: RUC=%s", input.Ruc)
+        return c.JSON(http.StatusForbidden, map[string]interface{}{
+            "error":   "ACCOUNT_DISABLED",
+            "message": "Tu cuenta ha sido deshabilitada. Contacta al soporte.",
+        })
+    }
+
+    // Generar token
+    token, err := a.BllController.Token.CreateToken(usuario.ID, 24*time.Hour, "authentication")
+    if err != nil {
+        a.Logger.Errorf("Error al generar token para usuario %d: %v", usuario.ID, err)
+        return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+            "error":   "TOKEN_GENERATION_ERROR",
+            "message": "Error al generar el token de autenticación",
+        })
+    }
+
+    a.Logger.Infof("Organizador autenticado exitosamente: RUC=%s, ID=%d", input.Ruc, usuario.ID)
+
+    return c.JSON(http.StatusOK, map[string]interface{}{
+        "message": "Autenticación exitosa",
+        "token": map[string]interface{}{
+            "token":  token.Plaintext,
+            "expiry": token.Expiry.Unix(),
+        },
+        "usuario": map[string]interface{}{
+            "id":             usuario.ID,
+            "nombre":         usuario.Nombre,
+            "correo":         usuario.Correo,
+            "tipo_documento": usuario.TipoDocumento,
+            "num_documento":  usuario.NumDocumento,
+            "telefono":       usuario.Telefono,
+            "estado_cuenta":  usuario.EstadoDeCuenta,
+        },
+    }) 
+}   
+
 func (a *Api) GoogleAuth(c echo.Context) error {
     var input struct {
         AccessToken string `json:"access_token"`
@@ -407,11 +502,18 @@ func (a *Api) VerifyEmail(c echo.Context) error {
 
     a.Logger.Infof("Verificando email para usuario ID: %d", input.UsuarioID)
 
+    usuarioPrev, usuarioErr := a.BllController.Usuario.GetUsuario(input.UsuarioID)
+    var estadoCuenta int
+    if usuarioPrev.TipoDocumento == "RUC_PERSONA" || usuarioPrev.TipoDocumento == "RUC_EMPRESA" {
+        estadoCuenta = 0
+    } else {
+        estadoCuenta = 1
+    }
     // Marcar como verificado
     err := a.BllController.Usuario.DB.Usuario.PostgresqlDB.Model(&model.Usuario{}).
         Where("usuario_id = ?", input.UsuarioID).
         Updates(map[string]interface{}{
-            "estado_de_cuenta":        1,
+            "estado_de_cuenta":        estadoCuenta,
             "codigo_verificacion":     nil,
             "fecha_expiracion_codigo": nil,
         }).Error
@@ -524,4 +626,120 @@ func (a *Api) Logout(c echo.Context) error {
     return c.JSON(http.StatusOK, map[string]interface{}{
         "message": "Sesión cerrada exitosamente",
     })
+}
+
+// ===================================================
+// GESTIÓN DE ESTADO DE USUARIOS
+// ===================================================
+
+// ActivarUsuario activa un usuario (estado = 1)
+// POST /api/users/:id/activate
+func (a *Api) ActivarUsuario(c echo.Context) error {
+	idParam := c.Param("id")
+	usuarioID, err := strconv.ParseInt(idParam, 10, 64)
+	if err != nil {
+		a.Logger.Warnf("ID de usuario inválido: %s", idParam)
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"error": "ID de usuario inválido",
+		})
+	}
+
+	// TODO: Obtener del contexto/sesión
+	updatedBy := int64(1)
+
+	apiErr := a.BllController.Usuario.ActivarUsuario(usuarioID, updatedBy)
+	if apiErr != nil {
+		a.Logger.Errorf("Error activando usuario %d: %v", usuarioID, apiErr)
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+			"error": apiErr.Message,
+		})
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"message": "Usuario activado correctamente",
+	})
+}
+
+// DesactivarUsuario desactiva un usuario (estado = 0)
+// POST /api/users/:id/deactivate
+func (a *Api) DesactivarUsuario(c echo.Context) error {
+	idParam := c.Param("id")
+	usuarioID, err := strconv.ParseInt(idParam, 10, 64)
+	if err != nil {
+		a.Logger.Warnf("ID de usuario inválido: %s", idParam)
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"error": "ID de usuario inválido",
+		})
+	}
+
+	updatedBy := int64(1)
+
+	apiErr := a.BllController.Usuario.DesactivarUsuario(usuarioID, updatedBy)
+	if apiErr != nil {
+		a.Logger.Errorf("Error desactivando usuario %d: %v", usuarioID, apiErr)
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+			"error": apiErr.Message,
+		})
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"message": "Usuario desactivado correctamente",
+	})
+}
+
+// CambiarEstadoUsuario cambia el estado de un usuario
+// POST /api/users/:id/status
+// Body: { "estado": 1 } o { "estado": 0 }
+func (a *Api) CambiarEstadoUsuario(c echo.Context) error {
+	idParam := c.Param("id")
+	usuarioID, err := strconv.ParseInt(idParam, 10, 64)
+	if err != nil {
+		a.Logger.Warnf("ID de usuario inválido: %s", idParam)
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"error": "ID de usuario inválido",
+		})
+	}
+
+	var request struct {
+		Estado int16 `json:"estado"`
+	}
+	if err := c.Bind(&request); err != nil {
+		a.Logger.Warnf("Error parseando request: %v", err)
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"error": "El campo 'estado' es requerido (0 o 1)",
+		})
+	}
+
+	if request.Estado != 0 && request.Estado != 1 {
+		a.Logger.Warnf("Estado inválido: %d", request.Estado)
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"error": "El estado debe ser 0 (inactivo) o 1 (activo)",
+		})
+	}
+
+	updatedBy := int64(1)
+
+	// Llamar al controller directamente
+	var apiErr *errors.Error
+	if request.Estado == 1 {
+		apiErr = a.BllController.Usuario.ActivarUsuario(usuarioID, updatedBy)
+	} else {
+		apiErr = a.BllController.Usuario.DesactivarUsuario(usuarioID, updatedBy)
+	}
+
+	if apiErr != nil {
+		a.Logger.Errorf("Error cambiando estado del usuario %d: %v", usuarioID, apiErr)
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+			"error": apiErr.Message,
+		})
+	}
+
+	estadoTexto := "activado"
+	if request.Estado == 0 {
+		estadoTexto = "desactivado"
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"message": fmt.Sprintf("Usuario %s correctamente", estadoTexto),
+	})
 }

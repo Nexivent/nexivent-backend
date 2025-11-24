@@ -27,6 +27,7 @@ type NexiventPsqlEntidades struct {
 	Tarifa          *Tarifa
 	Ticket          *Ticket
 	Token           *Token
+	UsuarioCupon    *UsuarioCupon
 }
 
 // Clase que crea colección de entidades para Nexivent Postgresql
@@ -41,6 +42,7 @@ func NewNexiventPsqlEntidades(
 		configEnv.PostgresDBName,
 		configEnv.PostgresPort,
 		configEnv.EnableSqlLogs,
+		configEnv.PostgresPsqlMode,
 	)
 	if err != nil {
 		logger.Panicln("Failed to connect to AstroCat Postgresql database")
@@ -86,6 +88,7 @@ func NewNexiventPsqlEntidades(
 			logger: logger,
 			DB:     postgresqlDB,
 		},
+		UsuarioCupon: NewUsuarioCuponController(logger, postgresqlDB),
 	}, postgresqlDB
 }
 

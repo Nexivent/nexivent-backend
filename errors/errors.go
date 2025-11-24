@@ -242,6 +242,9 @@ var (
 		InvalidUploadMimeType         Error
 		UploadURLNotCreated           Error
 		InvalidIDParam                Error
+		InvalidFechaCupon             Error
+		CantLimitUseCupon             Error
+		UsuarioCuponNotUpdate         Error
 	}{
 		InvalidUpdatedByValue: Error{
 			Code:    "REQUEST_ERROR_002",
@@ -382,6 +385,18 @@ var (
 		InvalidIDParam: Error{
 			Code:    "REQUEST_ERROR_003",
 			Message: "Invalid ID parameter",
+		},
+		InvalidFechaCupon: Error{
+			Code:    "FECHA_ERROR_004",
+			Message: "Expired coupon",
+		},
+		CantLimitUseCupon: Error{
+			Code:    "LIMIT_ERROR_005",
+			Message: "Coupon usage limit reached",
+		},
+		UsuarioCuponNotUpdate: Error{
+			Code:    "USUARIO_CUPON_ERROR_006",
+			Message: "Updated by usuario cupon error",
 		},
 	}
 

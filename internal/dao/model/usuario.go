@@ -22,6 +22,7 @@ type Usuario struct {
 	EstadoDeCuenta        int16 `gorm:"default:0"`
 	CodigoVerificacion    *string
 	FechaExpiracionCodigo *time.Time
+	CuentaDeBanco         *string
 	UsuarioCreacion       *int64
 	FechaCreacion         time.Time `gorm:"default:now()"`
 	UsuarioModificacion   *int64

@@ -91,3 +91,8 @@ func (ec *EventoController) GenerarReporteAdministrativo(req schemas.AdminReport
 func (ec *EventoController) GetEventoDetalle(eventoId int64) (*schemas.EventoDetalleDTO, *errors.Error) {
 	return ec.EventoAdapter.GetPostgresqlEventoDetalle(eventoId)
 }
+func (c *EventoController) EditarEvento(
+	req *schemas.EditarEventoRequest,
+) (*schemas.EventoDetalleDTO, *errors.Error) {
+	return c.EventoAdapter.EditarEvento(req)
+}

@@ -17,8 +17,8 @@ func (a *Api) RegisterUsuario(c echo.Context) error {
 
 	var input struct {
 		//para reenvio de codigo de verif
-		Resend 	  bool    `json:"resend"`
-		UsuarioID int64   `json:"usuario_id"`
+		Resend    bool  `json:"resend"`
+		UsuarioID int64 `json:"usuario_id"`
 		//campos de registro normal
 		Nombre        string  `json:"nombre"`
 		TipoDocumento string  `json:"tipo_documento"`
@@ -28,53 +28,54 @@ func (a *Api) RegisterUsuario(c echo.Context) error {
 		Contrasenha   string  `json:"contrasenha"`
 		Contrasena    string  `json:"contrasena"` // Alias para contrasenha
 		Telefono      *string `json:"telefono"`
+		CuentaDeBanco *string `json:"cuenta_de_banco"`
 	}
 
 	if err := c.Bind(&input); err != nil {
 		return errors.HandleError(errors.UnprocessableEntityError.InvalidRequestBody, c)
 	}
 
-    if input.Resend && input.UsuarioID > 0 {
-        // Obtener usuario existente
-        usuario, err := a.BllController.Usuario.GetUsuario(input.UsuarioID)
-        if err != nil {
-            return errors.HandleError(*err, c)
-        }
+	if input.Resend && input.UsuarioID > 0 {
+		// Obtener usuario existente
+		usuario, err := a.BllController.Usuario.GetUsuario(input.UsuarioID)
+		if err != nil {
+			return errors.HandleError(*err, c)
+		}
 
-        // Generar nuevo código
-        codigo, codeErr := repository.GenerarCodigoVerificacion()
-        if codeErr != nil {
-            a.Logger.Errorf("Error al generar código: %v", codeErr)
-            return c.JSON(http.StatusInternalServerError, map[string]interface{}{
-                "error":   "CODE_GENERATION_ERROR",
-                "message": "Error al generar código de verificación",
-            })
-        }
+		// Generar nuevo código
+		codigo, codeErr := repository.GenerarCodigoVerificacion()
+		if codeErr != nil {
+			a.Logger.Errorf("Error al generar código: %v", codeErr)
+			return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+				"error":   "CODE_GENERATION_ERROR",
+				"message": "Error al generar código de verificación",
+			})
+		}
 
-        // Actualizar código en BD
-        expira := time.Now().Add(15 * time.Minute)
-        updateErr := a.BllController.Usuario.DB.Usuario.ActualizarCodigoVerificacion(usuario.ID, codigo, expira)
-        if updateErr != nil {
-            a.Logger.Errorf("Error al actualizar código: %v", updateErr)
-            return c.JSON(http.StatusInternalServerError, map[string]interface{}{
-                "error":   "CODE_UPDATE_ERROR",
-                "message": "Error al actualizar código de verificación",
-            })
-        }
+		// Actualizar código en BD
+		expira := time.Now().Add(15 * time.Minute)
+		updateErr := a.BllController.Usuario.DB.Usuario.ActualizarCodigoVerificacion(usuario.ID, codigo, expira)
+		if updateErr != nil {
+			a.Logger.Errorf("Error al actualizar código: %v", updateErr)
+			return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+				"error":   "CODE_UPDATE_ERROR",
+				"message": "Error al actualizar código de verificación",
+			})
+		}
 
-        a.Logger.Infof("Código reenviado para usuario %d: %s", usuario.ID, codigo)
+		a.Logger.Infof("Código reenviado para usuario %d: %s", usuario.ID, codigo)
 
-        // Retornar nuevo código
-        return c.JSON(http.StatusOK, map[string]interface{}{
-            "message": "Código reenviado exitosamente",
-            "usuario": map[string]interface{}{
-                "id":     usuario.ID,
-                "nombre": usuario.Nombre,
-                "correo": usuario.Correo,
-            },
-            "codigo_verificacion": codigo,
-        })
-    }
+		// Retornar nuevo código
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"message": "Código reenviado exitosamente",
+			"usuario": map[string]interface{}{
+				"id":     usuario.ID,
+				"nombre": usuario.Nombre,
+				"correo": usuario.Correo,
+			},
+			"codigo_verificacion": codigo,
+		})
+	}
 
 	// Usar email si correo está vacío
 	if input.Correo == "" && input.Email != "" {
@@ -85,6 +86,7 @@ func (a *Api) RegisterUsuario(c echo.Context) error {
 	if input.Contrasenha == "" && input.Contrasena != "" {
 		input.Contrasenha = input.Contrasena
 	}
+	esOrganizador := input.TipoDocumento == "RUC_EMPRESA"
 
 	var usuario model.Usuario = model.Usuario{
 		Nombre:        input.Nombre,
@@ -95,6 +97,10 @@ func (a *Api) RegisterUsuario(c echo.Context) error {
 		Telefono:      input.Telefono,
 		Estado:        1,
 	}
+	// Solo organizador puede tener cuenta de banco
+	if esOrganizador && input.CuentaDeBanco != nil && *input.CuentaDeBanco != "" {
+		usuario.CuentaDeBanco = input.CuentaDeBanco
+	}
 
 	password, err := model.HashPassword(input.Contrasenha)
 	if err != nil {
@@ -103,45 +109,45 @@ func (a *Api) RegisterUsuario(c echo.Context) error {
 	usuario.Contrasenha = password
 
 	usuarioRegistrado, newErr := a.BllController.Usuario.RegisterUsuario(&usuario)
-    if newErr != nil {
-        return errors.HandleError(*newErr, c)
-    }
+	if newErr != nil {
+		return errors.HandleError(*newErr, c)
+	}
 
 	// Generar código de verificación
-    codigo, codeErr := repository.GenerarCodigoVerificacion()
-    if codeErr != nil {
-        a.Logger.Errorf("Error al generar código: %v", codeErr)
-        return c.JSON(http.StatusInternalServerError, map[string]interface{}{
-            "error":   "CODE_GENERATION_ERROR",
-            "message": "Error al generar código de verificación",
-        })
-    }
+	codigo, codeErr := repository.GenerarCodigoVerificacion()
+	if codeErr != nil {
+		a.Logger.Errorf("Error al generar código: %v", codeErr)
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+			"error":   "CODE_GENERATION_ERROR",
+			"message": "Error al generar código de verificación",
+		})
+	}
 
-    expira := time.Now().Add(15 * time.Minute)
-    updateErr := a.BllController.Usuario.DB.Usuario.ActualizarCodigoVerificacion(usuarioRegistrado.ID, codigo, expira)
-    if updateErr != nil {
-        a.Logger.Errorf("Error al guardar código: %v", updateErr)
-        return c.JSON(http.StatusInternalServerError, map[string]interface{}{
-            "error":   "CODE_SAVE_ERROR",
-            "message": "Error al guardar código de verificación",
-        })
-    }
+	expira := time.Now().Add(15 * time.Minute)
+	updateErr := a.BllController.Usuario.DB.Usuario.ActualizarCodigoVerificacion(usuarioRegistrado.ID, codigo, expira)
+	if updateErr != nil {
+		a.Logger.Errorf("Error al guardar código: %v", updateErr)
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+			"error":   "CODE_SAVE_ERROR",
+			"message": "Error al guardar código de verificación",
+		})
+	}
 
 	a.Logger.Infof("Usuario registrado: %d - Código generado: %s", usuarioRegistrado.ID, codigo)
 
-    // Retornar código al frontend para que lo envíe por email
-    return c.JSON(http.StatusCreated, map[string]interface{}{
-        "message": "Usuario registrado exitosamente",
-        "usuario": map[string]interface{}{
-            "id":             usuarioRegistrado.ID,
-            "nombre":         usuarioRegistrado.Nombre,
-            "correo":         usuarioRegistrado.Correo,
-            "tipo_documento": usuarioRegistrado.TipoDocumento,
-            "num_documento":  usuarioRegistrado.NumDocumento,
-        },
-        "codigo_verificacion": codigo,
-        "requiere_verificacion": true,
-    })
+	// Retornar código al frontend para que lo envíe por email
+	return c.JSON(http.StatusCreated, map[string]interface{}{
+		"message": "Usuario registrado exitosamente",
+		"usuario": map[string]interface{}{
+			"id":             usuarioRegistrado.ID,
+			"nombre":         usuarioRegistrado.Nombre,
+			"correo":         usuarioRegistrado.Correo,
+			"tipo_documento": usuarioRegistrado.TipoDocumento,
+			"num_documento":  usuarioRegistrado.NumDocumento,
+		},
+		"codigo_verificacion":   codigo,
+		"requiere_verificacion": true,
+	})
 }
 
 func (a *Api) GetUsuario(c echo.Context) error {
@@ -197,435 +203,435 @@ func (a *Api) AuthenticateUsuario(c echo.Context) error {
 	}
 
 	// Generar token
-    token, err := a.BllController.Token.CreateToken(usuario.ID, 24*time.Hour, "authentication")
-    if err != nil {
-        a.Logger.Errorf("Error al generar token para usuario %d: %v", usuario.ID, err)
-        return c.JSON(http.StatusInternalServerError, map[string]interface{}{
-            "error":   "TOKEN_GENERATION_ERROR",
-            "message": "Error al generar el token de autenticación",
-        })
-    }
+	token, err := a.BllController.Token.CreateToken(usuario.ID, 24*time.Hour, "authentication")
+	if err != nil {
+		a.Logger.Errorf("Error al generar token para usuario %d: %v", usuario.ID, err)
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+			"error":   "TOKEN_GENERATION_ERROR",
+			"message": "Error al generar el token de autenticación",
+		})
+	}
 
-    return c.JSON(http.StatusOK, map[string]interface{}{
-        "message": "Autenticación exitosa",
-        "token": map[string]interface{}{
-            "token":  token.Plaintext,
-            "expiry": token.Expiry.Unix(),
-        },
-        "usuario": map[string]interface{}{
-            "id":             usuario.ID,
-            "nombre":         usuario.Nombre,
-            "correo":         usuario.Correo,
-            "tipo_documento": usuario.TipoDocumento,
-            "num_documento":  usuario.NumDocumento,
-            "telefono":       usuario.Telefono,
-        },
-    })
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"message": "Autenticación exitosa",
+		"token": map[string]interface{}{
+			"token":  token.Plaintext,
+			"expiry": token.Expiry.Unix(),
+		},
+		"usuario": map[string]interface{}{
+			"id":             usuario.ID,
+			"nombre":         usuario.Nombre,
+			"correo":         usuario.Correo,
+			"tipo_documento": usuario.TipoDocumento,
+			"num_documento":  usuario.NumDocumento,
+			"telefono":       usuario.Telefono,
+		},
+	})
 }
 
 func (a *Api) AuthenticateOrganizador(c echo.Context) error {
 
-    var input struct {
-        Ruc      string `json:"ruc"`
-        Contrasenha string `json:"contrasenha"`
-    }
+	var input struct {
+		Ruc         string `json:"ruc"`
+		Contrasenha string `json:"contrasenha"`
+	}
 
-    if err := c.Bind(&input); err != nil {
-        a.Logger.Errorf("Error al parsear request: %v", err)
-        return errors.HandleError(errors.UnprocessableEntityError.InvalidRequestBody, c)
-    }
-    
-    // Validar que los campos no estén vacíos
-    if input.Ruc == "" || input.Contrasenha == "" {
-        a.Logger.Warnf("Intento de login con credenciales vacías")
-        return c.JSON(http.StatusBadRequest, map[string]interface{}{
-            "error":   "EMPTY_CREDENTIALS",
-            "message": "RUC y contraseña son requeridos",
-        })
-    }
+	if err := c.Bind(&input); err != nil {
+		a.Logger.Errorf("Error al parsear request: %v", err)
+		return errors.HandleError(errors.UnprocessableEntityError.InvalidRequestBody, c)
+	}
 
-    // Validar formato de RUC (11 dígitos numéricos)
-    if len(input.Ruc) != 11 {
-        return c.JSON(http.StatusBadRequest, map[string]interface{}{
-            "error":   "INVALID_RUC_FORMAT",
-            "message": "El RUC debe tener 11 dígitos",
-        })
-    }
+	// Validar que los campos no estén vacíos
+	if input.Ruc == "" || input.Contrasenha == "" {
+		a.Logger.Warnf("Intento de login con credenciales vacías")
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"error":   "EMPTY_CREDENTIALS",
+			"message": "RUC y contraseña son requeridos",
+		})
+	}
 
-    a.Logger.Infof("Intento de login de organizador con RUC: %s", input.Ruc)
+	// Validar formato de RUC (11 dígitos numéricos)
+	if len(input.Ruc) != 11 {
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"error":   "INVALID_RUC_FORMAT",
+			"message": "El RUC debe tener 11 dígitos",
+		})
+	}
 
-    usuario, newErr := a.BllController.Usuario.AuthenticateOrganizador(input.Ruc, input.Contrasenha)
-    if newErr != nil {
-        a.Logger.Warnf("Error de autenticación para RUC %s: %v", input.Ruc, newErr)
-        return errors.HandleError(*newErr, c)
-    }
+	a.Logger.Infof("Intento de login de organizador con RUC: %s", input.Ruc)
 
-    // Validar que el usuario exista
-    if usuario == nil {
-        a.Logger.Errorf("AuthenticateOrganizador retornó nil para RUC: %s", input.Ruc)
-        return c.JSON(http.StatusUnauthorized, map[string]interface{}{
-            "error":   "INVALID_CREDENTIALS",
-            "message": "Credenciales incorrectas",
-        })
-    }
+	usuario, newErr := a.BllController.Usuario.AuthenticateOrganizador(input.Ruc, input.Contrasenha)
+	if newErr != nil {
+		a.Logger.Warnf("Error de autenticación para RUC %s: %v", input.Ruc, newErr)
+		return errors.HandleError(*newErr, c)
+	}
 
-    // Validar que la cuenta esté activa (aprobada por admin)
-    if usuario.EstadoDeCuenta != 1 {
-        a.Logger.Warnf("Intento de login de cuenta no activa: RUC=%s, Estado=%d", input.Ruc, usuario.EstadoDeCuenta)
-        return c.JSON(http.StatusForbidden, map[string]interface{}{
-            "error":   "ACCOUNT_NOT_ACTIVE",
-            "message": "Tu cuenta está pendiente de aprobación por un administrador. Recibirás un correo cuando sea activada.",
-            "estado_cuenta": usuario.EstadoDeCuenta,
-        })
-    }
+	// Validar que el usuario exista
+	if usuario == nil {
+		a.Logger.Errorf("AuthenticateOrganizador retornó nil para RUC: %s", input.Ruc)
+		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
+			"error":   "INVALID_CREDENTIALS",
+			"message": "Credenciales incorrectas",
+		})
+	}
 
-    // Validar que el usuario esté activo
-    if usuario.Estado != 1 {
-        a.Logger.Warnf("Intento de login de cuenta deshabilitada: RUC=%s", input.Ruc)
-        return c.JSON(http.StatusForbidden, map[string]interface{}{
-            "error":   "ACCOUNT_DISABLED",
-            "message": "Tu cuenta ha sido deshabilitada. Contacta al soporte.",
-        })
-    }
+	// Validar que la cuenta esté activa (aprobada por admin)
+	if usuario.EstadoDeCuenta != 1 {
+		a.Logger.Warnf("Intento de login de cuenta no activa: RUC=%s, Estado=%d", input.Ruc, usuario.EstadoDeCuenta)
+		return c.JSON(http.StatusForbidden, map[string]interface{}{
+			"error":         "ACCOUNT_NOT_ACTIVE",
+			"message":       "Tu cuenta está pendiente de aprobación por un administrador. Recibirás un correo cuando sea activada.",
+			"estado_cuenta": usuario.EstadoDeCuenta,
+		})
+	}
 
-    // Generar token
-    token, err := a.BllController.Token.CreateToken(usuario.ID, 24*time.Hour, "authentication")
-    if err != nil {
-        a.Logger.Errorf("Error al generar token para usuario %d: %v", usuario.ID, err)
-        return c.JSON(http.StatusInternalServerError, map[string]interface{}{
-            "error":   "TOKEN_GENERATION_ERROR",
-            "message": "Error al generar el token de autenticación",
-        })
-    }
+	// Validar que el usuario esté activo
+	if usuario.Estado != 1 {
+		a.Logger.Warnf("Intento de login de cuenta deshabilitada: RUC=%s", input.Ruc)
+		return c.JSON(http.StatusForbidden, map[string]interface{}{
+			"error":   "ACCOUNT_DISABLED",
+			"message": "Tu cuenta ha sido deshabilitada. Contacta al soporte.",
+		})
+	}
 
-    a.Logger.Infof("Organizador autenticado exitosamente: RUC=%s, ID=%d", input.Ruc, usuario.ID)
+	// Generar token
+	token, err := a.BllController.Token.CreateToken(usuario.ID, 24*time.Hour, "authentication")
+	if err != nil {
+		a.Logger.Errorf("Error al generar token para usuario %d: %v", usuario.ID, err)
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+			"error":   "TOKEN_GENERATION_ERROR",
+			"message": "Error al generar el token de autenticación",
+		})
+	}
 
-    return c.JSON(http.StatusOK, map[string]interface{}{
-        "message": "Autenticación exitosa",
-        "token": map[string]interface{}{
-            "token":  token.Plaintext,
-            "expiry": token.Expiry.Unix(),
-        },
-        "usuario": map[string]interface{}{
-            "id":             usuario.ID,
-            "nombre":         usuario.Nombre,
-            "correo":         usuario.Correo,
-            "tipo_documento": usuario.TipoDocumento,
-            "num_documento":  usuario.NumDocumento,
-            "telefono":       usuario.Telefono,
-            "estado_cuenta":  usuario.EstadoDeCuenta,
-        },
-    }) 
-}   
+	a.Logger.Infof("Organizador autenticado exitosamente: RUC=%s, ID=%d", input.Ruc, usuario.ID)
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"message": "Autenticación exitosa",
+		"token": map[string]interface{}{
+			"token":  token.Plaintext,
+			"expiry": token.Expiry.Unix(),
+		},
+		"usuario": map[string]interface{}{
+			"id":             usuario.ID,
+			"nombre":         usuario.Nombre,
+			"correo":         usuario.Correo,
+			"tipo_documento": usuario.TipoDocumento,
+			"num_documento":  usuario.NumDocumento,
+			"telefono":       usuario.Telefono,
+			"estado_cuenta":  usuario.EstadoDeCuenta,
+		},
+	})
+}
 
 func (a *Api) GoogleAuth(c echo.Context) error {
-    var input struct {
-        AccessToken string `json:"access_token"`
-        IdToken     string `json:"id_token"`
-        Email string `json:"email"`
-        Name string `json:"name"`
-        Picture string `json:"picture"`
-        EmailVerified bool `json:"email_verified"`
-        Sub string `json:"sub"`
-        TipoDocumento string `json:"tipo_documento"`
-        NumDocumento  string `json:"num_documento"`
-    }
+	var input struct {
+		AccessToken   string `json:"access_token"`
+		IdToken       string `json:"id_token"`
+		Email         string `json:"email"`
+		Name          string `json:"name"`
+		Picture       string `json:"picture"`
+		EmailVerified bool   `json:"email_verified"`
+		Sub           string `json:"sub"`
+		TipoDocumento string `json:"tipo_documento"`
+		NumDocumento  string `json:"num_documento"`
+	}
 
-    if err := c.Bind(&input); err != nil {
-        a.Logger.Errorf("Error binding request: %v", err)
-        return c.JSON(http.StatusBadRequest, map[string]interface{}{
-            "error":   "INVALID_REQUEST",
-            "message": "Solicitud inválida",
-        })
-    }
+	if err := c.Bind(&input); err != nil {
+		a.Logger.Errorf("Error binding request: %v", err)
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"error":   "INVALID_REQUEST",
+			"message": "Solicitud inválida",
+		})
+	}
 
-    var googleUser *controller.GoogleUser
+	var googleUser *controller.GoogleUser
 
-    if input.Email != "" && input.EmailVerified && input.Sub != "" {
-        a.Logger.Infof("Usando datos validados de Google para: %s", input.Email)
-        googleUser = &controller.GoogleUser{
-            Email:         input.Email,
-            Name:          input.Name,
-            Picture:       input.Picture,
-            Sub:           input.Sub,
-            VerifiedEmail: input.EmailVerified,
-        }
-    } else if input.IdToken != "" {
-        a.Logger.Infof("Validando ID Token de Google")
-        var err error
-        googleUser, err = a.BllController.Usuario.VerifyGoogleToken(input.IdToken)
-        if err != nil {
-            a.Logger.Errorf("Error verificando token de Google: %v", err)
-            return c.JSON(http.StatusUnauthorized, map[string]interface{}{
-                "error":   "INVALID_GOOGLE_TOKEN",
-                "message": "Token de Google inválido o expirado",
-            })
-        }
-    } else {
-        return c.JSON(http.StatusBadRequest, map[string]interface{}{
-            "error":   "MISSING_DATA",
-            "message": "Se requiere id_token o datos validados de Google",
-        })
-    }
+	if input.Email != "" && input.EmailVerified && input.Sub != "" {
+		a.Logger.Infof("Usando datos validados de Google para: %s", input.Email)
+		googleUser = &controller.GoogleUser{
+			Email:         input.Email,
+			Name:          input.Name,
+			Picture:       input.Picture,
+			Sub:           input.Sub,
+			VerifiedEmail: input.EmailVerified,
+		}
+	} else if input.IdToken != "" {
+		a.Logger.Infof("Validando ID Token de Google")
+		var err error
+		googleUser, err = a.BllController.Usuario.VerifyGoogleToken(input.IdToken)
+		if err != nil {
+			a.Logger.Errorf("Error verificando token de Google: %v", err)
+			return c.JSON(http.StatusUnauthorized, map[string]interface{}{
+				"error":   "INVALID_GOOGLE_TOKEN",
+				"message": "Token de Google inválido o expirado",
+			})
+		}
+	} else {
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"error":   "MISSING_DATA",
+			"message": "Se requiere id_token o datos validados de Google",
+		})
+	}
 
-    // Verificar que el email esté verificado por Google
-    if !googleUser.VerifiedEmail {
-        return c.JSON(http.StatusUnauthorized, map[string]interface{}{
-            "error":   "EMAIL_NOT_VERIFIED",
-            "message": "El correo de Google no está verificado",
-        })
-    }
+	// Verificar que el email esté verificado por Google
+	if !googleUser.VerifiedEmail {
+		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
+			"error":   "EMAIL_NOT_VERIFIED",
+			"message": "El correo de Google no está verificado",
+		})
+	}
 
-    a.Logger.Infof("🔍 Buscando usuario existente con correo: %s", googleUser.Email)
+	a.Logger.Infof("🔍 Buscando usuario existente con correo: %s", googleUser.Email)
 
-    usuarioExistente, err := a.BllController.Usuario.DB.Usuario.ObtenerUsuarioPorCorreo(googleUser.Email)
-    
-    if err == nil && usuarioExistente != nil {
-        a.Logger.Infof("✅ Usuario EXISTENTE encontrado: ID=%d, Nombre=%s, TipoDoc=%s, NumDoc=%s", 
-            usuarioExistente.ID, 
-            usuarioExistente.Nombre, 
-            usuarioExistente.TipoDocumento, 
-            usuarioExistente.NumDocumento)
+	usuarioExistente, err := a.BllController.Usuario.DB.Usuario.ObtenerUsuarioPorCorreo(googleUser.Email)
 
-        token, tokenErr := a.BllController.Token.CreateToken(usuarioExistente.ID, 24*time.Hour, "authentication")
-        if tokenErr != nil {
-            a.Logger.Errorf("Error al generar token: %v", tokenErr)
-            return c.JSON(http.StatusInternalServerError, map[string]interface{}{
-                "error":   "TOKEN_GENERATION_ERROR",
-                "message": "Error al generar token de autenticación",
-            })
-        }
+	if err == nil && usuarioExistente != nil {
+		a.Logger.Infof("✅ Usuario EXISTENTE encontrado: ID=%d, Nombre=%s, TipoDoc=%s, NumDoc=%s",
+			usuarioExistente.ID,
+			usuarioExistente.Nombre,
+			usuarioExistente.TipoDocumento,
+			usuarioExistente.NumDocumento)
 
-        a.Logger.Infof("✅ Usuario existente autenticado con Google: %s (ID: %d)", usuarioExistente.Correo, usuarioExistente.ID)
+		token, tokenErr := a.BllController.Token.CreateToken(usuarioExistente.ID, 24*time.Hour, "authentication")
+		if tokenErr != nil {
+			a.Logger.Errorf("Error al generar token: %v", tokenErr)
+			return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+				"error":   "TOKEN_GENERATION_ERROR",
+				"message": "Error al generar token de autenticación",
+			})
+		}
 
-        return c.JSON(http.StatusOK, map[string]interface{}{
-            "message": "Autenticación con Google exitosa",
-            "token": map[string]interface{}{
-                "token":  token.Plaintext,
-                "expiry": token.Expiry.Unix(),
-            },
-            "usuario": map[string]interface{}{
-                "id":               usuarioExistente.ID,
-                "nombre":           usuarioExistente.Nombre,
-                "correo":           usuarioExistente.Correo,
-                "tipo_documento":   usuarioExistente.TipoDocumento,
-                "num_documento":    usuarioExistente.NumDocumento,
-                "telefono":         usuarioExistente.Telefono,
-                "estado_de_cuenta": usuarioExistente.EstadoDeCuenta,
-            },
-            "is_new_user": false,
-        })
-    }
+		a.Logger.Infof("✅ Usuario existente autenticado con Google: %s (ID: %d)", usuarioExistente.Correo, usuarioExistente.ID)
 
-    a.Logger.Infof("📝 Usuario NO existe, creando nuevo usuario con correo: %s", googleUser.Email)
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"message": "Autenticación con Google exitosa",
+			"token": map[string]interface{}{
+				"token":  token.Plaintext,
+				"expiry": token.Expiry.Unix(),
+			},
+			"usuario": map[string]interface{}{
+				"id":               usuarioExistente.ID,
+				"nombre":           usuarioExistente.Nombre,
+				"correo":           usuarioExistente.Correo,
+				"tipo_documento":   usuarioExistente.TipoDocumento,
+				"num_documento":    usuarioExistente.NumDocumento,
+				"telefono":         usuarioExistente.Telefono,
+				"estado_de_cuenta": usuarioExistente.EstadoDeCuenta,
+			},
+			"is_new_user": false,
+		})
+	}
 
-    var nuevoUsuario model.Usuario
-    
-    nuevoUsuario.Nombre = googleUser.Name
-    nuevoUsuario.Correo = googleUser.Email
-    
-    if input.TipoDocumento != "" && input.NumDocumento != "" {
-        a.Logger.Infof("📄 Usando documento del frontend: %s - %s", input.TipoDocumento, input.NumDocumento)
-        nuevoUsuario.TipoDocumento = input.TipoDocumento
-        nuevoUsuario.NumDocumento = input.NumDocumento
-    } else {
-        a.Logger.Warnf("⚠️ No hay documento del frontend, usando Google Sub como identificador")
-        nuevoUsuario.TipoDocumento = "GOOGLE"
-        nuevoUsuario.NumDocumento = googleUser.Sub
-    }
-    
-    nuevoUsuario.EstadoDeCuenta = 1 // Verificado
-    nuevoUsuario.Estado = 1         // Activo
-    nuevoUsuario.Contrasenha = ""   // Sin contraseña para usuarios de Google
-    nuevoUsuario.Telefono = nil
+	a.Logger.Infof("📝 Usuario NO existe, creando nuevo usuario con correo: %s", googleUser.Email)
 
-    a.Logger.Infof("🔧 Registrando nuevo usuario: Correo=%s, TipoDoc=%s, NumDoc=%s", 
-        nuevoUsuario.Correo, 
-        nuevoUsuario.TipoDocumento, 
-        nuevoUsuario.NumDocumento)
+	var nuevoUsuario model.Usuario
 
-    usuarioRegistrado, newErr := a.BllController.Usuario.RegisterUsuario(&nuevoUsuario)
-    if newErr != nil {
-        a.Logger.Errorf("❌ Error al registrar usuario de Google: %v", newErr)
-        return errors.HandleError(*newErr, c)
-    }
+	nuevoUsuario.Nombre = googleUser.Name
+	nuevoUsuario.Correo = googleUser.Email
 
-    token, tokenErr := a.BllController.Token.CreateToken(usuarioRegistrado.ID, 24*time.Hour, "authentication")
-    if tokenErr != nil {
-        a.Logger.Errorf("Error al generar token: %v", tokenErr)
-        return c.JSON(http.StatusInternalServerError, map[string]interface{}{
-            "error":   "TOKEN_GENERATION_ERROR",
-            "message": "Error al generar token de autenticación",
-        })
-    }
+	if input.TipoDocumento != "" && input.NumDocumento != "" {
+		a.Logger.Infof("📄 Usando documento del frontend: %s - %s", input.TipoDocumento, input.NumDocumento)
+		nuevoUsuario.TipoDocumento = input.TipoDocumento
+		nuevoUsuario.NumDocumento = input.NumDocumento
+	} else {
+		a.Logger.Warnf("⚠️ No hay documento del frontend, usando Google Sub como identificador")
+		nuevoUsuario.TipoDocumento = "GOOGLE"
+		nuevoUsuario.NumDocumento = googleUser.Sub
+	}
 
-    a.Logger.Infof("✅ Usuario registrado exitosamente con Google: %s (ID: %d)", usuarioRegistrado.Correo, usuarioRegistrado.ID)
+	nuevoUsuario.EstadoDeCuenta = 1 // Verificado
+	nuevoUsuario.Estado = 1         // Activo
+	nuevoUsuario.Contrasenha = ""   // Sin contraseña para usuarios de Google
+	nuevoUsuario.Telefono = nil
 
-    return c.JSON(http.StatusCreated, map[string]interface{}{
-        "message": "Registro con Google exitoso",
-        "token": map[string]interface{}{
-            "token":  token.Plaintext,
-            "expiry": token.Expiry.Unix(),
-        },
-        "usuario": map[string]interface{}{
-            "id":             usuarioRegistrado.ID,
-            "nombre":         usuarioRegistrado.Nombre,
-            "correo":         usuarioRegistrado.Correo,
-            "tipo_documento": usuarioRegistrado.TipoDocumento,
-            "num_documento":  usuarioRegistrado.NumDocumento,
-            "telefono":       usuarioRegistrado.Telefono,
-        },
-        "is_new_user": true,
-        "skip_verification": true,
-    })
+	a.Logger.Infof("🔧 Registrando nuevo usuario: Correo=%s, TipoDoc=%s, NumDoc=%s",
+		nuevoUsuario.Correo,
+		nuevoUsuario.TipoDocumento,
+		nuevoUsuario.NumDocumento)
+
+	usuarioRegistrado, newErr := a.BllController.Usuario.RegisterUsuario(&nuevoUsuario)
+	if newErr != nil {
+		a.Logger.Errorf("❌ Error al registrar usuario de Google: %v", newErr)
+		return errors.HandleError(*newErr, c)
+	}
+
+	token, tokenErr := a.BllController.Token.CreateToken(usuarioRegistrado.ID, 24*time.Hour, "authentication")
+	if tokenErr != nil {
+		a.Logger.Errorf("Error al generar token: %v", tokenErr)
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+			"error":   "TOKEN_GENERATION_ERROR",
+			"message": "Error al generar token de autenticación",
+		})
+	}
+
+	a.Logger.Infof("✅ Usuario registrado exitosamente con Google: %s (ID: %d)", usuarioRegistrado.Correo, usuarioRegistrado.ID)
+
+	return c.JSON(http.StatusCreated, map[string]interface{}{
+		"message": "Registro con Google exitoso",
+		"token": map[string]interface{}{
+			"token":  token.Plaintext,
+			"expiry": token.Expiry.Unix(),
+		},
+		"usuario": map[string]interface{}{
+			"id":             usuarioRegistrado.ID,
+			"nombre":         usuarioRegistrado.Nombre,
+			"correo":         usuarioRegistrado.Correo,
+			"tipo_documento": usuarioRegistrado.TipoDocumento,
+			"num_documento":  usuarioRegistrado.NumDocumento,
+			"telefono":       usuarioRegistrado.Telefono,
+		},
+		"is_new_user":       true,
+		"skip_verification": true,
+	})
 }
 
 func (a *Api) VerifyEmail(c echo.Context) error {
-    var input struct {
-        UsuarioID int64 `json:"usuario_id"`
-    }
+	var input struct {
+		UsuarioID int64 `json:"usuario_id"`
+	}
 
-    if err := c.Bind(&input); err != nil {
-        a.Logger.Error(fmt.Sprintf("Error al parsear request: %v", err))
-        return c.JSON(http.StatusBadRequest, map[string]interface{}{
-            "error": "INVALID_REQUEST",
-            "message": "Cuerpo de solicitud inválido",
-        })
-    }
+	if err := c.Bind(&input); err != nil {
+		a.Logger.Error(fmt.Sprintf("Error al parsear request: %v", err))
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"error":   "INVALID_REQUEST",
+			"message": "Cuerpo de solicitud inválido",
+		})
+	}
 
-    if input.UsuarioID == 0 {
-        return c.JSON(http.StatusBadRequest, map[string]interface{}{
-            "error":   "INVALID_USER_ID",
-            "message": "ID de usuario inválido",
-        })
-    }
+	if input.UsuarioID == 0 {
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"error":   "INVALID_USER_ID",
+			"message": "ID de usuario inválido",
+		})
+	}
 
-    a.Logger.Infof("Verificando email para usuario ID: %d", input.UsuarioID)
+	a.Logger.Infof("Verificando email para usuario ID: %d", input.UsuarioID)
 
-    usuarioPrev, usuarioErr := a.BllController.Usuario.GetUsuario(input.UsuarioID)
-    var estadoCuenta int
-    if usuarioPrev.TipoDocumento == "RUC_PERSONA" || usuarioPrev.TipoDocumento == "RUC_EMPRESA" {
-        estadoCuenta = 0
-    } else {
-        estadoCuenta = 1
-    }
-    // Marcar como verificado
-    err := a.BllController.Usuario.DB.Usuario.PostgresqlDB.Model(&model.Usuario{}).
-        Where("usuario_id = ?", input.UsuarioID).
-        Updates(map[string]interface{}{
-            "estado_de_cuenta":        estadoCuenta,
-            "codigo_verificacion":     nil,
-            "fecha_expiracion_codigo": nil,
-        }).Error
+	usuarioPrev, usuarioErr := a.BllController.Usuario.GetUsuario(input.UsuarioID)
+	var estadoCuenta int
+	if usuarioPrev.TipoDocumento == "RUC_PERSONA" || usuarioPrev.TipoDocumento == "RUC_EMPRESA" {
+		estadoCuenta = 0
+	} else {
+		estadoCuenta = 1
+	}
+	// Marcar como verificado
+	err := a.BllController.Usuario.DB.Usuario.PostgresqlDB.Model(&model.Usuario{}).
+		Where("usuario_id = ?", input.UsuarioID).
+		Updates(map[string]interface{}{
+			"estado_de_cuenta":        estadoCuenta,
+			"codigo_verificacion":     nil,
+			"fecha_expiracion_codigo": nil,
+		}).Error
 
-    if err != nil {
-        a.Logger.Error(fmt.Sprintf("Error al verificar usuario: %v", err))
-        return c.JSON(http.StatusInternalServerError, map[string]interface{}{
-            "error":   "VERIFICATION_ERROR",
-            "message": "Error al verificar el usuario",
-        })
-    }
+	if err != nil {
+		a.Logger.Error(fmt.Sprintf("Error al verificar usuario: %v", err))
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+			"error":   "VERIFICATION_ERROR",
+			"message": "Error al verificar el usuario",
+		})
+	}
 
-    // Obtener usuario actualizado
-    usuario, usuarioErr := a.BllController.Usuario.GetUsuario(input.UsuarioID)
-    if usuarioErr != nil {
-        a.Logger.Error(fmt.Sprintf("Error al obtener usuario: %v", usuarioErr))
-        return c.JSON(http.StatusInternalServerError, map[string]interface{}{
-            "error":   "USER_NOT_FOUND",
-            "message": "Usuario no encontrado",
-        })
-    }
+	// Obtener usuario actualizado
+	usuario, usuarioErr := a.BllController.Usuario.GetUsuario(input.UsuarioID)
+	if usuarioErr != nil {
+		a.Logger.Error(fmt.Sprintf("Error al obtener usuario: %v", usuarioErr))
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+			"error":   "USER_NOT_FOUND",
+			"message": "Usuario no encontrado",
+		})
+	}
 
-    if usuario == nil {
-        a.Logger.Error("GetUsuario retornó nil")
-        return c.JSON(http.StatusInternalServerError, map[string]interface{}{
-            "error":   "USER_NULL",
-            "message": "Error: usuario es nil",
-        })
-    }
+	if usuario == nil {
+		a.Logger.Error("GetUsuario retornó nil")
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+			"error":   "USER_NULL",
+			"message": "Error: usuario es nil",
+		})
+	}
 
-    // Log para debugging
-    a.Logger.Infof("Usuario obtenido: ID=%d, Nombre=%s, Correo=%s", usuario.ID, usuario.Nombre, usuario.Correo)
+	// Log para debugging
+	a.Logger.Infof("Usuario obtenido: ID=%d, Nombre=%s, Correo=%s", usuario.ID, usuario.Nombre, usuario.Correo)
 
-    // Validar campos críticos
-    if usuario.Nombre == "" {
-        a.Logger.Error("Usuario sin nombre")
-        return c.JSON(http.StatusInternalServerError, map[string]interface{}{
-            "error": "INVALID_USER_DATA",
-            "message": "Usuario con datos incompletos",
-        })
-    }
+	// Validar campos críticos
+	if usuario.Nombre == "" {
+		a.Logger.Error("Usuario sin nombre")
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+			"error":   "INVALID_USER_DATA",
+			"message": "Usuario con datos incompletos",
+		})
+	}
 
-    if usuario.Correo == "" {
-        a.Logger.Error("Usuario sin correo")
-        return c.JSON(http.StatusInternalServerError, map[string]interface{}{
-            "error": "INVALID_USER_DATA",
-            "message": "Usuario sin correo",
-        })
-    }
-    
-    // Manejar telefono (puede ser nil)
-    telefono := ""
-    if usuario.Telefono != nil {
-        telefono = *usuario.Telefono
-    }
+	if usuario.Correo == "" {
+		a.Logger.Error("Usuario sin correo")
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+			"error":   "INVALID_USER_DATA",
+			"message": "Usuario sin correo",
+		})
+	}
 
-    // Generar token simple (sin dependencias)
-    tokenString := fmt.Sprintf("nexivent_auth_%d_%d", input.UsuarioID, time.Now().Unix())
-    tokenExpiry := time.Now().Add(24 * time.Hour)
+	// Manejar telefono (puede ser nil)
+	telefono := ""
+	if usuario.Telefono != nil {
+		telefono = *usuario.Telefono
+	}
 
-    a.Logger.Infof("Usuario %d verificado exitosamente", input.UsuarioID)
+	// Generar token simple (sin dependencias)
+	tokenString := fmt.Sprintf("nexivent_auth_%d_%d", input.UsuarioID, time.Now().Unix())
+	tokenExpiry := time.Now().Add(24 * time.Hour)
 
-    // Preparar respuesta con validaciones
-    usuarioResponse := map[string]interface{}{
-        "id":      usuario.ID,
-        "nombre":  usuario.Nombre,
-        "correo":  usuario.Correo,
-    }
+	a.Logger.Infof("Usuario %d verificado exitosamente", input.UsuarioID)
 
-    // Agregar campos opcionales solo si existen
-    if usuario.TipoDocumento != "" {
-        usuarioResponse["tipo_documento"] = usuario.TipoDocumento
-    }
+	// Preparar respuesta con validaciones
+	usuarioResponse := map[string]interface{}{
+		"id":     usuario.ID,
+		"nombre": usuario.Nombre,
+		"correo": usuario.Correo,
+	}
 
-    if usuario.NumDocumento != "" {
-        usuarioResponse["num_documento"] = usuario.NumDocumento
-    }
+	// Agregar campos opcionales solo si existen
+	if usuario.TipoDocumento != "" {
+		usuarioResponse["tipo_documento"] = usuario.TipoDocumento
+	}
 
-    if telefono != "" {
-        usuarioResponse["telefono"] = telefono
-    }
+	if usuario.NumDocumento != "" {
+		usuarioResponse["num_documento"] = usuario.NumDocumento
+	}
 
-    return c.JSON(http.StatusOK, map[string]interface{}{
-        "message": "Email verificado exitosamente",
-        "token": map[string]interface{}{
-            "token":  tokenString,
-            "expiry": tokenExpiry.Unix(),
-        },
-        "usuario": usuarioResponse,
-    })
+	if telefono != "" {
+		usuarioResponse["telefono"] = telefono
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"message": "Email verificado exitosamente",
+		"token": map[string]interface{}{
+			"token":  tokenString,
+			"expiry": tokenExpiry.Unix(),
+		},
+		"usuario": usuarioResponse,
+	})
 }
 
 func (a *Api) Logout(c echo.Context) error {
-    // Obtener el token del header Authorization
-    authHeader := c.Request().Header.Get("Authorization")
-    if authHeader == "" {
-        return c.JSON(http.StatusOK, map[string]interface{}{
-            "message": "Sesión cerrada exitosamente",
-        })
-    }
+	// Obtener el token del header Authorization
+	authHeader := c.Request().Header.Get("Authorization")
+	if authHeader == "" {
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"message": "Sesión cerrada exitosamente",
+		})
+	}
 
-    // Extraer el token (formato: "Bearer <token>")
-    var token string
-    if len(authHeader) > 7 && authHeader[:7] == "Bearer " {
-        token = authHeader[7:]
-    }
+	// Extraer el token (formato: "Bearer <token>")
+	var token string
+	if len(authHeader) > 7 && authHeader[:7] == "Bearer " {
+		token = authHeader[7:]
+	}
 
-    a.Logger.Infof("Usuario cerró sesión con token: %s", token)
+	a.Logger.Infof("Usuario cerró sesión con token: %s", token)
 
-    return c.JSON(http.StatusOK, map[string]interface{}{
-        "message": "Sesión cerrada exitosamente",
-    })
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"message": "Sesión cerrada exitosamente",
+	})
 }
 
 // ===================================================

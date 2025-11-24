@@ -135,7 +135,7 @@ func (ru *RolUsuarioRepo) ObtenerUsuariosPorRol(rolId int64) ([]model.Usuario, e
 	respuesta := ru.PostgresqlDB.
 		Table("usuario").
 		Joins("JOIN rol_usuario r ON r.usuario_id = usuario.usuario_id").
-		Where("r.rol_id = ? AND r.estado = 1 AND usuario.estado = 1", rolId).
+		Where("r.rol_id = ? AND r.estado = 1 ", rolId).
 		Find(&usuarios)
 
 	if respuesta.Error != nil {
@@ -149,7 +149,7 @@ func (ru *RolUsuarioRepo) ObtenerUsuariosPorRol(rolId int64) ([]model.Usuario, e
 func (ru *RolUsuarioRepo) ObtenerTodosLosUsuariosActivos() ([]model.Usuario, error) {
 	var usuarios []model.Usuario
 	respuesta := ru.PostgresqlDB.
-		Where("estado = 1").
+		//Where("estado = 1").
 		Find(&usuarios)
 
 	if respuesta.Error != nil {

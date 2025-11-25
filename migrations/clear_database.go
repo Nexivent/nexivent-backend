@@ -180,7 +180,7 @@ func seedUsuarios(entidad *repository.NexiventPsqlEntidades) ([]model.Usuario, e
 				TipoDocumento:  "DNI",
 				NumDocumento:   "45812345",
 				Correo:         "ana.rojas@nexivent.com",
-				Contrasenha:    "admin123",
+				Contrasenha:    "$argon2id$v=19$m=65536,t=1,p=4$iL2aiZhH9DOoSQfiItByYQ$AxaJNR2SzuuKioAoeAhoP6OIvPCiUDTlY8algOEfAeY",
 				EstadoDeCuenta: 1,
 				Estado:         1,
 			},

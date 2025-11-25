@@ -3,6 +3,15 @@ package model
 
 import "time"
 
+// EventDateView se utiliza para exponer fechas formateadas en respuestas JSON sin afectar el modelo persistente.
+type EventDateView struct {
+	IdFechaEvento int64  `json:"idFechaEvento"`
+	IdFecha       int64  `json:"idFecha"`
+	Fecha         string `json:"fecha"`
+	HoraInicio    string `json:"horaInicio"`
+	HoraFin       string `json:"horaFin"`
+}
+
 type Evento struct {
 	ID                  int64 `gorm:"column:evento_id;primaryKey;autoIncrement"`
 	OrganizadorID       int64
@@ -36,6 +45,9 @@ type Evento struct {
 
 	// RELACIÓN 1–N: un evento tiene muchos cupones
 	Cupones []Cupon `gorm:"foreignKey:EventoID;references:ID"`
+
+	// EventDates expone fechas formateadas para respuestas sin tocar la estructura persistente.
+	EventDates []EventDateView `gorm:"-" json:"eventDates"`
 }
 
 func (Evento) TableName() string { return "evento" }

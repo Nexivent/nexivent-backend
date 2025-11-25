@@ -310,6 +310,8 @@ func (e *Evento) FetchPostgresqlEventos() (*schemas.EventosPaginados, *errors.Er
 		return nil, &errors.BadRequestError.EventoNotFound
 	}
 
+	mapEventDates(eventos)
+
 	total := int64(len(eventos))
 	totalPaginas := 0
 	if total > 0 {
@@ -351,6 +353,8 @@ func (e *Evento) FetchPostgresqlEventosWithFilters(
 		return nil, &errors.BadRequestError.EventoNotFound
 	}
 
+	mapEventDates(eventos)
+
 	//Revisar esta lógica
 	total := int64(len(eventos))
 	totalPaginas := 0
@@ -364,6 +368,31 @@ func (e *Evento) FetchPostgresqlEventosWithFilters(
 		PaginaActual: 1,
 		TotalPaginas: totalPaginas,
 	}, nil
+}
+
+// mapEventDates rellena el slice EventDates con fechas formateadas para la respuesta JSON.
+func mapEventDates(eventos []*model.Evento) {
+	for _, ev := range eventos {
+		if ev == nil {
+			continue
+		}
+		ev.EventDates = make([]model.EventDateView, 0, len(ev.Fechas))
+		for _, ef := range ev.Fechas {
+			fechaStr := ""
+			if ef.Fecha != nil {
+				fechaStr = ef.Fecha.FechaEvento.Format("2006-01-02")
+			}
+			horaInicioStr := ef.HoraInicio.Format("15:04")
+
+			ev.EventDates = append(ev.EventDates, model.EventDateView{
+				IdFechaEvento: ef.ID,
+				IdFecha:       ef.FechaID,
+				Fecha:         fechaStr,
+				HoraInicio:    horaInicioStr,
+				HoraFin:       "",
+			})
+		}
+	}
 }
 
 // GetPostgresqlEventoById gets an event by ID

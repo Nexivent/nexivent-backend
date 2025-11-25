@@ -40,3 +40,16 @@ func (a *Api) GetAdminReports(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, resp)
 }
+
+// GetAdminTransactionsByEvento GET /api/admin/transactions/:eventoId
+func (a *Api) GetAdminTransactionsByEvento(c echo.Context) error {
+	eventoId := c.Param("eventoId")
+
+	// Call Adapter
+	resp, err := a.BllController.Evento.ObtenerTransaccionesPorEvento(eventoId)
+	// Manejo de errores
+	if err != nil {
+		return errors.HandleError(*err, c)
+	}
+	return c.JSON(http.StatusOK, resp)
+}

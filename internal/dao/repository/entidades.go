@@ -28,6 +28,7 @@ type NexiventPsqlEntidades struct {
 	Ticket          *Ticket
 	Token           *Token
 	UsuarioCupon    *UsuarioCupon
+	EventoFecha     *EventoFecha
 }
 
 // Clase que crea colección de entidades para Nexivent Postgresql
@@ -63,6 +64,7 @@ func NewNexiventPsqlEntidades(
 		TipoDeTicket:    NewTipoDeTicketController(logger, postgresqlDB),
 		Tarifa:          NewTarifaController(logger, postgresqlDB),
 		Ticket:          NewTicketController(logger, postgresqlDB),
+		EventoFecha:     NewEventoFechaController(logger, postgresqlDB),
 		Usuario: &Usuario{
 			logger:       logger,
 			PostgresqlDB: postgresqlDB,

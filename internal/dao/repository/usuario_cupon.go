@@ -22,16 +22,17 @@ func NewUsuarioCuponController(
 }
 
 func (uc *UsuarioCupon) ObtenerUsuarioCuponPorId(usuarioId int64, cuponId int64) (*model.UsuarioCupon, error) {
-	var usuarioCupon *model.UsuarioCupon
+	var usuarioCupon model.UsuarioCupon  // ← Cambio 1: valor, no puntero
 
-	resp := uc.PostgresqlDB.Table("usuario_cupon").
+	resp := uc.PostgresqlDB.
 		Where("usuario_id = ? AND cupon_id = ?", usuarioId, cuponId).
-		Find(&usuarioCupon)
+		First(&usuarioCupon)  // ← Cambio 2: First, no Find
 
-	if resp != nil {
+	if resp.Error != nil {  // ← Cambio 3: resp.Error, no resp
 		return nil, resp.Error
 	}
-	return usuarioCupon, nil
+
+	return &usuarioCupon, nil
 }
 
 func (uc *UsuarioCupon) CrearUsuarioCupon(usuarioCupon *model.UsuarioCupon) error {

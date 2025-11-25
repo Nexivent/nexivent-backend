@@ -143,49 +143,94 @@ func seedRoles(logger logging.Logger, entidad *repository.NexiventPsqlEntidades)
 }
 
 func seedUsuarios(entidad *repository.NexiventPsqlEntidades) ([]model.Usuario, error) {
-	usuarios := []model.Usuario{
+	roleNames := []string{"ASISTENTE", "ADMINISTRADOR", "ORGANIZADOR"}
+	roleIDs := make(map[string]int64, len(roleNames))
+	for _, roleName := range roleNames {
+		role, err := entidad.Roles.ObtenerRolPorNombre(roleName)
+		if err != nil {
+			return nil, fmt.Errorf("no se pudo obtener rol %s: %w", roleName, err)
+		}
+		if role == nil {
+			return nil, fmt.Errorf("rol %s no existe", roleName)
+		}
+		roleIDs[roleName] = role.ID
+	}
+
+	type usuarioSeed struct {
+		usuario model.Usuario
+		roles   []string
+	}
+
+	seeds := []usuarioSeed{
 		{
-			Nombre:         "Ana Rojas",
-			TipoDocumento:  "DNI",
-			NumDocumento:   "45812345",
-			Correo:         "ana.rojas@nexivent.com",
-			Contrasenha:    "admin123",
-			EstadoDeCuenta: 1,
-			Estado:         1,
+			usuario: model.Usuario{
+				Nombre:         "TELEDISTRIBUCION SA",
+				TipoDocumento:  "RUC_EMPRESA",
+				NumDocumento:   "20334461875",
+				Correo:         "oworfewno@vunewjviuew.com",
+				Contrasenha:    "$argon2id$v=19$m=65536,t=1,p=4$iL2aiZhH9DOoSQfiItByYQ$AxaJNR2SzuuKioAoeAhoP6OIvPCiUDTlY8algOEfAeY",
+				EstadoDeCuenta: 1,
+				Estado:         1,
+			},
+			roles: []string{"ORGANIZADOR"},
 		},
 		{
-			Nombre:         "Luis Salazar",
-			TipoDocumento:  "DNI",
-			NumDocumento:   "78451236",
-			Correo:         "luis.salazar@nexivent.com",
-			Contrasenha:    "organizer123",
-			EstadoDeCuenta: 1,
-			Estado:         1,
+			usuario: model.Usuario{
+				Nombre:         "Ana Rojas",
+				TipoDocumento:  "DNI",
+				NumDocumento:   "45812345",
+				Correo:         "ana.rojas@nexivent.com",
+				Contrasenha:    "$argon2id$v=19$m=65536,t=1,p=4$iL2aiZhH9DOoSQfiItByYQ$AxaJNR2SzuuKioAoeAhoP6OIvPCiUDTlY8algOEfAeY",
+				EstadoDeCuenta: 1,
+				Estado:         1,
+			},
+			roles: []string{"ADMINISTRADOR"},
 		},
 		{
-			Nombre:         "María Castillo",
-			TipoDocumento:  "CE",
-			NumDocumento:   "X8945123",
-			Correo:         "maria.castillo@nexivent.com",
-			Contrasenha:    "ventas123",
-			EstadoDeCuenta: 1,
-			Estado:         1,
+			usuario: model.Usuario{
+				Nombre:         "Luis Salazar",
+				TipoDocumento:  "DNI",
+				NumDocumento:   "78451236",
+				Correo:         "luis.salazar@nexivent.com",
+				Contrasenha:    "organizer123",
+				EstadoDeCuenta: 1,
+				Estado:         1,
+			},
+			roles: []string{"ORGANIZADOR"},
 		},
 		{
-			Nombre:         "Carlos Ruiz",
-			TipoDocumento:  "DNI",
-			NumDocumento:   "70112584",
-			Correo:         "carlos.ruiz@nexivent.com",
-			Contrasenha:    "cliente123",
-			EstadoDeCuenta: 1,
-			Estado:         1,
+			usuario: model.Usuario{
+				Nombre:         "María Castillo",
+				TipoDocumento:  "CE",
+				NumDocumento:   "X8945123",
+				Correo:         "maria.castillo@nexivent.com",
+				Contrasenha:    "ventas123",
+				EstadoDeCuenta: 1,
+				Estado:         1,
+			},
+			roles: []string{"ORGANIZADOR"},
 		},
 	}
 
-	for i := range usuarios {
-		if err := entidad.Usuario.CrearUsuario(&usuarios[i]); err != nil {
-			return nil, fmt.Errorf("no se pudo crear usuario %s: %w", usuarios[i].Nombre, err)
+	var usuarios []model.Usuario
+
+	for _, seed := range seeds {
+		u := seed.usuario
+		if err := entidad.Usuario.CrearUsuario(&u); err != nil {
+			return nil, fmt.Errorf("no se pudo crear usuario %s: %w", u.Nombre, err)
 		}
+
+		for _, rolName := range seed.roles {
+			rolID, ok := roleIDs[rolName]
+			if !ok {
+				return nil, fmt.Errorf("rol %s no encontrado en cache", rolName)
+			}
+			if _, err := entidad.RolesUsuario.AsignarRolAUsuario(u.ID, rolID, u.ID); err != nil {
+				return nil, fmt.Errorf("no se pudo asignar rol %s a usuario %s: %w", rolName, u.Nombre, err)
+			}
+		}
+
+		usuarios = append(usuarios, u)
 	}
 
 	return usuarios, nil

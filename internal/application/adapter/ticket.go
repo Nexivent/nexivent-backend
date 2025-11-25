@@ -292,3 +292,30 @@ func (t *Ticket) EmitirTicketsConInfo(
 	}
 	return resp, nil
 }
+
+func (t *Ticket) ObtenerTicketsPostesqlPorUsuario(idUser int64) ([]schemas.TicketDetalle, *errors.Error) {
+	tickets, err := t.DaoPostgresql.Ticket.ObternerTicketsPorUsuario(idUser)
+	if err != nil {
+		t.logger.Errorf("Failed to obtener tickets de usuario %d: %v", idUser, err)
+		return nil, &errors.BadRequestError.EventoNotFound
+	}
+	ticketsCheveres := make([]schemas.TicketDetalle, len(tickets))
+	//var eventoChevere schemas.EventoMini
+	for i, t := range tickets {
+		
+
+		ticketsCheveres[i] = schemas.TicketDetalle{
+			IDTicket: t.IDTicket,
+			TipoSector: t.TipoSector,
+			Evento: schemas.EventoMini{
+				IDEvento: t.IDEvento,
+				Titulo: t.Titulo,
+				Lugar: t.Lugar,
+				ImagenPortada: t.ImagenPortada,
+			},
+			FechaInicio: t.FechaInicio,
+		}
+	}
+
+	return ticketsCheveres, nil
+}

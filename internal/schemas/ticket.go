@@ -71,3 +71,17 @@ type TicketGenerado struct {
 	Estado   string `json:"estado"`
 	Zona     string `json:"zona"`
 }
+
+
+type TicketDetalle struct {
+	IDTicket    int64     `json:"idTicket"`
+	TipoSector  string    `json:"tipoSector"`
+	Evento      EventoMini    `json:"evento"`
+	FechaInicio string `json:"fechaInicio"`
+}
+type EventoMini struct {
+	IDEvento      int64  `json:"idEvento"`
+	Titulo        string `json:"titulo"`
+	Lugar         string `json:"lugar"`
+	ImagenPortada string `json:"imagenPortada"`
+}

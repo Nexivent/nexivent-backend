@@ -2,10 +2,12 @@ package repository
 
 import (
 	"database/sql"
+	"time"
 
 	"github.com/Nexivent/nexivent-backend/internal/dao/model"
 	"github.com/Nexivent/nexivent-backend/logging"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	// "github.com/Loui27/nexivent-backend/internal/dao/model"
 )
 
@@ -187,5 +189,72 @@ func (r *EventoFecha) DesactivarEventoFecha(eventoFechaID int64) error {
 	if res.RowsAffected == 0 {
 		return gorm.ErrRecordNotFound
 	}
+	return nil
+}
+
+// SumarGananciaNetaPorEventoYFecha:
+// 1) Busca en la tabla fecha por fecha_evento
+// 2) Usa fecha_id + evento_id para actualizar evento_fecha
+func (r *EventoFecha) SumarGananciaNetaPorEventoYFecha(
+	eventoID int64,
+	fechaEvento time.Time,
+	montoNeto float64,
+) error {
+
+	if montoNeto == 0 {
+		return nil
+	}
+
+	// 1) Buscar la fila en FECHA por fecha_evento
+	var f model.Fecha
+	err := r.PostgresqlDB.
+		// usamos el modelo directamente, columna fecha_evento
+		Where("fecha_evento = ?", fechaEvento).
+		First(&f).Error
+
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			r.logger.Warnf(
+				"SumarGananciaNetaPorEventoYFecha: no existe fecha_evento=%s en tabla fecha",
+				fechaEvento.Format("2006-01-02"),
+			)
+		} else {
+			r.logger.Errorf(
+				"SumarGananciaNetaPorEventoYFecha.buscarFecha(evento_id=%d, fecha=%s): %v",
+				eventoID, fechaEvento.Format("2006-01-02"), err,
+			)
+		}
+		return err
+	}
+
+	fechaID := f.ID
+
+	// 2) Actualizar evento_fecha por (evento_id, fecha_id)
+	result := r.PostgresqlDB.
+		Model(&model.EventoFecha{}).
+		// opcional: lock si quieres evitar condiciones de carrera
+		Clauses(clause.Locking{Strength: "UPDATE"}).
+		Where("evento_id = ? AND fecha_id = ? AND estado = 1", eventoID, fechaID).
+		UpdateColumn(
+			"ganancia_neta_organizador",
+			gorm.Expr("ganancia_neta_organizador + ?", montoNeto),
+		)
+
+	if result.Error != nil {
+		r.logger.Errorf(
+			"SumarGananciaNetaPorEventoYFecha.update(evento_id=%d, fecha_id=%d, monto=%.2f): %v",
+			eventoID, fechaID, montoNeto, result.Error,
+		)
+		return result.Error
+	}
+
+	if result.RowsAffected == 0 {
+		r.logger.Warnf(
+			"SumarGananciaNetaPorEventoYFecha: no se encontró evento_fecha (evento_id=%d, fecha_id=%d)",
+			eventoID, fechaID,
+		)
+		return gorm.ErrRecordNotFound
+	}
+
 	return nil
 }

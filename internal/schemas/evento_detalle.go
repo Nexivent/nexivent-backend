@@ -2,10 +2,11 @@ package schemas
 
 // DTOs para respuesta JSON
 type FechaEventoDTO struct {
-	IDFechaEvento int64  `json:"idFechaEvento"`
-	Fecha         string `json:"fecha"`
-	HoraInicio    string `json:"horaInicio"`
-	HoraFin       string `json:"horaFin"`
+	IDFechaEvento           int64   `json:"idFechaEvento"`
+	Fecha                   string  `json:"fecha"`
+	HoraInicio              string  `json:"horaInicio"`
+	HoraFin                 string  `json:"horaFin"`
+	GananciaNetaOrganizador float64 `json:"ganancia_neta_organizador"`
 }
 
 type TarifaDTO struct {
@@ -23,11 +24,11 @@ type TarifaDTO struct {
 }
 
 type EventoDetalleDTO struct {
-	IDEvento    int64            `json:"idEvento"`
-	Titulo      string           `json:"titulo"`
-	Descripcion string           `json:"descripcion"`
-	ImagenPortada string         `json:"imagenPortada"`
-	Lugar       string           `json:"lugar"`
-	Fechas      []FechaEventoDTO `json:"fechas"`
-	Tarifas     []TarifaDTO      `json:"tarifas"`
+	IDEvento      int64            `json:"idEvento"`
+	Titulo        string           `json:"titulo"`
+	Descripcion   string           `json:"descripcion"`
+	ImagenPortada string           `json:"imagenPortada"`
+	Lugar         string           `json:"lugar"`
+	Fechas        []FechaEventoDTO `json:"fechas"`
+	Tarifas       []TarifaDTO      `json:"tarifas"`
 }

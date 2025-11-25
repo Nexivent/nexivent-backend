@@ -51,16 +51,21 @@ func (c *Cupon) ActualizarCupon(Cupon *model.Cupon) error {
 }
 
 func (c *Cupon) ObtenerCuponPorIdYIdEvento(id int64, eventoId int64) (*model.Cupon, error) {
-	var cupon *model.Cupon
-	respuesta := c.PostgresqlDB.Table("cupon").
-		Where("cupon.cupon_id = ? AND cupon.evento_id = ?", id, eventoId).
-		Find(&cupon)
+	var cupon model.Cupon
+	respuesta := c.PostgresqlDB.
+		Where("cupon_id = ? AND evento_id = ?", id, eventoId). 
+		First(&cupon)
 
 	if respuesta.Error != nil {
 		return nil, respuesta.Error
 	}
 
-	return cupon, nil
+	// verificar que se encontró el registro
+	if respuesta.RowsAffected == 0 {
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	return &cupon, nil
 }
 
 func (c *Cupon) ObtenerCuponesPorOrganizador(organizadorId int64) ([]*model.Cupon, error) {
@@ -79,16 +84,21 @@ func (c *Cupon) ObtenerCuponesPorOrganizador(organizadorId int64) ([]*model.Cupo
 }
 
 func (c *Cupon) ObtenerCuponPorCodYIdEvento(eventoId int64, codigo string) (*model.Cupon, error) {
-	var cupon *model.Cupon
-	respuesta := c.PostgresqlDB.Table("cupon").
-		Where("cupon.codigo = ? AND cupon.evento_id = ?", codigo, eventoId).
-		Find(&cupon)
+	var cupon model.Cupon
+	respuesta := c.PostgresqlDB.
+		Where("codigo = ? AND evento_id = ?", codigo, eventoId). 
+		First(&cupon)
 
 	if respuesta.Error != nil {
 		return nil, respuesta.Error
 	}
 
-	return cupon, nil
+	// verificar que se encontró el registro
+	if respuesta.RowsAffected == 0 {
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	return &cupon, nil
 }
 
 /*

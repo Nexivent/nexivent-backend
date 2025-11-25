@@ -171,6 +171,7 @@ type EventoOrganizadorReporte struct {
 	Capacidad       int64                           `json:"capacidad"`
 	Estado          string                          `json:"estado"`
 	IngresosTotales float64                         `json:"ingresosTotales"`
+	GananciaNeta    float64                         `json:"gananciaNeta"`
 	TicketsVendidos int64                           `json:"ticketsVendidos"`
 	VentasPorSector []VentaPorSectorOrganizador     `json:"ventasPorSector"`
 	Fechas          []EventoFechaOrganizadorReporte `json:"fechas"`

@@ -2,7 +2,7 @@ package api
 
 import (
 	"net/http"
-
+	"strconv"
 	"github.com/Nexivent/nexivent-backend/errors"
 	"github.com/Nexivent/nexivent-backend/internal/schemas"
 	"github.com/labstack/echo/v4"
@@ -72,4 +72,20 @@ func (a *Api) CancelarTickets(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, resp)
+}
+
+
+func (a *Api) GetTicketsByUser(c echo.Context) error {
+	IdStr := c.Param("id")
+	idUser, parseErr := strconv.ParseInt(IdStr, 10, 64)
+	if parseErr != nil {
+		return errors.HandleError(errors.UnprocessableEntityError.InvalidParsingInteger, c)
+	}
+
+	response, err := a.BllController.Ticket.ObtenerTicketsPorUsuario(idUser)
+	if err != nil {
+		return errors.HandleError(*err, c)
+	}
+
+	return c.JSON(http.StatusOK, response)
 }

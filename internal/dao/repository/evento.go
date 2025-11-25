@@ -491,9 +491,10 @@ func (e *Evento) ObtenerEventoDetalle(eventoId int64) (*schemas.EventoDetalleDTO
 	e.PostgresqlDB.
 		Table("evento_fecha ef").
 		Select(`ef.evento_fecha_id as id_fecha_evento,
-			TO_CHAR(f.fecha_evento, 'YYYY-MM-DD') as fecha,
-			TO_CHAR(ef.hora_inicio, 'HH24:MI') as hora_inicio,
-			'' as hora_fin`).
+        TO_CHAR(f.fecha_evento, 'YYYY-MM-DD') as fecha,
+        TO_CHAR(ef.hora_inicio, 'HH24:MI') as hora_inicio,
+        '' as hora_fin,
+        ef.ganancia_neta_organizador as ganancia_neta_organizador`).
 		Joins("JOIN fecha f ON ef.fecha_id = f.fecha_id").
 		Where("ef.evento_id = ? AND ef.estado = 1", eventoId).
 		Find(&fechas)

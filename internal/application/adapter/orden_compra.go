@@ -43,18 +43,23 @@ func (a *OrdenDeCompra) CrearSesionOrdenTemporal(
 		return nil, &errors.UnprocessableEntityError.InvalidRequestBody
 	}
 
+	// Validar que el Total sea mayor que 0
+	if req.Total <= 0 {
+		a.logger.Errorf("Total inválido: %.2f", req.Total)
+		return nil, &errors.UnprocessableEntityError.InvalidRequestBody
+	}
+
 	// ============================================================================
 	// Verificar y reservar stock ANTES de crear la orden
 	// ============================================================================
 
-	var total float64 = 0
 	stocksReservados := []StockReservado{}
 
 	// 1. Validar stock disponible para cada entrada
 	for _, entrada := range req.Entradas {
 		sectorID := entrada.IdSector
 
-		a.logger.Infof("🔍 Validando stock: Sector %d, Cantidad solicitada %d", sectorID, entrada.Cantidad)
+		a.logger.Infof("Validando stock: Sector %d, Cantidad solicitada %d", sectorID, entrada.Cantidad)
 
 		// Verificar que haya stock disponible
 		var totalEntradas, cantVendidas int64
@@ -73,7 +78,7 @@ func (a *OrdenDeCompra) CrearSesionOrdenTemporal(
 		disponible := (cantVendidas + entrada.Cantidad) <= totalEntradas
 
 		if !disponible {
-			a.logger.Warnf("❌ Stock insuficiente para sector %d (solicitado: %d, disponible: %d)",
+			a.logger.Warnf("Stock insuficiente para sector %d (solicitado: %d, disponible: %d)",
 				sectorID, entrada.Cantidad, totalEntradas-cantVendidas)
 			a.rollbackStockReservado(stocksReservados)
 			return nil, &errors.BadRequestError.EventoNotFound
@@ -97,12 +102,12 @@ func (a *OrdenDeCompra) CrearSesionOrdenTemporal(
 			Cantidad: entrada.Cantidad,
 		})
 
-		a.logger.Infof("📉 Stock reservado: Sector %d, Cantidad %d", sectorID, entrada.Cantidad)
+		a.logger.Infof("Stock reservado: Sector %d, Cantidad %d", sectorID, entrada.Cantidad)
 	}
 
-	// ============================================================================
-	// Crear la orden temporal
-	// ============================================================================
+	// ========================
+	// Crear la orden temporal 
+	// ========================
 
 	now := time.Now()
 	expiresAt := now.Add(time.Duration(ttlReservaSegundos) * time.Second)
@@ -112,7 +117,7 @@ func (a *OrdenDeCompra) CrearSesionOrdenTemporal(
 		Fecha:            now,
 		FechaHoraIni:     now,
 		FechaHoraFin:     &expiresAt,
-		Total:            total,
+		Total:            req.Total, 
 		MontoFeeServicio: 0,
 		EstadoDeOrden:    util.OrdenTemporal.Codigo(),
 	}
@@ -123,7 +128,7 @@ func (a *OrdenDeCompra) CrearSesionOrdenTemporal(
 		return nil, &errors.BadRequestError.EventoNotCreated
 	}
 
-	a.logger.Infof("✅ Orden temporal %d creada con stock reservado", orden.ID)
+	a.logger.Infof("Orden temporal %d creada con stock reservado (Total: %.2f)", orden.ID, orden.Total)
 
 	resp := &schemas.CrearOrdenTemporalResponse{
 		OrderID:    orden.ID,
@@ -144,10 +149,10 @@ func (a *OrdenDeCompra) rollbackStockReservado(stocks []StockReservado) {
 			UpdateColumn("cant_vendidas", gorm.Expr("cant_vendidas - ?", stock.Cantidad))
 
 		if res.Error != nil {
-			a.logger.Errorf("⚠️ Error al hacer rollback de stock: Sector %d, Cantidad %d: %v",
+			a.logger.Errorf("Error al hacer rollback de stock: Sector %d, Cantidad %d: %v",
 				stock.SectorID, stock.Cantidad, res.Error)
 		} else {
-			a.logger.Infof("📈 Rollback stock: Sector %d, Cantidad %d",
+			a.logger.Infof("Rollback stock: Sector %d, Cantidad %d",
 				stock.SectorID, stock.Cantidad)
 		}
 	}
@@ -250,7 +255,7 @@ func (a *OrdenDeCompra) ConfirmarOrden(
 		return nil, &errors.BadRequestError.EventoNotFound
 	}
 
-	a.logger.Infof("✅ Orden %d confirmada exitosamente con método de pago %d",
+	a.logger.Infof("Orden %d confirmada exitosamente con método de pago %d",
 		orderID, metodoPagoID)
 
 	montoBruto := orden.Total
@@ -347,7 +352,7 @@ func (a *OrdenDeCompra) CancelarOrdenYLiberarStock(orderID int64) *errors.Error 
 			if res.Error != nil {
 				a.logger.Errorf("CancelarOrden.DecrementarStock(sector=%d): %v", d.SectorID, res.Error)
 			} else {
-				a.logger.Infof("📈 Stock liberado: Sector %d, Cantidad %d (Orden %d cancelada)",
+				a.logger.Infof("Stock liberado: Sector %d, Cantidad %d (Orden %d cancelada)",
 					d.SectorID, d.Cantidad, orderID)
 			}
 		}
@@ -358,6 +363,6 @@ func (a *OrdenDeCompra) CancelarOrdenYLiberarStock(orderID int64) *errors.Error 
 		return &errors.InternalServerError.Default
 	}
 
-	a.logger.Infof("✅ Orden %d cancelada y stock liberado", orderID)
+	a.logger.Infof("Orden %d cancelada y stock liberado", orderID)
 	return nil
 }

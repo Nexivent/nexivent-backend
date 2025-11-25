@@ -267,7 +267,7 @@ func (t *Ticket) EmitirTicketsConInfo(
 				EventoFechaID:   req.IdFechaEvento,
 				TarifaID:        ticketInfo.IdTarifa,
 				CodigoQR:        codigoQR,
-				EstadoDeTicket:  int16(1), // 1 = VENDIDO
+				EstadoDeTicket:  int16(3), // ESTADO 3
 			}
 
 			if err := t.DaoPostgresql.Ticket.Crear(ticket); err != nil {

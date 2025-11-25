@@ -164,6 +164,18 @@ func seedUsuarios(entidad *repository.NexiventPsqlEntidades) ([]model.Usuario, e
 	seeds := []usuarioSeed{
 		{
 			usuario: model.Usuario{
+				Nombre:         "TELEDISTRIBUCION SA",
+				TipoDocumento:  "RUC_EMPRESA",
+				NumDocumento:   "20334461875",
+				Correo:         "oworfewno@vunewjviuew.com",
+				Contrasenha:    "$argon2id$v=19$m=65536,t=1,p=4$iL2aiZhH9DOoSQfiItByYQ$AxaJNR2SzuuKioAoeAhoP6OIvPCiUDTlY8algOEfAeY",
+				EstadoDeCuenta: 1,
+				Estado:         1,
+			},
+			roles: []string{"ORGANIZADOR"},
+		},
+		{
+			usuario: model.Usuario{
 				Nombre:         "Ana Rojas",
 				TipoDocumento:  "DNI",
 				NumDocumento:   "45812345",
@@ -193,18 +205,6 @@ func seedUsuarios(entidad *repository.NexiventPsqlEntidades) ([]model.Usuario, e
 				NumDocumento:   "X8945123",
 				Correo:         "maria.castillo@nexivent.com",
 				Contrasenha:    "ventas123",
-				EstadoDeCuenta: 1,
-				Estado:         1,
-			},
-			roles: []string{"ORGANIZADOR"},
-		},
-		{
-			usuario: model.Usuario{
-				Nombre:         "TELEDISTRIBUCION SA",
-				TipoDocumento:  "RUC_EMPRESA",
-				NumDocumento:   "20334461875",
-				Correo:         "oworfewno@vunewjviuew.com",
-				Contrasenha:    "$argon2id$v=19$m=65536,t=1,p=4$iL2aiZhH9DOoSQfiItByYQ$AxaJNR2SzuuKioAoeAhoP6OIvPCiUDTlY8algOEfAeY",
 				EstadoDeCuenta: 1,
 				Estado:         1,
 			},

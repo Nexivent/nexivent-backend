@@ -212,23 +212,6 @@ func (a *Api) AuthenticateUsuario(c echo.Context) error {
 		})
 	}
 
-<<<<<<< Updated upstream
-	return c.JSON(http.StatusOK, map[string]interface{}{
-		"message": "Autenticación exitosa",
-		"token": map[string]interface{}{
-			"token":  token.Plaintext,
-			"expiry": token.Expiry.Unix(),
-		},
-		"usuario": map[string]interface{}{
-			"id":             usuario.ID,
-			"nombre":         usuario.Nombre,
-			"correo":         usuario.Correo,
-			"tipo_documento": usuario.TipoDocumento,
-			"num_documento":  usuario.NumDocumento,
-			"telefono":       usuario.Telefono,
-		},
-	})
-=======
     roles, rolErr := a.BllController.Rol.GetRolPorUsuario(usuario.ID)
     if rolErr != nil {
         a.Logger.Errorf("Error al obtener rol para usuario %d: %v", usuario.ID, rolErr)
@@ -249,6 +232,8 @@ func (a *Api) AuthenticateUsuario(c echo.Context) error {
     if rolPrincipal == "" && len(roles) > 0 {
         rolPrincipal = roles[0].Nombre
     }
+    //quiero ver que rol se asigno para el usuario identificado
+    a.Logger.Infof("Rol principal asignado para usuario %d: %s", usuario.ID, rolPrincipal)
 
     return c.JSON(http.StatusOK, map[string]interface{}{
         "message": "Autenticación exitosa",
@@ -266,7 +251,6 @@ func (a *Api) AuthenticateUsuario(c echo.Context) error {
             "rol_principal":  rolPrincipal,
         },
     })
->>>>>>> Stashed changes
 }
 
 func (a *Api) AuthenticateOrganizador(c echo.Context) error {

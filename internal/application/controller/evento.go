@@ -92,14 +92,13 @@ func (ec *EventoController) GenerarReporteAdministrativo(req schemas.AdminReport
 func (ec *EventoController) GetEventoDetalle(eventoId int64) (*schemas.EventoDetalleDTO, *errors.Error) {
 	return ec.EventoAdapter.GetPostgresqlEventoDetalle(eventoId)
 }
-<<<<<<< Updated upstream
+
 func (c *EventoController) EditarEvento(
 	req *schemas.EditarEventoRequest,
 ) (*schemas.EventoDetalleDTO, *errors.Error) {
 	return c.EventoAdapter.EditarEvento(req)
-=======
+}
 
 func (ec *EventoController) ObtenerTransaccionesPorEvento(eventoId string) ([]model.OrdenDeCompra, *errors.Error) {
 	return ec.EventoAdapter.ObtenerTransaccionesPorEvento(eventoId)
->>>>>>> Stashed changes
 }

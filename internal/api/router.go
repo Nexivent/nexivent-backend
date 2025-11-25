@@ -92,6 +92,7 @@ func (a *Api) RegisterRoutes(configEnv *config.ConfigEnv) {
 	a.Echo.GET("/categorias/", a.FetchCategorias)
 	a.Echo.POST("/categoria/", a.CreateCategoria)
 	a.Echo.GET("/categoria/:categoriaId/", a.GetCategoria)
+	a.Echo.PUT("/api/eventos/:id", a.EditarEvento)
 	// 2. Reporte Administrativo Global (Dashboard BI)
 	a.Echo.POST("/api/admin/reports", a.GetAdminReports)
 	a.Echo.GET("/api/admin/transactions/:eventoId", a.GetAdminTransactionsByEvento)

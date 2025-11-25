@@ -714,6 +714,7 @@ func (e *Evento) GetPostgresqlEventoDetalle(eventoId int64) (*schemas.EventoDeta
 	return eventoDetalle, nil
 }
 
+<<<<<<< Updated upstream
 // EditarEvento aplica cambios a:
 // - Evento (ubicación, estados)
 // - Fechas (fecha calendario, hora inicio, reasignar fecha_id)
@@ -915,4 +916,16 @@ func (e *Evento) EditarEvento(
 	}
 
 	return detalle, nil
+=======
+func (e *Evento) ObtenerTransaccionesPorEvento(eventoId string) ([]model.OrdenDeCompra, *errors.Error) {
+	// Implementa la lógica para obtener las transacciones por evento
+	// Esto es solo un placeholder
+	var transacciones []model.OrdenDeCompra
+	transacciones, err := e.DaoPostgresql.OrdenDeCompra.ListarTransaccionesPorEvento(eventoId)
+	if err != nil {
+		e.logger.Errorf("Failed to get transacciones for evento %s: %v", eventoId, err)
+		return nil, &errors.BadRequestError.EventoNotFound
+	}
+	return transacciones, nil
+>>>>>>> Stashed changes
 }

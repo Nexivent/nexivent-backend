@@ -5,6 +5,7 @@ import (
 
 	"github.com/Nexivent/nexivent-backend/errors"
 	"github.com/Nexivent/nexivent-backend/internal/application/adapter"
+	"github.com/Nexivent/nexivent-backend/internal/dao/model"
 	"github.com/Nexivent/nexivent-backend/internal/schemas"
 	"github.com/Nexivent/nexivent-backend/logging"
 )
@@ -91,8 +92,14 @@ func (ec *EventoController) GenerarReporteAdministrativo(req schemas.AdminReport
 func (ec *EventoController) GetEventoDetalle(eventoId int64) (*schemas.EventoDetalleDTO, *errors.Error) {
 	return ec.EventoAdapter.GetPostgresqlEventoDetalle(eventoId)
 }
+<<<<<<< Updated upstream
 func (c *EventoController) EditarEvento(
 	req *schemas.EditarEventoRequest,
 ) (*schemas.EventoDetalleDTO, *errors.Error) {
 	return c.EventoAdapter.EditarEvento(req)
+=======
+
+func (ec *EventoController) ObtenerTransaccionesPorEvento(eventoId string) ([]model.OrdenDeCompra, *errors.Error) {
+	return ec.EventoAdapter.ObtenerTransaccionesPorEvento(eventoId)
+>>>>>>> Stashed changes
 }

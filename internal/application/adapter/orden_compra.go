@@ -112,13 +112,16 @@ func (a *OrdenDeCompra) CrearSesionOrdenTemporal(
 	now := time.Now()
 	expiresAt := now.Add(time.Duration(ttlReservaSegundos) * time.Second)
 
+	// Calcular fee de servicio: 2.5% del total
+	feeServicio := req.Total * 0.025
+
 	orden := &model.OrdenDeCompra{
 		UsuarioID:        req.IdUsuario,
 		Fecha:            now,
 		FechaHoraIni:     now,
 		FechaHoraFin:     &expiresAt,
 		Total:            req.Total, 
-		MontoFeeServicio: 0,
+		MontoFeeServicio: feeServicio,
 		EstadoDeOrden:    util.OrdenTemporal.Codigo(),
 	}
 
@@ -128,7 +131,7 @@ func (a *OrdenDeCompra) CrearSesionOrdenTemporal(
 		return nil, &errors.BadRequestError.EventoNotCreated
 	}
 
-	a.logger.Infof("Orden temporal %d creada con stock reservado (Total: %.2f)", orden.ID, orden.Total)
+	a.logger.Infof("Orden temporal %d creada con stock reservado (Total: %.2f, Fee Servicio: %.2f)", orden.ID, orden.Total, orden.MontoFeeServicio)
 
 	resp := &schemas.CrearOrdenTemporalResponse{
 		OrderID:    orden.ID,

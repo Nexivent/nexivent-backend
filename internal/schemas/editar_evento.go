@@ -42,9 +42,13 @@ type EditarEventoRequest struct {
 	IdEvento int64 `json:"idEvento"`
 
 	// Nivel EVENTO
-	NuevoLugar          *string `json:"nuevoLugar,omitempty"`
-	NuevoEstadoWorkflow *int16  `json:"nuevoEstadoWorkflow,omitempty"` // evento_estado
-	NuevoEstadoFlag     *int16  `json:"nuevoEstadoFlag,omitempty"`     // estado (on/off)
+	NuevoLugar              *string `json:"nuevoLugar,omitempty"`
+	NuevoEstadoWorkflow     *int16  `json:"nuevoEstadoWorkflow,omitempty"` // evento_estado
+	NuevoEstadoFlag         *int16  `json:"nuevoEstadoFlag,omitempty"`     // estado (on/off)
+	NuevaDescripcion        *string `json:"nuevaDescripcion,omitempty"`
+	NuevaImagenPortada      *string `json:"nuevaImagenPortada,omitempty"`
+	NuevaImagenPresentacion *string `json:"nuevaImagenPresentacion,omitempty"`
+	NuevoVideo              *string `json:"nuevoVideo,omitempty"`
 
 	// Niveles relacionados:
 	Fechas      []EditarFechaEventoRequest `json:"fechas,omitempty"`

@@ -10,6 +10,7 @@ import (
 	"github.com/Nexivent/nexivent-backend/internal/application/controller"
 	"github.com/Nexivent/nexivent-backend/internal/dao/model"
 	"github.com/Nexivent/nexivent-backend/internal/dao/repository"
+	"github.com/Nexivent/nexivent-backend/internal/schemas"
 	"github.com/labstack/echo/v4"
 )
 
@@ -24,9 +25,9 @@ func (a *Api) RegisterUsuario(c echo.Context) error {
 		TipoDocumento string  `json:"tipo_documento"`
 		NumDocumento  string  `json:"num_documento"`
 		Correo        string  `json:"correo"`
-		Email         string  `json:"email"` // Alias para correo
+		Email         string  `json:"email"`
 		Contrasenha   string  `json:"contrasenha"`
-		Contrasena    string  `json:"contrasena"` // Alias para contrasenha
+		Contrasena    string  `json:"contrasena"`
 		Telefono      *string `json:"telefono"`
 		CuentaDeBanco *string `json:"cuenta_de_banco"`
 	}
@@ -194,63 +195,76 @@ func (a *Api) AuthenticateUsuario(c echo.Context) error {
 	}
 
 	if err := c.Bind(&input); err != nil {
-		return errors.HandleError(errors.UnprocessableEntityError.InvalidRequestBody, c)
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+            "error": "Datos inválidos",
+        })
 	}
 
 	usuario, newErr := a.BllController.Usuario.AuthenticateUsuario(input.Correo, input.Contrasenha)
 	if newErr != nil {
-		return errors.HandleError(*newErr, c)
+        return c.JSON(http.StatusUnauthorized, map[string]interface{}{
+            "error": newErr.Message,
+        })
 	}
+
+	// Obtener roles desde el controller (adapter -> repository)
+	rolesResp, rolErr := a.BllController.RolUsuario.GetUserRoles(usuario.ID)
+	if rolErr != nil {
+		rolesResp = &schemas.RolUsuarioResponse{IDUsuario: usuario.ID, Roles: []schemas.RolResponse{}}
+	}
+
+    // extraer slice de roles para uso y respuesta
+    var roles []schemas.RolResponse
+    if rolesResp != nil && len(rolesResp.Roles) > 0 {
+        roles = rolesResp.Roles
+    } else {
+        roles = []schemas.RolResponse{}
+    }
+
+    // Determinar rol principal
+    var rolPrincipal string
+    if len(roles) > 0 {
+        for _, r := range roles {
+            // comparar con el nombre que usas para admin
+            if r.Nombre == "ADMINISTRADOR" {
+                rolPrincipal = "ADMINISTRADOR"
+                break
+            }
+        }
+        if rolPrincipal == "" {
+            rolPrincipal = roles[0].Nombre
+        }
+    } else {
+        rolPrincipal = "ASISTENTE"
+    }
 
 	// Generar token
 	token, err := a.BllController.Token.CreateToken(usuario.ID, 24*time.Hour, "authentication")
 	if err != nil {
-		a.Logger.Errorf("Error al generar token para usuario %d: %v", usuario.ID, err)
 		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
 			"error":   "TOKEN_GENERATION_ERROR",
 			"message": "Error al generar el token de autenticación",
 		})
 	}
-
-    roles, rolErr := a.BllController.Rol.GetRolPorUsuario(usuario.ID)
-    if rolErr != nil {
-        a.Logger.Errorf("Error al obtener rol para usuario %d: %v", usuario.ID, rolErr)
-        return c.JSON(http.StatusInternalServerError, map[string]interface{}{
-            "error":   "ROLE_RETRIEVAL_ERROR",
-            "message": "Error al obtener el rol del usuario",
-        })
-    }
-
-    // Si tiene varios roles, si esta ADMINISTRADOR, ponerlo con principal
-    var rolPrincipal string
-    for _, rol := range roles {
-        if rol.Nombre == "ADMINISTRADOR" {
-            rolPrincipal = "ADMINISTRADOR"
-            break
-        }
-    }
-    if rolPrincipal == "" && len(roles) > 0 {
-        rolPrincipal = roles[0].Nombre
-    }
-    //quiero ver que rol se asigno para el usuario identificado
-    a.Logger.Infof("Rol principal asignado para usuario %d: %s", usuario.ID, rolPrincipal)
-
-    return c.JSON(http.StatusOK, map[string]interface{}{
+	
+    response := map[string]interface{}{
         "message": "Autenticación exitosa",
         "token": map[string]interface{}{
             "token":  token.Plaintext,
-            "expiry": token.Expiry.Unix(),
+            "expiry": time.Now().Add(24 * time.Hour).Unix(),
         },
         "usuario": map[string]interface{}{
             "id":             usuario.ID,
-            "nombre":         usuario.Nombre,
             "correo":         usuario.Correo,
-            "tipo_documento": usuario.TipoDocumento,
+            "nombre":         usuario.Nombre,
             "num_documento":  usuario.NumDocumento,
             "telefono":       usuario.Telefono,
+            "tipo_documento": usuario.TipoDocumento,
+            "roles":          roles,
             "rol_principal":  rolPrincipal,
         },
-    })
+    }
+    return c.JSON(http.StatusOK, response)
 }
 
 func (a *Api) AuthenticateOrganizador(c echo.Context) error {
@@ -261,13 +275,11 @@ func (a *Api) AuthenticateOrganizador(c echo.Context) error {
 	}
 
 	if err := c.Bind(&input); err != nil {
-		a.Logger.Errorf("Error al parsear request: %v", err)
 		return errors.HandleError(errors.UnprocessableEntityError.InvalidRequestBody, c)
 	}
 
 	// Validar que los campos no estén vacíos
 	if input.Ruc == "" || input.Contrasenha == "" {
-		a.Logger.Warnf("Intento de login con credenciales vacías")
 		return c.JSON(http.StatusBadRequest, map[string]interface{}{
 			"error":   "EMPTY_CREDENTIALS",
 			"message": "RUC y contraseña son requeridos",
@@ -282,17 +294,13 @@ func (a *Api) AuthenticateOrganizador(c echo.Context) error {
 		})
 	}
 
-	a.Logger.Infof("Intento de login de organizador con RUC: %s", input.Ruc)
-
 	usuario, newErr := a.BllController.Usuario.AuthenticateOrganizador(input.Ruc, input.Contrasenha)
 	if newErr != nil {
-		a.Logger.Warnf("Error de autenticación para RUC %s: %v", input.Ruc, newErr)
 		return errors.HandleError(*newErr, c)
 	}
 
 	// Validar que el usuario exista
 	if usuario == nil {
-		a.Logger.Errorf("AuthenticateOrganizador retornó nil para RUC: %s", input.Ruc)
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 			"error":   "INVALID_CREDENTIALS",
 			"message": "Credenciales incorrectas",
@@ -301,7 +309,6 @@ func (a *Api) AuthenticateOrganizador(c echo.Context) error {
 
 	// Validar que la cuenta esté activa (aprobada por admin)
 	if usuario.EstadoDeCuenta != 1 {
-		a.Logger.Warnf("Intento de login de cuenta no activa: RUC=%s, Estado=%d", input.Ruc, usuario.EstadoDeCuenta)
 		return c.JSON(http.StatusForbidden, map[string]interface{}{
 			"error":         "ACCOUNT_NOT_ACTIVE",
 			"message":       "Tu cuenta está pendiente de aprobación por un administrador. Recibirás un correo cuando sea activada.",
@@ -311,7 +318,6 @@ func (a *Api) AuthenticateOrganizador(c echo.Context) error {
 
 	// Validar que el usuario esté activo
 	if usuario.Estado != 1 {
-		a.Logger.Warnf("Intento de login de cuenta deshabilitada: RUC=%s", input.Ruc)
 		return c.JSON(http.StatusForbidden, map[string]interface{}{
 			"error":   "ACCOUNT_DISABLED",
 			"message": "Tu cuenta ha sido deshabilitada. Contacta al soporte.",
@@ -321,14 +327,11 @@ func (a *Api) AuthenticateOrganizador(c echo.Context) error {
 	// Generar token
 	token, err := a.BllController.Token.CreateToken(usuario.ID, 24*time.Hour, "authentication")
 	if err != nil {
-		a.Logger.Errorf("Error al generar token para usuario %d: %v", usuario.ID, err)
 		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
 			"error":   "TOKEN_GENERATION_ERROR",
 			"message": "Error al generar el token de autenticación",
 		})
 	}
-
-	a.Logger.Infof("Organizador autenticado exitosamente: RUC=%s, ID=%d", input.Ruc, usuario.ID)
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
 		"message": "Autenticación exitosa",
@@ -362,7 +365,6 @@ func (a *Api) GoogleAuth(c echo.Context) error {
 	}
 
 	if err := c.Bind(&input); err != nil {
-		a.Logger.Errorf("Error binding request: %v", err)
 		return c.JSON(http.StatusBadRequest, map[string]interface{}{
 			"error":   "INVALID_REQUEST",
 			"message": "Solicitud inválida",
@@ -372,7 +374,6 @@ func (a *Api) GoogleAuth(c echo.Context) error {
 	var googleUser *controller.GoogleUser
 
 	if input.Email != "" && input.EmailVerified && input.Sub != "" {
-		a.Logger.Infof("Usando datos validados de Google para: %s", input.Email)
 		googleUser = &controller.GoogleUser{
 			Email:         input.Email,
 			Name:          input.Name,
@@ -381,11 +382,9 @@ func (a *Api) GoogleAuth(c echo.Context) error {
 			VerifiedEmail: input.EmailVerified,
 		}
 	} else if input.IdToken != "" {
-		a.Logger.Infof("Validando ID Token de Google")
 		var err error
 		googleUser, err = a.BllController.Usuario.VerifyGoogleToken(input.IdToken)
 		if err != nil {
-			a.Logger.Errorf("Error verificando token de Google: %v", err)
 			return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 				"error":   "INVALID_GOOGLE_TOKEN",
 				"message": "Token de Google inválido o expirado",
@@ -406,17 +405,9 @@ func (a *Api) GoogleAuth(c echo.Context) error {
 		})
 	}
 
-	a.Logger.Infof("🔍 Buscando usuario existente con correo: %s", googleUser.Email)
-
 	usuarioExistente, err := a.BllController.Usuario.DB.Usuario.ObtenerUsuarioPorCorreo(googleUser.Email)
 
 	if err == nil && usuarioExistente != nil {
-		a.Logger.Infof("✅ Usuario EXISTENTE encontrado: ID=%d, Nombre=%s, TipoDoc=%s, NumDoc=%s",
-			usuarioExistente.ID,
-			usuarioExistente.Nombre,
-			usuarioExistente.TipoDocumento,
-			usuarioExistente.NumDocumento)
-
 		token, tokenErr := a.BllController.Token.CreateToken(usuarioExistente.ID, 24*time.Hour, "authentication")
 		if tokenErr != nil {
 			a.Logger.Errorf("Error al generar token: %v", tokenErr)
@@ -425,8 +416,6 @@ func (a *Api) GoogleAuth(c echo.Context) error {
 				"message": "Error al generar token de autenticación",
 			})
 		}
-
-		a.Logger.Infof("✅ Usuario existente autenticado con Google: %s (ID: %d)", usuarioExistente.Correo, usuarioExistente.ID)
 
 		return c.JSON(http.StatusOK, map[string]interface{}{
 			"message": "Autenticación con Google exitosa",
@@ -447,49 +436,29 @@ func (a *Api) GoogleAuth(c echo.Context) error {
 		})
 	}
 
-	a.Logger.Infof("📝 Usuario NO existe, creando nuevo usuario con correo: %s", googleUser.Email)
-
 	var nuevoUsuario model.Usuario
 
 	nuevoUsuario.Nombre = googleUser.Name
 	nuevoUsuario.Correo = googleUser.Email
-
-	if input.TipoDocumento != "" && input.NumDocumento != "" {
-		a.Logger.Infof("📄 Usando documento del frontend: %s - %s", input.TipoDocumento, input.NumDocumento)
-		nuevoUsuario.TipoDocumento = input.TipoDocumento
-		nuevoUsuario.NumDocumento = input.NumDocumento
-	} else {
-		a.Logger.Warnf("⚠️ No hay documento del frontend, usando Google Sub como identificador")
-		nuevoUsuario.TipoDocumento = "GOOGLE"
-		nuevoUsuario.NumDocumento = googleUser.Sub
-	}
-
-	nuevoUsuario.EstadoDeCuenta = 1 // Verificado
-	nuevoUsuario.Estado = 1         // Activo
-	nuevoUsuario.Contrasenha = ""   // Sin contraseña para usuarios de Google
+	nuevoUsuario.TipoDocumento = input.TipoDocumento
+	nuevoUsuario.NumDocumento = input.NumDocumento
+	nuevoUsuario.EstadoDeCuenta = 1
+	nuevoUsuario.Estado = 1
+	nuevoUsuario.Contrasenha = "" 
 	nuevoUsuario.Telefono = nil
-
-	a.Logger.Infof("🔧 Registrando nuevo usuario: Correo=%s, TipoDoc=%s, NumDoc=%s",
-		nuevoUsuario.Correo,
-		nuevoUsuario.TipoDocumento,
-		nuevoUsuario.NumDocumento)
 
 	usuarioRegistrado, newErr := a.BllController.Usuario.RegisterUsuario(&nuevoUsuario)
 	if newErr != nil {
-		a.Logger.Errorf("❌ Error al registrar usuario de Google: %v", newErr)
 		return errors.HandleError(*newErr, c)
 	}
 
 	token, tokenErr := a.BllController.Token.CreateToken(usuarioRegistrado.ID, 24*time.Hour, "authentication")
 	if tokenErr != nil {
-		a.Logger.Errorf("Error al generar token: %v", tokenErr)
 		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
 			"error":   "TOKEN_GENERATION_ERROR",
 			"message": "Error al generar token de autenticación",
 		})
 	}
-
-	a.Logger.Infof("✅ Usuario registrado exitosamente con Google: %s (ID: %d)", usuarioRegistrado.Correo, usuarioRegistrado.ID)
 
 	return c.JSON(http.StatusCreated, map[string]interface{}{
 		"message": "Registro con Google exitoso",
@@ -516,7 +485,6 @@ func (a *Api) VerifyEmail(c echo.Context) error {
 	}
 
 	if err := c.Bind(&input); err != nil {
-		a.Logger.Error(fmt.Sprintf("Error al parsear request: %v", err))
 		return c.JSON(http.StatusBadRequest, map[string]interface{}{
 			"error":   "INVALID_REQUEST",
 			"message": "Cuerpo de solicitud inválido",
@@ -530,9 +498,13 @@ func (a *Api) VerifyEmail(c echo.Context) error {
 		})
 	}
 
-	a.Logger.Infof("Verificando email para usuario ID: %d", input.UsuarioID)
-
 	usuarioPrev, usuarioErr := a.BllController.Usuario.GetUsuario(input.UsuarioID)
+	if usuarioErr != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+			"error":   "USER_NOT_FOUND",
+			"message": "Usuario no encontrado",
+		})
+	}
 	var estadoCuenta int
 	if usuarioPrev.TipoDocumento == "RUC_PERSONA" || usuarioPrev.TipoDocumento == "RUC_EMPRESA" {
 		estadoCuenta = 0
@@ -549,7 +521,6 @@ func (a *Api) VerifyEmail(c echo.Context) error {
 		}).Error
 
 	if err != nil {
-		a.Logger.Error(fmt.Sprintf("Error al verificar usuario: %v", err))
 		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
 			"error":   "VERIFICATION_ERROR",
 			"message": "Error al verificar el usuario",
@@ -559,7 +530,6 @@ func (a *Api) VerifyEmail(c echo.Context) error {
 	// Obtener usuario actualizado
 	usuario, usuarioErr := a.BllController.Usuario.GetUsuario(input.UsuarioID)
 	if usuarioErr != nil {
-		a.Logger.Error(fmt.Sprintf("Error al obtener usuario: %v", usuarioErr))
 		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
 			"error":   "USER_NOT_FOUND",
 			"message": "Usuario no encontrado",
@@ -567,19 +537,14 @@ func (a *Api) VerifyEmail(c echo.Context) error {
 	}
 
 	if usuario == nil {
-		a.Logger.Error("GetUsuario retornó nil")
 		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
 			"error":   "USER_NULL",
 			"message": "Error: usuario es nil",
 		})
 	}
 
-	// Log para debugging
-	a.Logger.Infof("Usuario obtenido: ID=%d, Nombre=%s, Correo=%s", usuario.ID, usuario.Nombre, usuario.Correo)
-
 	// Validar campos críticos
 	if usuario.Nombre == "" {
-		a.Logger.Error("Usuario sin nombre")
 		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
 			"error":   "INVALID_USER_DATA",
 			"message": "Usuario con datos incompletos",
@@ -587,7 +552,6 @@ func (a *Api) VerifyEmail(c echo.Context) error {
 	}
 
 	if usuario.Correo == "" {
-		a.Logger.Error("Usuario sin correo")
 		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
 			"error":   "INVALID_USER_DATA",
 			"message": "Usuario sin correo",
@@ -603,8 +567,6 @@ func (a *Api) VerifyEmail(c echo.Context) error {
 	// Generar token simple (sin dependencias)
 	tokenString := fmt.Sprintf("nexivent_auth_%d_%d", input.UsuarioID, time.Now().Unix())
 	tokenExpiry := time.Now().Add(24 * time.Hour)
-
-	a.Logger.Infof("Usuario %d verificado exitosamente", input.UsuarioID)
 
 	// Preparar respuesta con validaciones
 	usuarioResponse := map[string]interface{}{

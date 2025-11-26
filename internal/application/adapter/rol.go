@@ -70,24 +70,25 @@ func (e *Rol) GetPostgresqlRolPorNombre(nombre string) (*schemas.RolResponse, *e
 
 func (r *Rol) GetPostgresqlRolPorUsuario(usuarioID int64) ([]*schemas.RolResponse, *errors.Error) {
 	//var roles []*model.Rol
-
+ 	r.logger.Infof("🔍 [ADAPTER] Obteniendo roles para usuario ID: %d", usuarioID)
 	roles, err := r.DaoPostgresql.Roles.ObtenerRolesDeUsuario(usuarioID)
 	if err != nil {
-		r.logger.Errorf("Failed to fetch roles: %v", err)
-		return nil, &errors.BadRequestError.EventoNotFound
-	}
+        r.logger.Errorf("❌ [ADAPTER] Error obteniendo roles: %v", err)
+        return nil, &errors.BadRequestError.EventoNotFound
+    }
+	r.logger.Infof("📦 [ADAPTER] Roles obtenidos del repo: %d", len(roles))
+	response := make([]*schemas.RolResponse, 0, len(roles))
 
-	response := make([]*schemas.RolResponse, len(roles))
+	for _, mr := range roles {
+        // mapear model.Rol -> schemas.RolResponse
+        response = append(response, &schemas.RolResponse{
+            ID:     mr.ID,
+            Nombre: mr.Nombre,
+        })
+        r.logger.Infof("   [ADAPTER] rol encontrado ID=%d Nombre=%s", mr.ID, mr.Nombre)
+    }
 
-	for i, ro := range roles {
-		response[i] = &schemas.RolResponse{
-			ID:          ro.ID,
-			Nombre:     ro.Nombre,
-			//FechaCreacion: ro.FechaCreacion,
-		}
-
-	}
-	
+    r.logger.Infof("✅ [ADAPTER] roles procesados: %d", len(response))
 	return response, nil
 }
 

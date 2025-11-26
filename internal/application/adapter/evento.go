@@ -760,6 +760,33 @@ func (e *Evento) EditarEvento(
 
 	now := time.Now()
 	userID := req.UsuarioModificacion
+
+	updates := map[string]any{}
+	if req.NuevaDescripcion != nil && *req.NuevaDescripcion != "" {
+		updates["descripcion"] = *req.NuevaDescripcion
+	}
+	if req.NuevaImagenPortada != nil && *req.NuevaImagenPortada != "" {
+		updates["imagen_portada"] = *req.NuevaImagenPortada
+	}
+	if req.NuevaImagenPresentacion != nil && *req.NuevaImagenPresentacion != "" {
+		updates["imagen_escenario"] = *req.NuevaImagenPresentacion
+	}
+	if req.NuevoVideo != nil && *req.NuevoVideo != "" {
+		updates["video_presentacion"] = *req.NuevoVideo
+	}
+
+	if len(updates) > 0 {
+		if _, err := e.DaoPostgresql.Evento.ActualizarCamposEvento(
+			req.IdEvento,
+			updates,
+			&userID,
+			&now,
+		); err != nil {
+			e.logger.Errorf("EditarEvento.ActualizarCamposEvento(%d): %v", req.IdEvento, err)
+			return nil, &errors.InternalServerError.Default
+		}
+	}
+
 	// Ubicación
 	if req.NuevoLugar != nil && *req.NuevoLugar != "" {
 		_, err := e.DaoPostgresql.Evento.ActualizarUbicacionEvento(

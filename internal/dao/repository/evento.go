@@ -284,6 +284,41 @@ func (e *Evento) ActualizarEstadoFlagEvento(
 	return &ev, nil
 }
 
+// ActualizarCamposEvento actualiza columnas puntuales del evento en una sola llamada.
+func (e *Evento) ActualizarCamposEvento(
+	eventoID int64,
+	updates map[string]any,
+	usuarioModificacion *int64,
+	fechaModificacion *time.Time,
+) (*model.Evento, error) {
+	if eventoID <= 0 || len(updates) == 0 {
+		return nil, gorm.ErrInvalidData
+	}
+
+	if usuarioModificacion != nil {
+		updates["usuario_modificacion"] = *usuarioModificacion
+	}
+	if fechaModificacion != nil {
+		updates["fecha_modificacion"] = *fechaModificacion
+	}
+
+	var ev model.Evento
+	res := e.PostgresqlDB.
+		Model(&ev).
+		Clauses(clause.Returning{}).
+		Where("evento_id = ?", eventoID).
+		Updates(updates)
+
+	if res.Error != nil {
+		e.logger.Errorf("ActualizarCamposEvento id=%d: %v", eventoID, res.Error)
+		return nil, res.Error
+	}
+	if res.RowsAffected == 0 {
+		return nil, gorm.ErrRecordNotFound
+	}
+	return &ev, nil
+}
+
 // =====================================================
 //  FECHAS (tablas: fecha, evento_fecha)
 //  - Cambiar fecha del calendario (tabla fecha)

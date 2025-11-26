@@ -11,6 +11,7 @@ import (
 	"github.com/Nexivent/nexivent-backend/logging"
 	"github.com/Nexivent/nexivent-backend/utils/convert"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type Evento struct {
@@ -296,6 +297,366 @@ func (e *Evento) CreatePostgresqlEvento(eventoReq *schemas.EventoRequest, usuari
 			FechaCreacion:       eventoModel.FechaCreacion.Format(time.RFC3339),
 			UltimaActualizacion: eventoModel.FechaCreacion.Format(time.RFC3339),
 			Version:             eventoReq.Metadata.Version,
+		},
+	}
+
+	return response, nil
+}
+
+// EditarEventoFull reemplaza completamente un evento (solo BORRADOR y sin ventas).
+// Borra hijos y los recrea con el mismo formato de creación.
+func (e *Evento) EditarEventoFull(eventoID int64, req *schemas.EditarEventoFullRequest) (*schemas.EventoResponse, *errors.Error) {
+	if eventoID <= 0 {
+		return nil, &errors.BadRequestError.InvalidIDParam
+	}
+
+	tx := e.DaoPostgresql.Evento.PostgresqlDB.Begin()
+	if tx.Error != nil {
+		e.logger.Errorf("EditarEventoFull begin tx: %v", tx.Error)
+		return nil, &errors.InternalServerError.Default
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	now := time.Now()
+
+	var ev model.Evento
+	if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+		First(&ev, "evento_id = ?", eventoID).Error; err != nil {
+		tx.Rollback()
+		if err == gorm.ErrRecordNotFound {
+			return nil, &errors.ObjectNotFoundError.EventoNotFound
+		}
+		e.logger.Errorf("EditarEventoFull fetch evento id=%d: %v", eventoID, err)
+		return nil, &errors.InternalServerError.Default
+	}
+
+	// Validaciones: solo borrador y sin ventas/tickets.
+	if ev.EventoEstado != convert.MapEstadoToInt16("BORRADOR") {
+		tx.Rollback()
+		return nil, &errors.UnprocessableEntityError.InvalidRequestBody
+	}
+	if ev.CantVendidoTotal > 0 {
+		tx.Rollback()
+		return nil, &errors.UnprocessableEntityError.InvalidRequestBody
+	}
+	var ticketsCount int64
+	if err := tx.Model(&model.Ticket{}).
+		Joins("JOIN evento_fecha ef ON ef.evento_fecha_id = ticket.evento_fecha_id").
+		Where("ef.evento_id = ?", eventoID).
+		Count(&ticketsCount).Error; err != nil {
+		tx.Rollback()
+		e.logger.Errorf("EditarEventoFull count tickets evento=%d: %v", eventoID, err)
+		return nil, &errors.InternalServerError.Default
+	}
+	if ticketsCount > 0 {
+		tx.Rollback()
+		return nil, &errors.UnprocessableEntityError.InvalidRequestBody
+	}
+
+	// Actualizar cabecera de evento
+	ev.OrganizadorID = req.IdOrganizador
+	ev.CategoriaID = req.IdCategoria
+	ev.Titulo = req.Titulo
+	ev.Descripcion = req.Descripcion
+	ev.Lugar = req.Lugar
+	ev.EventoEstado = convert.MapEstadoToInt16(req.Estado)
+	ev.CantMeGusta = req.Likes
+	ev.CantNoInteresa = req.NoInteres
+	ev.CantVendidoTotal = req.CantVendidasTotal
+	ev.TotalRecaudado = req.TotalRecaudado
+	ev.ImagenPortada = req.ImagenPortada
+	ev.ImagenEscenario = req.ImagenLugar
+	ev.VideoPresentacion = req.VideoUrl
+	ev.UsuarioModificacion = &req.UsuarioModificacion
+	ev.FechaModificacion = &now
+
+	if err := tx.Save(&ev).Error; err != nil {
+		tx.Rollback()
+		e.logger.Errorf("EditarEventoFull update evento id=%d: %v", eventoID, err)
+		return nil, &errors.InternalServerError.Default
+	}
+
+	// Eliminar dependencias existentes
+	// Tickets (por si los hubiera)
+	if err := tx.Where("evento_fecha_id IN (?)",
+		tx.Table("evento_fecha").Select("evento_fecha_id").Where("evento_id = ?", eventoID)).
+		Delete(&model.Ticket{}).Error; err != nil {
+		tx.Rollback()
+		e.logger.Errorf("EditarEventoFull delete tickets evento=%d: %v", eventoID, err)
+		return nil, &errors.InternalServerError.Default
+	}
+	// Tarifas por sectores/tipos/perfiles asociados
+	if err := tx.Where("sector_id IN (?)",
+		tx.Table("sector").Select("sector_id").Where("evento_id = ?", eventoID)).
+		Delete(&model.Tarifa{}).Error; err != nil {
+		tx.Rollback()
+		e.logger.Errorf("EditarEventoFull delete tarifas-sector evento=%d: %v", eventoID, err)
+		return nil, &errors.InternalServerError.Default
+	}
+	if err := tx.Where("tipo_de_ticket_id IN (?)",
+		tx.Table("tipo_de_ticket").Select("tipo_de_ticket_id").Where("evento_id = ?", eventoID)).
+		Delete(&model.Tarifa{}).Error; err != nil {
+		tx.Rollback()
+		e.logger.Errorf("EditarEventoFull delete tarifas-tipo evento=%d: %v", eventoID, err)
+		return nil, &errors.InternalServerError.Default
+	}
+	if err := tx.Where("perfil_de_persona_id IN (?)",
+		tx.Table("perfil_de_persona").Select("perfil_de_persona_id").Where("evento_id = ?", eventoID)).
+		Delete(&model.Tarifa{}).Error; err != nil {
+		tx.Rollback()
+		e.logger.Errorf("EditarEventoFull delete tarifas-perfil evento=%d: %v", eventoID, err)
+		return nil, &errors.InternalServerError.Default
+	}
+
+	if err := tx.Where("evento_id = ?", eventoID).Delete(&model.EventoFecha{}).Error; err != nil {
+		tx.Rollback()
+		e.logger.Errorf("EditarEventoFull delete evento_fecha evento=%d: %v", eventoID, err)
+		return nil, &errors.InternalServerError.Default
+	}
+	if err := tx.Where("evento_id = ?", eventoID).Delete(&model.Sector{}).Error; err != nil {
+		tx.Rollback()
+		e.logger.Errorf("EditarEventoFull delete sector evento=%d: %v", eventoID, err)
+		return nil, &errors.InternalServerError.Default
+	}
+	if err := tx.Where("evento_id = ?", eventoID).Delete(&model.PerfilDePersona{}).Error; err != nil {
+		tx.Rollback()
+		e.logger.Errorf("EditarEventoFull delete perfil evento=%d: %v", eventoID, err)
+		return nil, &errors.InternalServerError.Default
+	}
+	if err := tx.Where("evento_id = ?", eventoID).Delete(&model.TipoDeTicket{}).Error; err != nil {
+		tx.Rollback()
+		e.logger.Errorf("EditarEventoFull delete tipo_ticket evento=%d: %v", eventoID, err)
+		return nil, &errors.InternalServerError.Default
+	}
+
+	// Recrear dependencias usando el payload (mismo formato de creación)
+	usuario := req.UsuarioModificacion
+
+	// Perfiles
+	perfilesMap := make(map[string]int64)
+	for _, perfil := range req.Perfiles {
+		perfilModel := &model.PerfilDePersona{
+			EventoID:        ev.ID,
+			Nombre:          perfil.Label,
+			Estado:          1,
+			UsuarioCreacion: &usuario,
+			FechaCreacion:   now,
+		}
+		if err := tx.Create(perfilModel).Error; err != nil {
+			tx.Rollback()
+			e.logger.Errorf("EditarEventoFull create perfil: %v", err)
+			return nil, &errors.BadRequestError.EventoNotCreated
+		}
+		perfilesMap[perfil.ID] = perfilModel.ID
+	}
+
+	// Sectores
+	sectoresMap := make(map[string]int64)
+	for _, sector := range req.Sectores {
+		sectorModel := &model.Sector{
+			EventoID:        ev.ID,
+			SectorTipo:      sector.Nombre,
+			TotalEntradas:   sector.Capacidad,
+			CantVendidas:    0,
+			Estado:          1,
+			UsuarioCreacion: &usuario,
+			FechaCreacion:   now,
+		}
+		if err := tx.Create(sectorModel).Error; err != nil {
+			tx.Rollback()
+			e.logger.Errorf("EditarEventoFull create sector: %v", err)
+			return nil, &errors.BadRequestError.EventoNotCreated
+		}
+		sectoresMap[sector.ID] = sectorModel.ID
+	}
+
+	// Tipos de ticket
+	tiposTicketMap := make(map[string]int64)
+	for _, tipoTicket := range req.TiposTicket {
+		fechaIni := now
+		fechaFin := now.AddDate(1, 0, 0)
+		tipoTicketModel := &model.TipoDeTicket{
+			EventoID:        ev.ID,
+			Nombre:          tipoTicket.Label,
+			FechaIni:        fechaIni,
+			FechaFin:        fechaFin,
+			Estado:          1,
+			UsuarioCreacion: &usuario,
+			FechaCreacion:   now,
+		}
+		if err := tx.Create(tipoTicketModel).Error; err != nil {
+			tx.Rollback()
+			e.logger.Errorf("EditarEventoFull create tipo_ticket: %v", err)
+			return nil, &errors.BadRequestError.EventoNotCreated
+		}
+		tiposTicketMap[tipoTicket.ID] = tipoTicketModel.ID
+	}
+
+	// Tarifas
+	for sectorID, perfilesPrecios := range req.Precios {
+		sectorDBID, ok := sectoresMap[sectorID]
+		if !ok {
+			tx.Rollback()
+			e.logger.Errorf("EditarEventoFull sector not found %s", sectorID)
+			return nil, &errors.BadRequestError.EventoNotCreated
+		}
+
+		for perfilID, tiposTicketPrecios := range perfilesPrecios {
+			perfilDBID, ok := perfilesMap[perfilID]
+			if !ok {
+				tx.Rollback()
+				e.logger.Errorf("EditarEventoFull perfil not found %s", perfilID)
+				return nil, &errors.BadRequestError.EventoNotCreated
+			}
+
+			for tipoTicketID, precio := range tiposTicketPrecios {
+				tipoTicketDBID, ok := tiposTicketMap[tipoTicketID]
+				if !ok {
+					tx.Rollback()
+					e.logger.Errorf("EditarEventoFull tipo_ticket not found %s", tipoTicketID)
+					return nil, &errors.BadRequestError.EventoNotCreated
+				}
+
+				tarifaModel := &model.Tarifa{
+					SectorID:          sectorDBID,
+					TipoDeTicketID:    tipoTicketDBID,
+					PerfilDePersonaID: &perfilDBID,
+					Precio:            precio,
+					Estado:            1,
+					UsuarioCreacion:   &usuario,
+					FechaCreacion:     now,
+				}
+				if err := tx.Create(tarifaModel).Error; err != nil {
+					tx.Rollback()
+					e.logger.Errorf("EditarEventoFull create tarifa: %v", err)
+					return nil, &errors.BadRequestError.EventoNotCreated
+				}
+			}
+		}
+	}
+
+	// Fechas del evento
+	eventDatesResponse := []schemas.EventDateResponse{}
+	for _, eventDate := range req.EventDates {
+		fecha, err := time.Parse("2006-01-02", eventDate.Fecha)
+		if err != nil {
+			tx.Rollback()
+			e.logger.Errorf("EditarEventoFull parse fecha: %v", err)
+			return nil, &errors.BadRequestError.EventoNotCreated
+		}
+
+		var fechaModel model.Fecha
+		result := tx.Where("fecha_evento = ?", fecha).First(&fechaModel)
+		if result.Error == gorm.ErrRecordNotFound {
+			fechaModel = model.Fecha{FechaEvento: fecha}
+			if err := tx.Create(&fechaModel).Error; err != nil {
+				tx.Rollback()
+				e.logger.Errorf("EditarEventoFull create fecha: %v", err)
+				return nil, &errors.BadRequestError.EventoNotCreated
+			}
+		} else if result.Error != nil {
+			tx.Rollback()
+			e.logger.Errorf("EditarEventoFull find fecha: %v", result.Error)
+			return nil, &errors.BadRequestError.EventoNotCreated
+		}
+
+		horaInicio, err := time.Parse("15:04", eventDate.HoraInicio)
+		if err != nil {
+			tx.Rollback()
+			e.logger.Errorf("EditarEventoFull parse hora inicio: %v", err)
+			return nil, &errors.BadRequestError.EventoNotCreated
+		}
+		horaInicioFull := time.Date(fecha.Year(), fecha.Month(), fecha.Day(),
+			horaInicio.Hour(), horaInicio.Minute(), 0, 0, time.UTC)
+
+		eventoFechaModel := &model.EventoFecha{
+			EventoID:        ev.ID,
+			FechaID:         fechaModel.ID,
+			HoraInicio:      horaInicioFull,
+			Estado:          1,
+			UsuarioCreacion: &usuario,
+			FechaCreacion:   now,
+		}
+		if err := tx.Create(eventoFechaModel).Error; err != nil {
+			tx.Rollback()
+			e.logger.Errorf("EditarEventoFull create evento_fecha: %v", err)
+			return nil, &errors.BadRequestError.EventoNotCreated
+		}
+
+		eventDatesResponse = append(eventDatesResponse, schemas.EventDateResponse{
+			IdFechaEvento: eventoFechaModel.ID,
+			IdFecha:       fechaModel.ID,
+			Fecha:         eventDate.Fecha,
+			HoraInicio:    eventDate.HoraInicio,
+			HoraFin:       eventDate.HoraFin,
+		})
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		e.logger.Errorf("EditarEventoFull commit evento=%d: %v", eventoID, err)
+		return nil, &errors.BadRequestError.EventoNotCreated
+	}
+
+	// Construir response
+	perfilesResponse := make([]schemas.PerfilResponse, len(req.Perfiles))
+	for i, p := range req.Perfiles {
+		perfilesResponse[i] = schemas.PerfilResponse{
+			ID:    p.ID,
+			Label: p.Label,
+		}
+	}
+
+	sectoresResponse := make([]schemas.SectorResponse, len(req.Sectores))
+	for i, s := range req.Sectores {
+		sectoresResponse[i] = schemas.SectorResponse{
+			ID:        s.ID,
+			Nombre:    s.Nombre,
+			Capacidad: s.Capacidad,
+		}
+	}
+
+	tiposTicketResponse := make([]schemas.TipoTicketResponse, len(req.TiposTicket))
+	for i, t := range req.TiposTicket {
+		tiposTicketResponse[i] = schemas.TipoTicketResponse{
+			ID:    t.ID,
+			Label: t.Label,
+		}
+	}
+
+	creadoPor := req.Metadata.CreadoPor
+	if creadoPor == "" && ev.UsuarioCreacion != nil {
+		creadoPor = fmt.Sprintf("%d", *ev.UsuarioCreacion)
+	}
+
+	response := &schemas.EventoResponse{
+		IdEvento:          ev.ID,
+		IdOrganizador:     ev.OrganizadorID,
+		IdCategoria:       ev.CategoriaID,
+		Titulo:            ev.Titulo,
+		Descripcion:       ev.Descripcion,
+		Lugar:             ev.Lugar,
+		Estado:            convert.MapEstadoToString(ev.EventoEstado),
+		Likes:             ev.CantMeGusta,
+		NoInteres:         ev.CantNoInteresa,
+		CantVendidasTotal: ev.CantVendidoTotal,
+		TotalRecaudado:    ev.TotalRecaudado,
+		ImagenPortada:     ev.ImagenPortada,
+		ImagenLugar:       ev.ImagenEscenario,
+		VideoUrl:          ev.VideoPresentacion,
+		EventDates:        eventDatesResponse,
+		Perfiles:          perfilesResponse,
+		Sectores:          sectoresResponse,
+		TiposTicket:       tiposTicketResponse,
+		Precios:           req.Precios,
+		Metadata: schemas.MetadataResponse{
+			CreadoPor:           creadoPor,
+			FechaCreacion:       ev.FechaCreacion.Format(time.RFC3339),
+			UltimaActualizacion: now.Format(time.RFC3339),
+			Version:             req.Metadata.Version,
 		},
 	}
 

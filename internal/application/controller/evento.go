@@ -93,10 +93,6 @@ func (ec *EventoController) GetEventoDetalle(eventoId int64) (*schemas.EventoDet
 	return ec.EventoAdapter.GetPostgresqlEventoDetalle(eventoId)
 }
 
-func (ec *EventoController) EditarEventoFull(eventoID int64, req schemas.EditarEventoFullRequest) (*schemas.EventoResponse, *errors.Error) {
-	return ec.EventoAdapter.EditarEventoFull(eventoID, &req)
-}
-
 func (c *EventoController) EditarEvento(req *schemas.EditarEventoRequest) (*schemas.EventoDetalleDTO, *errors.Error) {
 	return c.EventoAdapter.EditarEvento(req)
 }

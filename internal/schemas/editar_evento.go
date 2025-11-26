@@ -59,9 +59,3 @@ type EditarEventoRequest struct {
 	// Auditoría
 	UsuarioModificacion int64 `json:"usuarioModificacion"`
 }
-
-// EditarEventoFullRequest es basicamente crear un evento completo, pero para edicion
-type EditarEventoFullRequest struct {
-	EventoRequest
-	UsuarioModificacion int64 `json:"usuarioModificacion"`
-}

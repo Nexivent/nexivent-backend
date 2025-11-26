@@ -169,7 +169,7 @@ func (a *Api) GetUsuario(c echo.Context) error {
 		NumDocumento  string                `json:"num_documento"`
 		Correo        string                `json:"correo"`
 		Telefono      *string               `json:"telefono"`
-		Comentario    []model.Comentario    `json:"comentarios"`
+		Interaccion   []model.Interaccion   `json:"interacion"`
 		Ordenes       []model.OrdenDeCompra `json:"ordenes"`
 		Roles         []model.RolUsuario    `json:"roles"`
 	}
@@ -180,7 +180,7 @@ func (a *Api) GetUsuario(c echo.Context) error {
 	response.NumDocumento = usuario.NumDocumento
 	response.Correo = usuario.Correo
 	response.Telefono = usuario.Telefono
-	response.Comentario = usuario.Comentarios
+	response.Interaccion = usuario.Interaccion
 	response.Ordenes = usuario.Ordenes
 	response.Roles = usuario.RolesAsignados
 

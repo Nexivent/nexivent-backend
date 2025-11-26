@@ -9,50 +9,50 @@ import (
 	"gorm.io/gorm"
 )
 
-type Comentario struct {
+type Interaccion struct {
 	logger       logging.Logger
 	PostgresqlDB *gorm.DB
 }
 
-func NewComentariosController(
+func NewInteraccionController(
 	logger logging.Logger,
 	postgresqlDB *gorm.DB,
-) *Comentario {
-	return &Comentario{
+) *Interaccion {
+	return &Interaccion{
 		logger:       logger,
 		PostgresqlDB: postgresqlDB,
 	}
 }
 
-// CrearComentario: inserta un comentario (FKs deben existir en BD).
-func (r *Comentario) CrearComentario(c *model.Comentario) error {
+// CrearInteraccion: inserta un Interaccion (FKs deben existir en BD).
+func (r *Interaccion) CrearInteraccion(c *model.Interaccion) error {
 	if c == nil {
 		return gorm.ErrInvalidData
 	}
 	if err := r.PostgresqlDB.Create(c).Error; err != nil {
-		r.logger.Errorf("CrearComentario: %v", err)
+		r.logger.Errorf("CrearInteraccion: %v", err)
 		return err
 	}
 	return nil
 }
 
-// ObtenerComentarioPorID: retorna un comentario por su ID.
-func (r *Comentario) ObtenerComentarioPorID(id int64) (*model.Comentario, error) {
-	var c model.Comentario
-	if err := r.PostgresqlDB.First(&c, "comentario_id = ?", id).Error; err != nil {
+// ObtenerInteraccionPorID: retorna un Interaccion por su ID.
+func (r *Interaccion) ObtenerInteraccionPorID(id int64) (*model.Interaccion, error) {
+	var c model.Interaccion
+	if err := r.PostgresqlDB.First(&c, "interaccion_id = ?", id).Error; err != nil {
 		return nil, err
 	}
 	return &c, nil
 }
 
-// ListarComentariosActivosPorEvento: comentarios estado=1, ordenados por fecha (ASC).
-// func (r *Comentario) ListarComentariosActivosPorEvento(
+// ListarInteraccionsActivosPorEvento: Interaccions estado=1, ordenados por fecha (ASC).
+// func (r *Interaccion) ListarInteraccionsActivosPorEvento(
 // 	eventoID int64,
 // 	limit int,
 // 	offset int,
-// ) ([]model.Comentario, error) {
+// ) ([]model.Interaccion, error) {
 
-// 	var list []model.Comentario
+// 	var list []model.Interaccion
 // 	q := r.PostgresqlDB.
 // 		Where("evento_id = ? AND estado = 1", eventoID).
 // 		Order("fecha_creacion ASC")
@@ -65,28 +65,28 @@ func (r *Comentario) ObtenerComentarioPorID(id int64) (*model.Comentario, error)
 // 	}
 
 // 	if err := q.Find(&list).Error; err != nil {
-// 		r.logger.Errorf("ListarComentariosActivosPorEvento(evento=%d): %v", eventoID, err)
+// 		r.logger.Errorf("ListarInteraccionsActivosPorEvento(evento=%d): %v", eventoID, err)
 // 		return nil, err
 // 	}
 // 	return list, nil
 // }
 
-// ContarComentariosActivosPorEvento: total de comentarios activos del evento.
-func (r *Comentario) ContarComentariosActivosPorEvento(eventoID int64) (int64, error) {
+// ContarInteraccionsActivosPorEvento: total de Interaccions activos del evento.
+func (r *Interaccion) ContarInteraccionsActivosPorEvento(eventoID int64) (int64, error) {
 	var count int64
 	res := r.PostgresqlDB.
-		Table("comentario").
+		Table("interaccion").
 		Where("evento_id = ? AND estado = 1", eventoID).
 		Count(&count)
 	if res.Error != nil {
-		r.logger.Errorf("ContarComentariosActivosPorEvento(evento=%d): %v", eventoID, res.Error)
+		r.logger.Errorf("ContarInteraccionsActivosPorEvento(evento=%d): %v", eventoID, res.Error)
 		return 0, res.Error
 	}
 	return count, nil
 }
 
-// DesactivarComentario: estado = 0 (soft off).
-func (r *Comentario) DesactivarComentario(
+// DesactivarInteraccion: estado = 0 (soft off).
+func (r *Interaccion) DesactivarInteraccion(
 	id int64,
 	usuarioModificacion *int64,
 	fechaModificacion *time.Time,
@@ -107,12 +107,12 @@ func (r *Comentario) DesactivarComentario(
 	}
 
 	res := r.PostgresqlDB.
-		Table("comentario").
-		Where("comentario_id = ?", id).
+		Table("interaccion").
+		Where("interaccion_id = ?", id).
 		Updates(updates)
 
 	if res.Error != nil {
-		r.logger.Errorf("DesactivarComentario(id=%d): %v", id, res.Error)
+		r.logger.Errorf("DesactivarInteraccion(id=%d): %v", id, res.Error)
 		return res.Error
 	}
 	if res.RowsAffected == 0 {
@@ -121,9 +121,9 @@ func (r *Comentario) DesactivarComentario(
 	return nil
 }
 
-// Esto si los eventos se reactivan para otra fecha y la gente pueda ver comentarios de antiguos eventos??
-// ActivarComentario: estado = 1 (soft on) — por si necesitas reactivar.
-func (r *Comentario) ActivarComentario(
+// Esto si los eventos se reactivan para otra fecha y la gente pueda ver Interaccions de antiguos eventos??
+// ActivarInteraccion: estado = 1 (soft on) — por si necesitas reactivar.
+func (r *Interaccion) ActivarInteraccion(
 	id int64,
 	usuarioModificacion *int64,
 	fechaModificacion *time.Time,
@@ -144,12 +144,12 @@ func (r *Comentario) ActivarComentario(
 	}
 
 	res := r.PostgresqlDB.
-		Table("comentario").
-		Where("comentario_id = ?", id).
+		Table("interaccion").
+		Where("interaccion_id = ?", id).
 		Updates(updates)
 
 	if res.Error != nil {
-		r.logger.Errorf("ActivarComentario(id=%d): %v", id, res.Error)
+		r.logger.Errorf("ActivarInteraccion(id=%d): %v", id, res.Error)
 		return res.Error
 	}
 	if res.RowsAffected == 0 {
@@ -159,7 +159,7 @@ func (r *Comentario) ActivarComentario(
 }
 
 // VerificarEventoExiste: true si el evento existe (sin validar flags/estado de workflow).
-func (r *Comentario) VerificarEventoExiste(eventoID int64) (bool, error) {
+func (r *Interaccion) VerificarEventoExiste(eventoID int64) (bool, error) {
 	var count int64
 	res := r.PostgresqlDB.
 		Table("evento").
@@ -173,7 +173,7 @@ func (r *Comentario) VerificarEventoExiste(eventoID int64) (bool, error) {
 }
 
 // VerificarUsuarioExiste: true si el usuario existe (sin validar estado).
-func (r *Comentario) VerificarUsuarioExiste(usuarioID int64) (bool, error) {
+func (r *Interaccion) VerificarUsuarioExiste(usuarioID int64) (bool, error) {
 	var count int64
 	res := r.PostgresqlDB.
 		Table("usuario").
@@ -186,12 +186,34 @@ func (r *Comentario) VerificarUsuarioExiste(usuarioID int64) (bool, error) {
 	return count == 1, nil
 }
 
-func (c *Comentario) ListarComentariosPorIdEvento(eventoID int64) ([]*model.Comentario, error) {
-	var comentarios []*model.Comentario
+func (c *Interaccion) ListarInteraccionsPorIdEvento(eventoID int64) ([]*model.Interaccion, error) {
+	var Interaccions []*model.Interaccion
 	respuesta := c.PostgresqlDB.Where("evento_id = ?", eventoID).
-		Find(&comentarios)
+		Find(&Interaccions)
 	if respuesta.Error != nil {
 		return nil, respuesta.Error
 	}
-	return comentarios, nil
+	return Interaccions, nil
+}
+
+func (c *Interaccion) ObtenerInteraccionesEventoUsuario(eventoId int64, usuarioId int64) (*model.Interaccion, error) {
+	var interaccion *model.Interaccion
+
+	respuesta := c.PostgresqlDB.
+		Table("interaccion").
+		Where("evento_id = ? AND usuario_id = ?", eventoId, usuarioId).
+		Find(&interaccion)
+	if respuesta.Error != nil {
+		return nil, respuesta.Error
+	}
+
+	return interaccion, nil
+}
+
+func (c *Interaccion) ActualizarInteracciones(interacciones model.Interaccion) error {
+	respuesta := c.PostgresqlDB.Table("interaccion").Where("interaccion_id = ?", interacciones.ID).Update("tipo", interacciones.Tipo)
+	if respuesta != nil {
+		return respuesta.Error
+	}
+	return nil
 }

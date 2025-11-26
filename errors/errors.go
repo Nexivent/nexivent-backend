@@ -432,9 +432,10 @@ var (
 
 	// For 409 Conflict errors
 	ConflictError = struct {
-		EmailAlreadyExists Error
-		UserAlreadyExists  Error
-		CuponAlreadyExists Error
+		EmailAlreadyExists       Error
+		UserAlreadyExists        Error
+		CuponAlreadyExists       Error
+		InteraccionAlreadyExists Error
 	}{
 		UserAlreadyExists: Error{
 			Code:    "USER_ERROR_006",
@@ -447,6 +448,10 @@ var (
 		EmailAlreadyExists: Error{
 			Code:    "USER_ERROR_007",
 			Message: "Email already exists",
+		},
+		InteraccionAlreadyExists: Error{
+			Code:    "INTERACCION_ERROR_008",
+			Message: "Interaccion already exists",
 		},
 	}
 

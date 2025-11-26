@@ -580,3 +580,16 @@ func (e *Evento) ObtenerEventoDetalle(eventoId int64) (*schemas.EventoDetalleDTO
 		Tarifas:       tarifas,
 	}, nil
 }
+
+func (e *Evento) ActualizarInteracciones(evento model.Evento) error {
+	respuesta := e.PostgresqlDB.
+		Table("evento").
+		Where("evento_id = ?", evento.ID).
+		Update("cant_me_gusta", evento.CantMeGusta).
+		Update("cant_no_interesa", evento.CantNoInteresa)
+
+	if respuesta != nil {
+		return respuesta.Error
+	}
+	return nil
+}

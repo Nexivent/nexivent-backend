@@ -20,8 +20,8 @@ type UsuarioController struct {
 }
 
 type GoogleUser struct {
-	Email 	      string
-	Name 	      string
+	Email         string
+	Name          string
 	Picture       string
 	Sub           string
 	VerifiedEmail bool
@@ -45,17 +45,17 @@ func (uc *UsuarioController) RegisterUsuario(usuario *model.Usuario) (model.Usua
 		}
 
 		// Verificar si ya existe un usuario con el mismo número de documento
-        existingDoc, err := txRepo.Usuario.ObtenerUsuarioPorNumDocumento(usuario.NumDocumento)
-        switch {
-        case err == gorm.ErrRecordNotFound:
-            // No existe un usuario con este documento, continuar
-        case err != nil:
-            uc.Logger.Error(fmt.Sprintf("Error al verificar documento existente: %v", err))
-            return err
-        case existingDoc != nil:
-            uc.Logger.Warn(fmt.Sprintf("Intento de registro con documento existente: %s", usuario.NumDocumento))
-            return fmt.Errorf("el número de documento ya está registrado")
-        }
+		existingDoc, err := txRepo.Usuario.ObtenerUsuarioPorNumDocumento(usuario.NumDocumento)
+		switch {
+		case err == gorm.ErrRecordNotFound:
+			// No existe un usuario con este documento, continuar
+		case err != nil:
+			uc.Logger.Error(fmt.Sprintf("Error al verificar documento existente: %v", err))
+			return err
+		case existingDoc != nil:
+			uc.Logger.Warn(fmt.Sprintf("Intento de registro con documento existente: %s", usuario.NumDocumento))
+			return fmt.Errorf("el número de documento ya está registrado")
+		}
 
 		// Crear el usuario
 		uc.Logger.Info(fmt.Sprintf("Creando usuario: %s", usuario.Correo))
@@ -78,7 +78,7 @@ func (uc *UsuarioController) RegisterUsuario(usuario *model.Usuario) (model.Usua
 			if err != nil {
 				return err
 			}
-			usuario.EstadoDeCuenta = 0	
+			usuario.EstadoDeCuenta = 0
 		}
 		rolAsignado, err := txRepo.RolesUsuario.AsignarRolAUsuario(usuario.ID, defaultRole.ID, usuario.ID)
 		if err != nil {
@@ -88,27 +88,27 @@ func (uc *UsuarioController) RegisterUsuario(usuario *model.Usuario) (model.Usua
 
 		return nil
 	})
-	
+
 	if err != nil {
 		uc.Logger.Error(fmt.Sprintf("Error en transacción de registro: %v", err))
-        // Retornar errores más específicos
-        if err.Error() == "el correo ya está registrado" {
-            return model.Usuario{}, &errors.Error{
-                Code:    "DUPLICATE_EMAIL",
-                Message: "El correo electrónico ya está registrado",
-            }
-        }
-        if err.Error() == "el número de documento ya está registrado" {
-            return model.Usuario{}, &errors.Error{
-                Code:    "DUPLICATE_DOCUMENT",
-                Message: "El número de documento ya está registrado",
-            }
-        }
-        if err.Error() == "rol por defecto 'ASISTENTE' no encontrado" {
-            return model.Usuario{}, &errors.InternalServerError.Default
-        }
-        
-        return model.Usuario{}, &errors.InternalServerError.Default
+		// Retornar errores más específicos
+		if err.Error() == "el correo ya está registrado" {
+			return model.Usuario{}, &errors.Error{
+				Code:    "DUPLICATE_EMAIL",
+				Message: "El correo electrónico ya está registrado",
+			}
+		}
+		if err.Error() == "el número de documento ya está registrado" {
+			return model.Usuario{}, &errors.Error{
+				Code:    "DUPLICATE_DOCUMENT",
+				Message: "El número de documento ya está registrado",
+			}
+		}
+		if err.Error() == "rol por defecto 'ASISTENTE' no encontrado" {
+			return model.Usuario{}, &errors.InternalServerError.Default
+		}
+
+		return model.Usuario{}, &errors.InternalServerError.Default
 	}
 	return *usuario, nil
 }
@@ -131,15 +131,15 @@ func (uc *UsuarioController) GetUsuario(id int64) (*model.Usuario, *errors.Error
 		}
 
 		// Validar que usuario no sea nil
-        if usuario == nil {
-            uc.Logger.Error(fmt.Sprintf("ObtenerUsuarioBasicoPorID retornó nil para ID %d", id))
-            transactionErr = fmt.Errorf("user is nil")
-            return transactionErr
-        }
+		if usuario == nil {
+			uc.Logger.Error(fmt.Sprintf("ObtenerUsuarioBasicoPorID retornó nil para ID %d", id))
+			transactionErr = fmt.Errorf("user is nil")
+			return transactionErr
+		}
 
-		comentarios := txRepo.Comentario.PostgresqlDB.Model(&model.Comentario{}).Where("usuario_id = ?", id).Find(&usuario.Comentarios)
-		if comentarios.Error != nil {
-			return comentarios.Error
+		interacciones := txRepo.Interaccion.PostgresqlDB.Model(&model.Interaccion{}).Where("usuario_id = ?", id).Find(&usuario.Interaccion)
+		if interacciones.Error != nil {
+			return interacciones.Error
 		}
 
 		ordenes := txRepo.OrdenDeCompra.PostgresqlDB.Model(&model.OrdenDeCompra{}).Where("usuario_id = ?", id).Find(&usuario.Ordenes)
@@ -158,24 +158,24 @@ func (uc *UsuarioController) GetUsuario(id int64) (*model.Usuario, *errors.Error
 	})
 	if err != nil {
 		uc.Logger.Error(fmt.Sprintf("Error en GetUsuario para ID %d: %v", id, err))
-        
-        if transactionErr != nil && transactionErr.Error() == "user not found" {
-            return nil, &errors.ObjectNotFoundError.UserNotFound
-        }
-        if transactionErr != nil && transactionErr.Error() == "user is nil" {
-            return nil, &errors.InternalServerError.Default
-        }
-        return nil, &errors.InternalServerError.Default
+
+		if transactionErr != nil && transactionErr.Error() == "user not found" {
+			return nil, &errors.ObjectNotFoundError.UserNotFound
+		}
+		if transactionErr != nil && transactionErr.Error() == "user is nil" {
+			return nil, &errors.InternalServerError.Default
+		}
+		return nil, &errors.InternalServerError.Default
 	}
 
 	// Validación final por seguridad
-    if usuario == nil {
-        uc.Logger.Error(fmt.Sprintf("Usuario sigue siendo nil después de la transacción para ID %d", id))
-        return nil, &errors.InternalServerError.Default
-    }
+	if usuario == nil {
+		uc.Logger.Error(fmt.Sprintf("Usuario sigue siendo nil después de la transacción para ID %d", id))
+		return nil, &errors.InternalServerError.Default
+	}
 
-    uc.Logger.Infof("Usuario obtenido exitosamente: ID=%d, Nombre=%s, Correo=%s", usuario.ID, usuario.Nombre, usuario.Correo)
-	
+	uc.Logger.Infof("Usuario obtenido exitosamente: ID=%d, Nombre=%s, Correo=%s", usuario.ID, usuario.Nombre, usuario.Correo)
+
 	return usuario, nil
 }
 
@@ -213,7 +213,7 @@ func (uc *UsuarioController) AuthenticateUsuario(correo, contrasenha string) (*m
 	}
 
 	return usuario, nil
-}	
+}
 
 func (uc *UsuarioController) AuthenticateOrganizador(ruc, contrasenha string) (*model.Usuario, *errors.Error) {
 	usuario, err := uc.DB.Usuario.ObtenerUsuarioPorNumDocumento(ruc)
@@ -225,9 +225,9 @@ func (uc *UsuarioController) AuthenticateOrganizador(ruc, contrasenha string) (*
 		return nil, &errors.InternalServerError.Default
 	}
 	if usuario.TipoDocumento != "RUC_PERSONA" && usuario.TipoDocumento != "RUC_EMPRESA" {
-        uc.Logger.Warnf("Intento de login organizador con documento incorrecto: %s", usuario.TipoDocumento)
-        return nil, &errors.AuthenticationError.InvalidCredentials
-    }
+		uc.Logger.Warnf("Intento de login organizador con documento incorrecto: %s", usuario.TipoDocumento)
+		return nil, &errors.AuthenticationError.InvalidCredentials
+	}
 	ok, err := model.VerifyPassword(contrasenha, usuario.Contrasenha)
 	if err != nil {
 		return nil, &errors.InternalServerError.Default
@@ -241,56 +241,56 @@ func (uc *UsuarioController) AuthenticateOrganizador(ruc, contrasenha string) (*
 }
 
 func (u *UsuarioController) VerifyGoogleToken(idToken string) (*GoogleUser, error) {
-    ctx := context.Background()
+	ctx := context.Background()
 	// Validar el token usando el Client ID de Google
 	payload, err := idtoken.Validate(ctx, idToken, u.GoogleClientID)
-    if err != nil {
-        u.Logger.Errorf("Error validating Google token: %v", err)
-        return nil, err
-    }
+	if err != nil {
+		u.Logger.Errorf("Error validating Google token: %v", err)
+		return nil, err
+	}
 
-    // Extraer información del payload
-    email, _ := payload.Claims["email"].(string)
-    name, _ := payload.Claims["name"].(string)
-    picture, _ := payload.Claims["picture"].(string)
-    sub, _ := payload.Claims["sub"].(string)
-    emailVerified, _ := payload.Claims["email_verified"].(bool)
+	// Extraer información del payload
+	email, _ := payload.Claims["email"].(string)
+	name, _ := payload.Claims["name"].(string)
+	picture, _ := payload.Claims["picture"].(string)
+	sub, _ := payload.Claims["sub"].(string)
+	emailVerified, _ := payload.Claims["email_verified"].(bool)
 
-    if !emailVerified {
-        return nil, fmt.Errorf("email not verified")
-    }
+	if !emailVerified {
+		return nil, fmt.Errorf("email not verified")
+	}
 
-    return &GoogleUser{
-        Email:   email,
-        Name:    name,
-        Picture: picture,
-        Sub:     sub,
-        VerifiedEmail: emailVerified,
-    }, nil
+	return &GoogleUser{
+		Email:         email,
+		Name:          name,
+		Picture:       picture,
+		Sub:           sub,
+		VerifiedEmail: emailVerified,
+	}, nil
 }
 
 func (u *UsuarioController) GetOrCreateGoogleUser(googleUser *GoogleUser) (*model.Usuario, *errors.Error) {
-    // Buscar usuario por correo
-    usuario, err := u.DB.Usuario.ObtenerUsuarioPorCorreo(googleUser.Email)
-    
-    if err == nil && usuario != nil {
-        // Usuario existe, actualizar último acceso
-        u.Logger.Infof("Usuario existente de Google: %s", googleUser.Email)
-        return usuario, nil
-    }
+	// Buscar usuario por correo
+	usuario, err := u.DB.Usuario.ObtenerUsuarioPorCorreo(googleUser.Email)
 
-    // Crear nuevo usuario con Google
-    u.Logger.Infof("Creando nuevo usuario de Google: %s", googleUser.Email)
-    
-    nuevoUsuario := &model.Usuario{
-        Nombre:          googleUser.Name,
-        Correo:          googleUser.Email,
-        TipoDocumento:   "GOOGLE",
-        NumDocumento:    googleUser.Sub, // Usar Sub de Google como documento único
-        EstadoDeCuenta:  1, // Verificado automáticamente
-        Estado:          1, // Activo
-        Contrasenha:     "", // Sin contraseña para usuarios de Google
-    }
+	if err == nil && usuario != nil {
+		// Usuario existe, actualizar último acceso
+		u.Logger.Infof("Usuario existente de Google: %s", googleUser.Email)
+		return usuario, nil
+	}
+
+	// Crear nuevo usuario con Google
+	u.Logger.Infof("Creando nuevo usuario de Google: %s", googleUser.Email)
+
+	nuevoUsuario := &model.Usuario{
+		Nombre:         googleUser.Name,
+		Correo:         googleUser.Email,
+		TipoDocumento:  "GOOGLE",
+		NumDocumento:   googleUser.Sub, // Usar Sub de Google como documento único
+		EstadoDeCuenta: 1,              // Verificado automáticamente
+		Estado:         1,              // Activo
+		Contrasenha:    "",             // Sin contraseña para usuarios de Google
+	}
 
 	// Registrar usuario
 	usuarioCreado, newErr := u.RegisterUsuario(nuevoUsuario)

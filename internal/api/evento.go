@@ -350,6 +350,7 @@ func (a *Api) GetEventoSummary(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, response)
 }
+
 func (a *Api) EditarEvento(c echo.Context) error {
 	// 1) Tomar el ID desde el path :id
 	idStr := c.Param("id")
@@ -379,5 +380,57 @@ func (a *Api) EditarEvento(c echo.Context) error {
 	}
 
 	// 5) Devolver el detalle actualizado del evento
+	return c.JSON(http.StatusOK, resp)
+}
+
+// @Summary             Crear interacción usuario–evento
+// @Description         Registra una interacción de un usuario con un evento (like, vista)
+// @Tags                Evento
+// @Accept              json
+// @Produce             json
+// @Param               request body schemas.InteraccionConEventoRequest true "Datos de interacción con el evento"
+// @Success             201 {object} schemas.InteraccionConEventoResponse "Interacción creada"
+// @Failure             400 {object} errors.Error "Parámetros inválidos"
+// @Failure             404 {object} errors.Error "Evento o Usuario no encontrado"
+// @Failure             422 {object} errors.Error "Error en el request"
+// @Failure             500 {object} errors.Error "Internal Server Error"
+// @Router              /evento/interaccion [post]
+func (a *Api) PostInteraccionUsuarioEvento(c echo.Context) error {
+	var req schemas.InteraccionConEventoRequest
+	if err := c.Bind(&req); err != nil {
+		return errors.HandleError(errors.UnprocessableEntityError.InvalidParsingInteger, c)
+	}
+
+	resp, newErr := a.BllController.Evento.PostInteraccionUsuarioEvento(req)
+	if newErr != nil {
+		return errors.HandleError(*newErr, c)
+	}
+
+	return c.JSON(http.StatusCreated, resp)
+}
+
+// @Summary             Actualizar interacción usuario–evento
+// @Description         Modifica una interacción existente de un usuario con un evento.
+// @Tags                Evento
+// @Accept              json
+// @Produce             json
+// @Param               request body schemas.InteraccionConEventoRequest true "Datos actualizados de la interacción"
+// @Success             200 {object} schemas.InteraccionConEventoResponse "Interacción actualizada"
+// @Failure             400 {object} errors.Error "Parámetros inválidos"
+// @Failure             404 {object} errors.Error "Evento, Usuario o interacción no encontrado"
+// @Failure             422 {object} errors.Error "Error en el request"
+// @Failure             500 {object} errors.Error "Internal Server Error"
+// @Router              /evento/interaccion [put]
+func (a *Api) PutInteraccionUsuarioEvento(c echo.Context) error {
+	var req schemas.InteraccionConEventoRequest
+	if err := c.Bind(&req); err != nil {
+		return errors.HandleError(errors.UnprocessableEntityError.InvalidParsingInteger, c)
+	}
+
+	resp, newErr := a.BllController.Evento.PutInteraccionUsuarioEvento(req)
+	if newErr != nil {
+		return errors.HandleError(*newErr, c)
+	}
+
 	return c.JSON(http.StatusOK, resp)
 }

@@ -168,7 +168,7 @@ func (a *Api) GetUsuario(c echo.Context) error {
 		NumDocumento  string                `json:"num_documento"`
 		Correo        string                `json:"correo"`
 		Telefono      *string               `json:"telefono"`
-		Comentario    []model.Comentario    `json:"comentarios"`
+		Interaccion   []model.Interaccion   `json:"interacion"`
 		Ordenes       []model.OrdenDeCompra `json:"ordenes"`
 		Roles         []model.RolUsuario    `json:"roles"`
 	}
@@ -179,7 +179,7 @@ func (a *Api) GetUsuario(c echo.Context) error {
 	response.NumDocumento = usuario.NumDocumento
 	response.Correo = usuario.Correo
 	response.Telefono = usuario.Telefono
-	response.Comentario = usuario.Comentarios
+	response.Interaccion = usuario.Interaccion
 	response.Ordenes = usuario.Ordenes
 	response.Roles = usuario.RolesAsignados
 
@@ -212,45 +212,45 @@ func (a *Api) AuthenticateUsuario(c echo.Context) error {
 		})
 	}
 
-    roles, rolErr := a.BllController.Rol.GetRolPorUsuario(usuario.ID)
-    if rolErr != nil {
-        a.Logger.Errorf("Error al obtener rol para usuario %d: %v", usuario.ID, rolErr)
-        return c.JSON(http.StatusInternalServerError, map[string]interface{}{
-            "error":   "ROLE_RETRIEVAL_ERROR",
-            "message": "Error al obtener el rol del usuario",
-        })
-    }
+	roles, rolErr := a.BllController.Rol.GetRolPorUsuario(usuario.ID)
+	if rolErr != nil {
+		a.Logger.Errorf("Error al obtener rol para usuario %d: %v", usuario.ID, rolErr)
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+			"error":   "ROLE_RETRIEVAL_ERROR",
+			"message": "Error al obtener el rol del usuario",
+		})
+	}
 
-    // Si tiene varios roles, si esta ADMINISTRADOR, ponerlo con principal
-    var rolPrincipal string
-    for _, rol := range roles {
-        if rol.Nombre == "ADMINISTRADOR" {
-            rolPrincipal = "ADMINISTRADOR"
-            break
-        }
-    }
-    if rolPrincipal == "" && len(roles) > 0 {
-        rolPrincipal = roles[0].Nombre
-    }
-    //quiero ver que rol se asigno para el usuario identificado
-    a.Logger.Infof("Rol principal asignado para usuario %d: %s", usuario.ID, rolPrincipal)
+	// Si tiene varios roles, si esta ADMINISTRADOR, ponerlo con principal
+	var rolPrincipal string
+	for _, rol := range roles {
+		if rol.Nombre == "ADMINISTRADOR" {
+			rolPrincipal = "ADMINISTRADOR"
+			break
+		}
+	}
+	if rolPrincipal == "" && len(roles) > 0 {
+		rolPrincipal = roles[0].Nombre
+	}
+	//quiero ver que rol se asigno para el usuario identificado
+	a.Logger.Infof("Rol principal asignado para usuario %d: %s", usuario.ID, rolPrincipal)
 
-    return c.JSON(http.StatusOK, map[string]interface{}{
-        "message": "Autenticación exitosa",
-        "token": map[string]interface{}{
-            "token":  token.Plaintext,
-            "expiry": token.Expiry.Unix(),
-        },
-        "usuario": map[string]interface{}{
-            "id":             usuario.ID,
-            "nombre":         usuario.Nombre,
-            "correo":         usuario.Correo,
-            "tipo_documento": usuario.TipoDocumento,
-            "num_documento":  usuario.NumDocumento,
-            "telefono":       usuario.Telefono,
-            "rol_principal":  rolPrincipal,
-        },
-    })
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"message": "Autenticación exitosa",
+		"token": map[string]interface{}{
+			"token":  token.Plaintext,
+			"expiry": token.Expiry.Unix(),
+		},
+		"usuario": map[string]interface{}{
+			"id":             usuario.ID,
+			"nombre":         usuario.Nombre,
+			"correo":         usuario.Correo,
+			"tipo_documento": usuario.TipoDocumento,
+			"num_documento":  usuario.NumDocumento,
+			"telefono":       usuario.Telefono,
+			"rol_principal":  rolPrincipal,
+		},
+	})
 }
 
 func (a *Api) AuthenticateOrganizador(c echo.Context) error {

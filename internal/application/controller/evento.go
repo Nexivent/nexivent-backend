@@ -93,12 +93,18 @@ func (ec *EventoController) GetEventoDetalle(eventoId int64) (*schemas.EventoDet
 	return ec.EventoAdapter.GetPostgresqlEventoDetalle(eventoId)
 }
 
-func (c *EventoController) EditarEvento(
-	req *schemas.EditarEventoRequest,
-) (*schemas.EventoDetalleDTO, *errors.Error) {
+func (c *EventoController) EditarEvento(req *schemas.EditarEventoRequest) (*schemas.EventoDetalleDTO, *errors.Error) {
 	return c.EventoAdapter.EditarEvento(req)
 }
 
 func (ec *EventoController) ObtenerTransaccionesPorEvento(eventoId string) ([]model.OrdenDeCompra, *errors.Error) {
 	return ec.EventoAdapter.ObtenerTransaccionesPorEvento(eventoId)
+}
+
+func (ec *EventoController) PostInteraccionUsuarioEvento(req schemas.InteraccionConEventoRequest) (*schemas.InteraccionConEventoResponse, *errors.Error) {
+	return ec.EventoAdapter.PostPostgresqlInteraccionUsuarioEvento(req)
+}
+
+func (ec *EventoController) PutInteraccionUsuarioEvento(req schemas.InteraccionConEventoRequest) (*schemas.InteraccionConEventoResponse, *errors.Error) {
+	return ec.EventoAdapter.PutPostgresqlInteraccionUsuarioEvento(req)
 }

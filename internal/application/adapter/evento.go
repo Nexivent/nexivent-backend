@@ -957,3 +957,127 @@ func (e *Evento) ObtenerTransaccionesPorEvento(eventoId string) ([]model.OrdenDe
 	}
 	return transacciones, nil
 }
+
+func (e *Evento) PostPostgresqlInteraccionUsuarioEvento(req schemas.InteraccionConEventoRequest) (*schemas.InteraccionConEventoResponse, *errors.Error) {
+
+	interaccionModel := model.Interaccion{
+		UsuarioID:     req.UsuarioId,
+		EventoID:      req.EventoId,
+		Tipo:          req.Accion,
+		FechaCreacion: time.Now(),
+		Estado:        1,
+	}
+
+	respuesta := e.DaoPostgresql.Interaccion.CrearInteraccion(&interaccionModel)
+
+	if respuesta != nil {
+		return nil, &errors.ConflictError.InteraccionAlreadyExists
+	}
+
+	//actualizar likes
+	eventoModel, _ := e.DaoPostgresql.Evento.ObtenerEventoPorId(req.EventoId)
+
+	switch req.Accion {
+	case 1:
+		eventoModel.CantMeGusta++
+	case 2:
+		eventoModel.CantNoInteresa++
+	}
+
+	respuestaAct := e.DaoPostgresql.Evento.ActualizarInteracciones(*eventoModel)
+
+	if respuestaAct != nil {
+		return nil, &errors.BadRequestError.InvalidUpdatedByValue
+	}
+
+	eventoRes := schemas.EventoInteraccionResponse{
+		EventoId:            req.EventoId,
+		UsuarioId:           req.UsuarioId,
+		LikesTotales:        eventoModel.CantMeGusta,
+		NoMeInteresaTotales: eventoModel.CantNoInteresa,
+		Like:                false,
+		NoInteresa:          false,
+	}
+
+	switch req.Accion {
+	case 1:
+		eventoRes.Like = true
+	case 2:
+		eventoRes.NoInteresa = true
+	}
+
+	interaccionRes := schemas.InteraccionConEventoResponse{
+		Success: true,
+		Data:    eventoRes,
+	}
+	return &interaccionRes, nil
+}
+
+func (e *Evento) PutPostgresqlInteraccionUsuarioEvento(req schemas.InteraccionConEventoRequest) (*schemas.InteraccionConEventoResponse, *errors.Error) {
+
+	interaccionModel := model.Interaccion{
+		UsuarioID:     req.UsuarioId,
+		EventoID:      req.EventoId,
+		Tipo:          req.Accion,
+		FechaCreacion: time.Now(),
+		Estado:        1,
+	}
+	antInteraccion, _ := e.DaoPostgresql.Interaccion.ObtenerInteraccionesEventoUsuario(req.EventoId, req.UsuarioId)
+
+	interaccionModel.ID = antInteraccion.ID
+
+	respuesta := e.DaoPostgresql.Interaccion.ActualizarInteracciones(interaccionModel)
+
+	if respuesta != nil {
+		return nil, &errors.BadRequestError.InvalidUpdatedByValue
+	}
+
+	//actualizar likes
+	eventoModel, _ := e.DaoPostgresql.Evento.ObtenerEventoPorId(req.EventoId)
+
+	if req.Accion == 1 && antInteraccion.Tipo != 1 {
+		eventoModel.CantMeGusta++
+		if antInteraccion.Tipo == 2 {
+			eventoModel.CantNoInteresa--
+		}
+	} else if req.Accion == 2 && antInteraccion.Tipo != 2 {
+		eventoModel.CantNoInteresa++
+		if antInteraccion.Tipo == 1 {
+			eventoModel.CantMeGusta--
+		}
+	} else if req.Accion == 0 && antInteraccion.Tipo != 0 {
+		if antInteraccion.Tipo == 1 {
+			eventoModel.CantMeGusta--
+		} else if antInteraccion.Tipo == 2 {
+			eventoModel.CantNoInteresa--
+		}
+	}
+
+	respuestaAct := e.DaoPostgresql.Evento.ActualizarInteracciones(*eventoModel)
+
+	if respuestaAct != nil {
+		return nil, &errors.BadRequestError.InvalidUpdatedByValue
+	}
+
+	eventoRes := schemas.EventoInteraccionResponse{
+		EventoId:            req.EventoId,
+		UsuarioId:           req.UsuarioId,
+		LikesTotales:        eventoModel.CantMeGusta,
+		NoMeInteresaTotales: eventoModel.CantNoInteresa,
+		Like:                false,
+		NoInteresa:          false,
+	}
+
+	switch req.Accion {
+	case 1:
+		eventoRes.Like = true
+	case 2:
+		eventoRes.NoInteresa = true
+	}
+
+	interaccionRes := schemas.InteraccionConEventoResponse{
+		Success: true,
+		Data:    eventoRes,
+	}
+	return &interaccionRes, nil
+}

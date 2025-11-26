@@ -59,3 +59,9 @@ type EditarEventoRequest struct {
 	// Auditoría
 	UsuarioModificacion int64 `json:"usuarioModificacion"`
 }
+
+// EditarEventoFullRequest
+type EditarEventoFullRequest struct {
+	EventoRequest
+	UsuarioModificacion int64 `json:"usuarioModificacion"`
+}

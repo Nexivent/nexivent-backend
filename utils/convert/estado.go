@@ -1,8 +1,10 @@
 package convert
 
-// MapEstadoToInt16 converts string estado to int16
+import "strings"
+
+// MapEstadoToInt16 converts string estado to int16 (case-insensitive).
 func MapEstadoToInt16(estado string) int16 {
-	switch estado {
+	switch strings.ToUpper(strings.TrimSpace(estado)) {
 	case "BORRADOR":
 		return 0
 	case "PUBLICADO":
@@ -14,7 +16,7 @@ func MapEstadoToInt16(estado string) int16 {
 	}
 }
 
-// MapEstadoToString converts int16 estado to string
+// MapEstadoToString converts int16 estado to string.
 func MapEstadoToString(estado int16) string {
 	switch estado {
 	case 0:

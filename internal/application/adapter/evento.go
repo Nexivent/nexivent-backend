@@ -1108,3 +1108,18 @@ func (e *Evento) PutPostgresqlInteraccionUsuarioEvento(req schemas.InteraccionCo
 	}
 	return &interaccionRes, nil
 }
+
+func (e *Evento) GetAsistentesPorEvento(eventoID int64) ([]map[string]interface{}, *errors.Error) {
+   	asistentes, err := e.DaoPostgresql.Evento.ObtenerAsistentesPorEvento(eventoID)
+    if err != nil {
+        e.logger.Errorf("❌ [ADAPTER] Error obteniendo asistentes: %v", err)
+        return nil, &errors.InternalServerError.Default
+    }
+
+    if len(asistentes) == 0 {
+        e.logger.Infof("ℹ️ [ADAPTER] No se encontraron asistentes para el evento: %d", eventoID)
+        return []map[string]interface{}{}, nil
+    }
+
+    return asistentes, nil
+}

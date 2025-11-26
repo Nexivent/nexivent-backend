@@ -434,3 +434,25 @@ func (a *Api) PutInteraccionUsuarioEvento(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, resp)
 }
+
+func (a *Api) GetAsistentesPorEvento(c echo.Context) error {
+    eventoIDStr := c.Param("eventoId")
+    eventoID, parseErr := strconv.ParseInt(eventoIDStr, 10, 64)
+    if parseErr != nil {
+        a.Logger.Errorf("❌ [API] Error parseando eventoId: %v", parseErr)
+        return errors.HandleError(errors.UnprocessableEntityError.InvalidParsingInteger, c)
+    }
+
+    asistentes, err := a.BllController.Evento.GetAsistentesPorEvento(eventoID)
+    if err != nil {
+        return errors.HandleError(*err, c)
+    }
+
+    response := map[string]interface{}{
+        "success":    true,
+        "asistentes": asistentes,
+        "total":      len(asistentes),
+    }
+
+    return c.JSON(http.StatusOK, response)
+}

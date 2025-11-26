@@ -88,6 +88,7 @@ func (a *Api) RegisterRoutes(configEnv *config.ConfigEnv) {
 	a.Echo.GET("/evento/reporte", a.GetReporteEvento)
 	a.Echo.GET("/organizador/:organizadorId/eventos/reporte", a.GetReporteEventosOrganizador)
 	a.Echo.GET("/api/events/:id/summary", a.GetEventoSummary)
+	a.Echo.GET("/eventos/:eventoId/asistentes", a.GetAsistentesPorEvento)
 
 	// Interacción Usuario ↔ Evento
 	a.Echo.POST("/evento/interaccion", a.PostInteraccionUsuarioEvento)

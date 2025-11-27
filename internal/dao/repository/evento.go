@@ -599,22 +599,22 @@ func (e *Evento) ObtenerAsistentesPorEvento(eventoID int64) ([]map[string]interf
 
     var asistentes []map[string]interface{}
 
-    // Query que obtiene usuarios únicos que compraron tickets para el evento
     query := `
         SELECT DISTINCT
             u.usuario_id as id,
             u.correo as email,
             u.nombre as nombre,
-            COUNT(t.ticket_id) as cantidad_tickets,
-            SUM(odc.total) as total_gastado
+            COUNT(DISTINCT t.ticket_id) as cantidad_tickets,
+            SUM(DISTINCT odc.total) as total_gastado
         FROM usuario u
         INNER JOIN orden_de_compra odc ON u.usuario_id = odc.usuario_id
         INNER JOIN ticket t ON t.orden_de_compra_id = odc.orden_de_compra_id
-        INNER JOIN tarifa ta ON t.tarifa_id = ta.tarifa_id
-        INNER JOIN sector s ON ta.sector_id = s.sector_id
-        WHERE s.evento_id = ?
-          AND odc.estado_orden = 1
-          AND t.estado = 1
+        INNER JOIN evento_fecha ef ON t.evento_fecha_id = ef.evento_fecha_id
+        INNER JOIN evento ev ON ef.evento_id = ev.evento_id
+        WHERE ev.evento_id = $1
+          AND odc.estado_de_orden = 1
+          AND t.estado_de_ticket = 1
+          AND u.usuario_id != ev.organizador_id
         GROUP BY u.usuario_id, u.correo, u.nombre
         ORDER BY u.nombre ASC
     `

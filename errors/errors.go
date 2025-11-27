@@ -245,6 +245,7 @@ var (
 		InvalidFechaCupon             Error
 		CantLimitUseCupon             Error
 		UsuarioCuponNotUpdate         Error
+		InvalidBodyFormat             Error
 	}{
 		InvalidUpdatedByValue: Error{
 			Code:    "REQUEST_ERROR_002",
@@ -397,6 +398,10 @@ var (
 		UsuarioCuponNotUpdate: Error{
 			Code:    "USUARIO_CUPON_ERROR_006",
 			Message: "Updated by usuario cupon error",
+		},
+		InvalidBodyFormat: Error{
+			Code:    "INVALID_BODY_FORMAT_Error_007",
+			Message: "Invalid body format",
 		},
 	}
 

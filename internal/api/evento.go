@@ -303,7 +303,7 @@ func (a *Api) GetReporteEvento(c echo.Context) error {
 // @Failure             422 {object} errors.Error "Unprocessable Entity"
 // @Failure             500 {object} errors.Error "Internal Server Error"
 // @Router              /organizador/{organizadorId}/eventos/reporte [get]
-func (a *Api) GetReporteEventosOrganizador(c echo.Context) error {
+func (a *Api) GetReporteEventosOrganizador(c echo.Context) error { ////////////////////////////////////////////////
 	organizadorStr := c.Param("organizadorId")
 	organizadorID, parseErr := strconv.ParseInt(organizadorStr, 10, 64)
 	if parseErr != nil || organizadorID <= 0 {
@@ -398,7 +398,7 @@ func (a *Api) EditarEvento(c echo.Context) error {
 func (a *Api) PostInteraccionUsuarioEvento(c echo.Context) error {
 	var req schemas.InteraccionConEventoRequest
 	if err := c.Bind(&req); err != nil {
-		return errors.HandleError(errors.UnprocessableEntityError.InvalidParsingInteger, c)
+		return errors.HandleError(errors.BadRequestError.InvalidBodyFormat, c)
 	}
 
 	resp, newErr := a.BllController.Evento.PostInteraccionUsuarioEvento(req)
@@ -424,7 +424,7 @@ func (a *Api) PostInteraccionUsuarioEvento(c echo.Context) error {
 func (a *Api) PutInteraccionUsuarioEvento(c echo.Context) error {
 	var req schemas.InteraccionConEventoRequest
 	if err := c.Bind(&req); err != nil {
-		return errors.HandleError(errors.UnprocessableEntityError.InvalidParsingInteger, c)
+		return errors.HandleError(errors.BadRequestError.InvalidBodyFormat, c)
 	}
 
 	resp, newErr := a.BllController.Evento.PutInteraccionUsuarioEvento(req)

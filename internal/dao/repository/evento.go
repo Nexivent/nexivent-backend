@@ -69,6 +69,8 @@ func (e *Evento) ObtenerEventosDisponiblesConFiltros(
 
 	// Construcción base del query
 	query := e.PostgresqlDB.
+		Model(&model.Evento{}).
+		Select("DISTINCT ON (evento.evento_id) evento.*").
 		Preload("Fechas.Fecha").
 		Preload("Sectores").
 		Preload("Sectores.Tarifa").
@@ -130,7 +132,7 @@ func (e *Evento) ObtenerEventosDisponiblesConFiltros(
 
 	// Aplicar paginación
 	respuesta := query.
-		Order("f.fecha_evento ASC").
+		Order("evento.evento_id, f.fecha_evento ASC").
 		//Limit(limit).
 		//Offset(offset).
 		Find(&eventos)
@@ -595,11 +597,11 @@ func (e *Evento) ActualizarInteracciones(evento model.Evento) error {
 }
 
 func (e *Evento) ObtenerAsistentesPorEvento(eventoID int64) ([]map[string]interface{}, error) {
-    e.logger.Infof("📋 [REPO] Obteniendo asistentes del evento ID: %d", eventoID)
+	e.logger.Infof("📋 [REPO] Obteniendo asistentes del evento ID: %d", eventoID)
 
-    var asistentes []map[string]interface{}
+	var asistentes []map[string]interface{}
 
-    query := `
+	query := `
         SELECT DISTINCT
             u.usuario_id as id,
             u.correo as email,
@@ -619,42 +621,42 @@ func (e *Evento) ObtenerAsistentesPorEvento(eventoID int64) ([]map[string]interf
         ORDER BY u.nombre ASC
     `
 
-    rows, err := e.PostgresqlDB.Raw(query, eventoID).Rows()
-    if err != nil {
-        e.logger.Errorf("❌ [REPO] Error ejecutando query de asistentes: %v", err)
-        return nil, err
-    }
-    defer rows.Close()
+	rows, err := e.PostgresqlDB.Raw(query, eventoID).Rows()
+	if err != nil {
+		e.logger.Errorf("❌ [REPO] Error ejecutando query de asistentes: %v", err)
+		return nil, err
+	}
+	defer rows.Close()
 
-    for rows.Next() {
-        var asistente struct {
-            ID              int64
-            Email           string
-            Nombre          string
-            CantidadTickets int
-            TotalGastado    float64
-        }
+	for rows.Next() {
+		var asistente struct {
+			ID              int64
+			Email           string
+			Nombre          string
+			CantidadTickets int
+			TotalGastado    float64
+		}
 
-        if err := rows.Scan(
-            &asistente.ID,
-            &asistente.Email,
-            &asistente.Nombre,
-            &asistente.CantidadTickets,
-            &asistente.TotalGastado,
-        ); err != nil {
-            e.logger.Errorf("❌ [REPO] Error escaneando asistente: %v", err)
-            continue
-        }
+		if err := rows.Scan(
+			&asistente.ID,
+			&asistente.Email,
+			&asistente.Nombre,
+			&asistente.CantidadTickets,
+			&asistente.TotalGastado,
+		); err != nil {
+			e.logger.Errorf("❌ [REPO] Error escaneando asistente: %v", err)
+			continue
+		}
 
-        asistentes = append(asistentes, map[string]interface{}{
-            "id":               asistente.ID,
-            "email":            asistente.Email,
-            "nombre":           asistente.Nombre,
-            "cantidad_tickets": asistente.CantidadTickets,
-            "total_gastado":    asistente.TotalGastado,
-        })
-    }
+		asistentes = append(asistentes, map[string]interface{}{
+			"id":               asistente.ID,
+			"email":            asistente.Email,
+			"nombre":           asistente.Nombre,
+			"cantidad_tickets": asistente.CantidadTickets,
+			"total_gastado":    asistente.TotalGastado,
+		})
+	}
 
-    e.logger.Infof("✅ [REPO] Asistentes encontrados: %d", len(asistentes))
-    return asistentes, nil
+	e.logger.Infof("✅ [REPO] Asistentes encontrados: %d", len(asistentes))
+	return asistentes, nil
 }

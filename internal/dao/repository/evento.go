@@ -69,6 +69,8 @@ func (e *Evento) ObtenerEventosDisponiblesConFiltros(
 
 	// Construcción base del query
 	query := e.PostgresqlDB.
+		Model(&model.Evento{}).
+		Select("DISTINCT ON (evento.evento_id) evento.*").
 		Preload("Fechas.Fecha").
 		Preload("Sectores").
 		Preload("Sectores.Tarifa").
@@ -126,7 +128,7 @@ func (e *Evento) ObtenerEventosDisponiblesConFiltros(
 
 	// Aplicar paginación
 	respuesta := query.
-		Order("f.fecha_evento ASC").
+		Order("evento.evento_id, f.fecha_evento ASC").
 		//Limit(limit).
 		//Offset(offset).
 		Find(&eventos)

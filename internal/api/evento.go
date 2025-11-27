@@ -351,6 +351,27 @@ func (a *Api) GetEventoSummary(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
+// EditarEventoFull reemplaza completamente un evento (solo borrador sin ventas).
+func (a *Api) EditarEventoFull(c echo.Context) error {
+	idStr := c.Param("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		return errors.HandleError(errors.BadRequestError.InvalidIDParam, c)
+	}
+
+	var req schemas.EditarEventoFullRequest
+	if err := c.Bind(&req); err != nil {
+		return errors.HandleError(errors.UnprocessableEntityError.InvalidRequestBody, c)
+	}
+
+	resp, errBll := a.BllController.Evento.EditarEventoFull(id, req)
+	if errBll != nil {
+		return errors.HandleError(*errBll, c)
+	}
+
+	return c.JSON(http.StatusOK, resp)
+}
+
 func (a *Api) EditarEvento(c echo.Context) error {
 	// 1) Tomar el ID desde el path :id
 	idStr := c.Param("id")
@@ -433,4 +454,26 @@ func (a *Api) PutInteraccionUsuarioEvento(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, resp)
+}
+
+func (a *Api) GetAsistentesPorEvento(c echo.Context) error {
+    eventoIDStr := c.Param("eventoId")
+    eventoID, parseErr := strconv.ParseInt(eventoIDStr, 10, 64)
+    if parseErr != nil {
+        a.Logger.Errorf("❌ [API] Error parseando eventoId: %v", parseErr)
+        return errors.HandleError(errors.UnprocessableEntityError.InvalidParsingInteger, c)
+    }
+
+    asistentes, err := a.BllController.Evento.GetAsistentesPorEvento(eventoID)
+    if err != nil {
+        return errors.HandleError(*err, c)
+    }
+
+    response := map[string]interface{}{
+        "success":    true,
+        "asistentes": asistentes,
+        "total":      len(asistentes),
+    }
+
+    return c.JSON(http.StatusOK, response)
 }

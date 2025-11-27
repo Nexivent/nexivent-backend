@@ -7,6 +7,8 @@ import (
 	"github.com/Nexivent/nexivent-backend/errors"
 	"github.com/Nexivent/nexivent-backend/internal/dao/model"
 	util "github.com/Nexivent/nexivent-backend/internal/dao/model/util"
+
+	// "github.com/Nexivent/nexivent-backend/internal/dao/repository"
 	daoPostgresql "github.com/Nexivent/nexivent-backend/internal/dao/repository"
 	schemas "github.com/Nexivent/nexivent-backend/internal/schemas"
 	"github.com/Nexivent/nexivent-backend/logging"
@@ -106,19 +108,22 @@ func (a *OrdenDeCompra) CrearSesionOrdenTemporal(
 	}
 
 	// ========================
-	// Crear la orden temporal 
+	// Crear la orden temporal
 	// ========================
 
 	now := time.Now()
 	expiresAt := now.Add(time.Duration(ttlReservaSegundos) * time.Second)
+
+	// Calcular fee de servicio: 2.5% del total
+	feeServicio := req.Total * 0.025
 
 	orden := &model.OrdenDeCompra{
 		UsuarioID:        req.IdUsuario,
 		Fecha:            now,
 		FechaHoraIni:     now,
 		FechaHoraFin:     &expiresAt,
-		Total:            req.Total, 
-		MontoFeeServicio: 0,
+		Total:            req.Total,
+		MontoFeeServicio: feeServicio,
 		EstadoDeOrden:    util.OrdenTemporal.Codigo(),
 	}
 
@@ -128,7 +133,7 @@ func (a *OrdenDeCompra) CrearSesionOrdenTemporal(
 		return nil, &errors.BadRequestError.EventoNotCreated
 	}
 
-	a.logger.Infof("Orden temporal %d creada con stock reservado (Total: %.2f)", orden.ID, orden.Total)
+	a.logger.Infof("Orden temporal %d creada con stock reservado (Total: %.2f, Fee Servicio: %.2f)", orden.ID, orden.Total, orden.MontoFeeServicio)
 
 	resp := &schemas.CrearOrdenTemporalResponse{
 		OrderID:    orden.ID,
@@ -203,28 +208,29 @@ func (a *OrdenDeCompra) ConfirmarOrden(
 	ok, err := a.DaoPostgresql.OrdenDeCompra.VerificarOrdenExisteYEstado(orderID, util.OrdenTemporal)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, &errors.ObjectNotFoundError.EventoNotFound
+			return nil, &errors.ObjectNotFoundError.OrdenNotFound
 		}
 		a.logger.Errorf("ConfirmarOrden.Verificar(%d): %v", orderID, err)
-		return nil, &errors.BadRequestError.EventoNotFound
+		return nil, &errors.BadRequestError.EventoNotCreated
 	}
 	if !ok {
-		return nil, &errors.BadRequestError.EventoNotFound
+		a.logger.Errorf("Estado")
+		return nil, &errors.BadRequestError.OrdenNotCreated
 	}
 
 	orden, err := a.DaoPostgresql.OrdenDeCompra.CerrarOrdenTemporal(orderID)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, &errors.ObjectNotFoundError.EventoNotFound
+			return nil, &errors.ObjectNotFoundError.OrdenNotFound
 		}
 		a.logger.Errorf("ConfirmarOrden.CerrarTemporal(%d): %v", orderID, err)
-		return nil, &errors.BadRequestError.EventoNotFound
+		return nil, &errors.ObjectNotFoundError.OrdenNotFound
 	}
 
 	now := time.Now()
 	if orden.FechaHoraFin != nil && now.After(*orden.FechaHoraFin) {
 		_ = a.CancelarOrdenYLiberarStock(orderID)
-		return nil, &errors.BadRequestError.EventoNotFound
+		return nil, &errors.ObjectNotFoundError.OrdenNotFound
 	}
 
 	if req.PaymentID == "" {
@@ -258,6 +264,9 @@ func (a *OrdenDeCompra) ConfirmarOrden(
 	a.logger.Infof("Orden %d confirmada exitosamente con método de pago %d",
 		orderID, metodoPagoID)
 
+	// var EventoFecha = &repository.EventoFecha{}
+	// fecha, err := time.Parse("2006-01-02", req.FechaEvento)
+	// EventoFecha.SumarGananciaNetaPorEventoYFecha(req.IdEvento,fecha,)
 	montoBruto := orden.Total
 	montoFee := orden.MontoFeeServicio
 	gananciaNeta := montoBruto - montoFee

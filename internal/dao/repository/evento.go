@@ -124,10 +124,6 @@ func (e *Evento) ObtenerEventosDisponiblesConFiltros(
 		query = query.Where(orGroup, valores...)
 	}
 
-	// Contar total antes de aplicar limit/offset
-	//queryCount := query.Session(&gorm.Session{}) // Clona el query sin afectar el original
-	//queryCount.Count(&total)
-
 	// Aplicar paginación
 	respuesta := query.
 		Order("f.fecha_evento ASC").
@@ -139,16 +135,41 @@ func (e *Evento) ObtenerEventosDisponiblesConFiltros(
 		return nil, respuesta.Error
 	}
 
-	// Calcular total de páginas
-	//totalPaginas := int((total + int64(limit) - 1) / int64(limit))
+	return eventos, nil
+}
 
-	// Retornar resultado completo
-	/*resultado := &schemas.EventosPaginados{
-		Eventos:      eventos,
-		Total:        total,
-		PaginaActual: page,
-		TotalPaginas: totalPaginas,
-	}*/
+func (e *Evento) ObtenerEventosParaElFeed(usuarioId *int64) ([]*model.Evento, error) {
+	// Construcción base del query
+	var eventos []*model.Evento
+	query := e.PostgresqlDB.
+		Preload("Fechas").
+		Preload("Fechas.Fecha").
+		Preload("Sectores").
+		Preload("Sectores.Tarifa").
+		Preload("Sectores.Tarifa.TipoDeTicket").
+		Preload("Sectores.Tarifa.PerfilPersona").
+		Preload("TiposTicket").
+		Joins("JOIN evento_fecha ef ON ef.evento_id = evento.evento_id").
+		Joins("JOIN fecha f ON f.fecha_id = ef.fecha_id").
+		Where("f.fecha_evento >= CURRENT_DATE").
+		Where("evento.evento_estado = 1").
+		Where("evento.estado = 1").
+		Where(`f.fecha_evento = ( SELECT MIN(f2.fecha_evento)
+        	FROM fecha f2
+        	JOIN evento_fecha ef2 ON ef2.fecha_id = f2.fecha_id
+        	WHERE ef2.evento_id = evento.evento_id)`)
+
+	if usuarioId != nil {
+		query = query.Where(`NOT EXISTS (SELECT 1 FROM interaccion i WHERE i.usuario_id = ? AND i.evento_id = evento.evento_id)`, usuarioId)
+	}
+
+	respuesta := query.
+		Order("((2*evento.cant_me_gusta - evento.cant_no_interesa) / GREATEST(1, (f.fecha_evento::date - CURRENT_DATE))) DESC").
+		Find(&eventos)
+
+	if respuesta.Error != nil {
+		return nil, respuesta.Error
+	}
 
 	return eventos, nil
 }
@@ -595,11 +616,11 @@ func (e *Evento) ActualizarInteracciones(evento model.Evento) error {
 }
 
 func (e *Evento) ObtenerAsistentesPorEvento(eventoID int64) ([]map[string]interface{}, error) {
-    e.logger.Infof("📋 [REPO] Obteniendo asistentes del evento ID: %d", eventoID)
+	e.logger.Infof("📋 [REPO] Obteniendo asistentes del evento ID: %d", eventoID)
 
-    var asistentes []map[string]interface{}
+	var asistentes []map[string]interface{}
 
-    query := `
+	query := `
         SELECT DISTINCT
             u.usuario_id as id,
             u.correo as email,
@@ -619,42 +640,42 @@ func (e *Evento) ObtenerAsistentesPorEvento(eventoID int64) ([]map[string]interf
         ORDER BY u.nombre ASC
     `
 
-    rows, err := e.PostgresqlDB.Raw(query, eventoID).Rows()
-    if err != nil {
-        e.logger.Errorf("❌ [REPO] Error ejecutando query de asistentes: %v", err)
-        return nil, err
-    }
-    defer rows.Close()
+	rows, err := e.PostgresqlDB.Raw(query, eventoID).Rows()
+	if err != nil {
+		e.logger.Errorf("❌ [REPO] Error ejecutando query de asistentes: %v", err)
+		return nil, err
+	}
+	defer rows.Close()
 
-    for rows.Next() {
-        var asistente struct {
-            ID              int64
-            Email           string
-            Nombre          string
-            CantidadTickets int
-            TotalGastado    float64
-        }
+	for rows.Next() {
+		var asistente struct {
+			ID              int64
+			Email           string
+			Nombre          string
+			CantidadTickets int
+			TotalGastado    float64
+		}
 
-        if err := rows.Scan(
-            &asistente.ID,
-            &asistente.Email,
-            &asistente.Nombre,
-            &asistente.CantidadTickets,
-            &asistente.TotalGastado,
-        ); err != nil {
-            e.logger.Errorf("❌ [REPO] Error escaneando asistente: %v", err)
-            continue
-        }
+		if err := rows.Scan(
+			&asistente.ID,
+			&asistente.Email,
+			&asistente.Nombre,
+			&asistente.CantidadTickets,
+			&asistente.TotalGastado,
+		); err != nil {
+			e.logger.Errorf("❌ [REPO] Error escaneando asistente: %v", err)
+			continue
+		}
 
-        asistentes = append(asistentes, map[string]interface{}{
-            "id":               asistente.ID,
-            "email":            asistente.Email,
-            "nombre":           asistente.Nombre,
-            "cantidad_tickets": asistente.CantidadTickets,
-            "total_gastado":    asistente.TotalGastado,
-        })
-    }
+		asistentes = append(asistentes, map[string]interface{}{
+			"id":               asistente.ID,
+			"email":            asistente.Email,
+			"nombre":           asistente.Nombre,
+			"cantidad_tickets": asistente.CantidadTickets,
+			"total_gastado":    asistente.TotalGastado,
+		})
+	}
 
-    e.logger.Infof("✅ [REPO] Asistentes encontrados: %d", len(asistentes))
-    return asistentes, nil
+	e.logger.Infof("✅ [REPO] Asistentes encontrados: %d", len(asistentes))
+	return asistentes, nil
 }

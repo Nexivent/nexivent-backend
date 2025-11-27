@@ -60,6 +60,44 @@ func (a *Api) FetchEventos(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
+// @Summary      Feed de eventos del usuario
+// @Description  Obtiene eventos activos para el feed, excluyendo los que ya tienen interacción del usuario
+// @Tags         Evento
+// @Accept       json
+// @Produce      json
+// @Param        usuarioId query int64 false "ID del usuario (opcional)"
+// @Success      200 {object} schemas.EventosPaginados "OK"
+// @Failure      400 {object} errors.Error "Bad Request"
+// @Failure      422 {object} errors.Error "Unprocessable Entity"
+// @Failure      500 {object} errors.Error "Internal Server Error"
+// @Router       /feed/eventos [get]
+func (a *Api) FetchEventosFeed(c echo.Context) error {
+	// 1. Leer usuarioId del query param (ej: /feed/eventos?usuarioId=123)
+	uidStr := c.QueryParam("usuarioId")
+
+	var usuarioId *int64 = nil
+
+	// 2. Si se envía, convertirlo a int64 y validar
+	if uidStr != "" {
+		uid, err := strconv.ParseInt(uidStr, 10, 64)
+		if err != nil || uid <= 0 {
+			// Si falla el parse o es <= 0 → error 422
+			return errors.HandleError(errors.UnprocessableEntityError.InvalidParsingInteger, c)
+		}
+		usuarioId = &uid
+	}
+
+	// 3. Llamar a la lógica de negocio (tu función real)
+	resp, newErr := a.BllController.Evento.FetchEventosFeed(usuarioId)
+	if newErr != nil {
+		// 4. Si la capa BLL devuelve error → responderlo
+		return errors.HandleError(*newErr, c)
+	}
+
+	// 5. Todo OK → devolver JSON 200
+	return c.JSON(http.StatusOK, resp)
+}
+
 // @Summary      Fetch Eventos filtrados.
 // @Description  Obtiene la lista de eventos disponibles aplicando filtros opcionales.
 // @Tags         Evento
@@ -457,23 +495,23 @@ func (a *Api) PutInteraccionUsuarioEvento(c echo.Context) error {
 }
 
 func (a *Api) GetAsistentesPorEvento(c echo.Context) error {
-    eventoIDStr := c.Param("eventoId")
-    eventoID, parseErr := strconv.ParseInt(eventoIDStr, 10, 64)
-    if parseErr != nil {
-        a.Logger.Errorf("❌ [API] Error parseando eventoId: %v", parseErr)
-        return errors.HandleError(errors.UnprocessableEntityError.InvalidParsingInteger, c)
-    }
+	eventoIDStr := c.Param("eventoId")
+	eventoID, parseErr := strconv.ParseInt(eventoIDStr, 10, 64)
+	if parseErr != nil {
+		a.Logger.Errorf("❌ [API] Error parseando eventoId: %v", parseErr)
+		return errors.HandleError(errors.UnprocessableEntityError.InvalidParsingInteger, c)
+	}
 
-    asistentes, err := a.BllController.Evento.GetAsistentesPorEvento(eventoID)
-    if err != nil {
-        return errors.HandleError(*err, c)
-    }
+	asistentes, err := a.BllController.Evento.GetAsistentesPorEvento(eventoID)
+	if err != nil {
+		return errors.HandleError(*err, c)
+	}
 
-    response := map[string]interface{}{
-        "success":    true,
-        "asistentes": asistentes,
-        "total":      len(asistentes),
-    }
+	response := map[string]interface{}{
+		"success":    true,
+		"asistentes": asistentes,
+		"total":      len(asistentes),
+	}
 
-    return c.JSON(http.StatusOK, response)
+	return c.JSON(http.StatusOK, response)
 }

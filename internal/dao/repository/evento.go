@@ -284,6 +284,41 @@ func (e *Evento) ActualizarEstadoFlagEvento(
 	return &ev, nil
 }
 
+// ActualizarCamposEvento actualiza columnas puntuales del evento en una sola llamada.
+func (e *Evento) ActualizarCamposEvento(
+	eventoID int64,
+	updates map[string]any,
+	usuarioModificacion *int64,
+	fechaModificacion *time.Time,
+) (*model.Evento, error) {
+	if eventoID <= 0 || len(updates) == 0 {
+		return nil, gorm.ErrInvalidData
+	}
+
+	if usuarioModificacion != nil {
+		updates["usuario_modificacion"] = *usuarioModificacion
+	}
+	if fechaModificacion != nil {
+		updates["fecha_modificacion"] = *fechaModificacion
+	}
+
+	var ev model.Evento
+	res := e.PostgresqlDB.
+		Model(&ev).
+		Clauses(clause.Returning{}).
+		Where("evento_id = ?", eventoID).
+		Updates(updates)
+
+	if res.Error != nil {
+		e.logger.Errorf("ActualizarCamposEvento id=%d: %v", eventoID, res.Error)
+		return nil, res.Error
+	}
+	if res.RowsAffected == 0 {
+		return nil, gorm.ErrRecordNotFound
+	}
+	return &ev, nil
+}
+
 // =====================================================
 //  FECHAS (tablas: fecha, evento_fecha)
 //  - Cambiar fecha del calendario (tabla fecha)
@@ -544,4 +579,82 @@ func (e *Evento) ObtenerEventoDetalle(eventoId int64) (*schemas.EventoDetalleDTO
 		Fechas:        fechas,
 		Tarifas:       tarifas,
 	}, nil
+}
+
+func (e *Evento) ActualizarInteracciones(evento model.Evento) error {
+	respuesta := e.PostgresqlDB.
+		Table("evento").
+		Where("evento_id = ?", evento.ID).
+		Update("cant_me_gusta", evento.CantMeGusta).
+		Update("cant_no_interesa", evento.CantNoInteresa)
+
+	if respuesta != nil {
+		return respuesta.Error
+	}
+	return nil
+}
+
+func (e *Evento) ObtenerAsistentesPorEvento(eventoID int64) ([]map[string]interface{}, error) {
+    e.logger.Infof("📋 [REPO] Obteniendo asistentes del evento ID: %d", eventoID)
+
+    var asistentes []map[string]interface{}
+
+    query := `
+        SELECT DISTINCT
+            u.usuario_id as id,
+            u.correo as email,
+            u.nombre as nombre,
+            COUNT(DISTINCT t.ticket_id) as cantidad_tickets,
+            SUM(DISTINCT odc.total) as total_gastado
+        FROM usuario u
+        INNER JOIN orden_de_compra odc ON u.usuario_id = odc.usuario_id
+        INNER JOIN ticket t ON t.orden_de_compra_id = odc.orden_de_compra_id
+        INNER JOIN evento_fecha ef ON t.evento_fecha_id = ef.evento_fecha_id
+        INNER JOIN evento ev ON ef.evento_id = ev.evento_id
+        WHERE ev.evento_id = $1
+          AND odc.estado_de_orden = 1
+          AND t.estado_de_ticket = 1
+          AND u.usuario_id != ev.organizador_id
+        GROUP BY u.usuario_id, u.correo, u.nombre
+        ORDER BY u.nombre ASC
+    `
+
+    rows, err := e.PostgresqlDB.Raw(query, eventoID).Rows()
+    if err != nil {
+        e.logger.Errorf("❌ [REPO] Error ejecutando query de asistentes: %v", err)
+        return nil, err
+    }
+    defer rows.Close()
+
+    for rows.Next() {
+        var asistente struct {
+            ID              int64
+            Email           string
+            Nombre          string
+            CantidadTickets int
+            TotalGastado    float64
+        }
+
+        if err := rows.Scan(
+            &asistente.ID,
+            &asistente.Email,
+            &asistente.Nombre,
+            &asistente.CantidadTickets,
+            &asistente.TotalGastado,
+        ); err != nil {
+            e.logger.Errorf("❌ [REPO] Error escaneando asistente: %v", err)
+            continue
+        }
+
+        asistentes = append(asistentes, map[string]interface{}{
+            "id":               asistente.ID,
+            "email":            asistente.Email,
+            "nombre":           asistente.Nombre,
+            "cantidad_tickets": asistente.CantidadTickets,
+            "total_gastado":    asistente.TotalGastado,
+        })
+    }
+
+    e.logger.Infof("✅ [REPO] Asistentes encontrados: %d", len(asistentes))
+    return asistentes, nil
 }

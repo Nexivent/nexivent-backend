@@ -205,8 +205,7 @@ func (c *OrdenDeCompra) ConfirmarOrdenConPago(orderID int64, metodoPagoID int64,
 	updates := map[string]interface{}{
 		"estado_de_orden":   util.OrdenConfirmada.Codigo(),
 		"metodo_de_pago_id": metodoPagoID,
-		// Si tienes un campo para guardar el paymentId, agrégalo aquí
-		// "payment_reference": paymentReference,
+		
 	}
 
 	res := c.PostgresqlDB.

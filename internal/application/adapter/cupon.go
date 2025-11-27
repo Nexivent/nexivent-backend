@@ -249,7 +249,7 @@ func (c *Cupon) FetchPostresqlValidarCuponParaOrdenDeCompra(usuarioId int64, fec
 func (c *Cupon) CreatePostgresqlUsuarioCuponParaOrdenDeCompra(usarioCuponReq *schemas.UsuarioCuponRes) (*schemas.UsuarioCuponRes, *errors.Error) {
 
 	usuarioCuponModel := &model.UsuarioCupon{
-		CuponID:   usarioCuponReq.UsuarioID,
+		CuponID:   usarioCuponReq.CuponID,
 		UsuarioID: usarioCuponReq.UsuarioID,
 		CantUsada: usarioCuponReq.CantUsada,
 	}

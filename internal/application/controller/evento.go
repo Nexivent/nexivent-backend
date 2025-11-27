@@ -93,12 +93,38 @@ func (ec *EventoController) GetEventoDetalle(eventoId int64) (*schemas.EventoDet
 	return ec.EventoAdapter.GetPostgresqlEventoDetalle(eventoId)
 }
 
-func (c *EventoController) EditarEvento(
-	req *schemas.EditarEventoRequest,
-) (*schemas.EventoDetalleDTO, *errors.Error) {
+func (ec *EventoController) EditarEventoFull(eventoID int64, req schemas.EditarEventoFullRequest) (*schemas.EventoResponse, *errors.Error) {
+	return ec.EventoAdapter.EditarEventoFull(eventoID, &req)
+}
+
+func (c *EventoController) EditarEvento(req *schemas.EditarEventoRequest) (*schemas.EventoDetalleDTO, *errors.Error) {
 	return c.EventoAdapter.EditarEvento(req)
 }
 
 func (ec *EventoController) ObtenerTransaccionesPorEvento(eventoId string) ([]model.OrdenDeCompra, *errors.Error) {
 	return ec.EventoAdapter.ObtenerTransaccionesPorEvento(eventoId)
+}
+
+func (ec *EventoController) PostInteraccionUsuarioEvento(req schemas.InteraccionConEventoRequest) (*schemas.InteraccionConEventoResponse, *errors.Error) {
+	return ec.EventoAdapter.PostPostgresqlInteraccionUsuarioEvento(req)
+}
+
+func (ec *EventoController) PutInteraccionUsuarioEvento(req schemas.InteraccionConEventoRequest) (*schemas.InteraccionConEventoResponse, *errors.Error) {
+	return ec.EventoAdapter.PutPostgresqlInteraccionUsuarioEvento(req)
+}
+
+func (ec *EventoController) GetAsistentesPorEvento(eventoID int64) ([]map[string]interface{}, *errors.Error) {
+	// Validar que el evento existe
+    _, err := ec.EventoAdapter.GetPostgresqlEventoById(eventoID)
+    if err != nil {
+        ec.Logger.Errorf("❌ [CONTROLLER] Evento no encontrado: %d", eventoID)
+        return nil, &errors.ObjectNotFoundError.EventoNotFound
+    }
+
+    asistentes, err := ec.EventoAdapter.GetAsistentesPorEvento(eventoID)
+    if err != nil {
+        return nil, err
+    }
+
+    return asistentes, nil
 }

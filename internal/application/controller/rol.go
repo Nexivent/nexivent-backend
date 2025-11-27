@@ -31,7 +31,14 @@ func (ec *RolController) GetRolPorNombre(nombre string) (*schemas.RolResponse, *
 }
 
 func (ec *RolController) GetRolPorUsuario(usuarioID int64) ([]*schemas.RolResponse, *errors.Error) {
-	return ec.RolAdapter.GetPostgresqlRolPorUsuario(usuarioID)
+	ec.Logger.Infof("🎯 [CONTROLLER] GetRolPorUsuario usuarioID=%d", usuarioID)
+    roles, err := ec.RolAdapter.GetPostgresqlRolPorUsuario(usuarioID)
+    if err != nil {
+        ec.Logger.Errorf("❌ [CONTROLLER] error adapter: %v", err)
+        return nil, err
+    }
+    ec.Logger.Infof("✅ [CONTROLLER] roles obtenidos: %d", len(roles))
+    return roles, nil
 }
 
 func (r *RolController) ActualizarRol(request *schemas.RolRequest,rolID int64) (*schemas.RolResponse, *errors.Error) {

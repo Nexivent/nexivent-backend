@@ -52,6 +52,7 @@ func (c *OrdenDeCompra) ObtenerOrdenBasica(orderID int64) (*model.OrdenDeCompra,
 // CerrarOrdenTemporal aplica un lock de escritura (FOR UPDATE) sobre una orden temporal.
 func (c *OrdenDeCompra) CerrarOrdenTemporal(orderID int64) (*model.OrdenDeCompra, error) {
 	var o model.OrdenDeCompra
+
 	if err := c.PostgresqlDB.
 		Clauses(clause.Locking{Strength: "UPDATE"}).
 		Where("orden_de_compra_id = ? AND estado_de_orden = ?", orderID, util.OrdenTemporal.Codigo()).
@@ -98,7 +99,7 @@ func (c *OrdenDeCompra) VerificarOrdenExisteYEstado(orderID int64, estadoEsperad
 		c.logger.Errorf("VerificarOrdenExisteYEstado(%d): %v", orderID, err)
 		return false, err
 	}
-	return util.EstadoOrden(estInt) == estadoEsperado, nil
+	return estInt == estadoEsperado.Codigo(), nil
 }
 
 // ActualizarEstadoOrden cambia el estado de la orden usando enum.
@@ -205,7 +206,6 @@ func (c *OrdenDeCompra) ConfirmarOrdenConPago(orderID int64, metodoPagoID int64,
 	updates := map[string]interface{}{
 		"estado_de_orden":   util.OrdenConfirmada.Codigo(),
 		"metodo_de_pago_id": metodoPagoID,
-		
 	}
 
 	res := c.PostgresqlDB.

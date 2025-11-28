@@ -6,9 +6,9 @@ import (
 
 type EventoFecha struct {
 	ID                      int64     `gorm:"column:evento_fecha_id;primaryKey;autoIncrement"`
-	EventoID                int64     `gorm:"uniqueIndex:uq_evento_fecha"`
-	FechaID                 int64     `gorm:"uniqueIndex:uq_evento_fecha"`
-	HoraInicio              time.Time `gorm:"uniqueIndex:uq_evento_fecha"`
+	EventoID                int64     `gorm:"index:idx_evento_fecha_hora,unique"`
+	FechaID                 int64     `gorm:"index:idx_evento_fecha_hora,unique"`
+	HoraInicio              time.Time `gorm:"type:time;index:idx_evento_fecha_hora,unique"`
 	GananciaNetaOrganizador float64   `gorm:"column:ganancia_neta_organizador;default:0" json:"ganancia_neta_organizador"`
 	Estado                  int16     `gorm:"default:1"`
 	UsuarioCreacion         *int64

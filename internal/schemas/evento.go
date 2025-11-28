@@ -164,7 +164,7 @@ type EventoReporte struct {
 }
 
 // Reporte resumido por evento para un organizador.
-type EventoOrganizadorReporte struct {
+type EventoOrganizadorReporte struct { ////////////////////////
 	IdEvento        int64                           `json:"idEvento"`
 	Nombre          string                          `json:"nombre"`
 	Ubicacion       string                          `json:"ubicacion"`

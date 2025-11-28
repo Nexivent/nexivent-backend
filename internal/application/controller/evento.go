@@ -39,6 +39,10 @@ func (ec *EventoController) FetchEventos() (*schemas.EventosPaginados, *errors.E
 	return ec.EventoAdapter.FetchPostgresqlEventos()
 }
 
+func (ec *EventoController) FetchEventosFeed(usuarioId *int64) (*schemas.EventosPaginados, *errors.Error) {
+	return ec.EventoAdapter.FetchPostgresqlEventosFeed(usuarioId)
+}
+
 func (ec *EventoController) FetchEventosWithFilters(
 	categoriaID *int64,
 	organizadorID *int64,
@@ -115,16 +119,16 @@ func (ec *EventoController) PutInteraccionUsuarioEvento(req schemas.InteraccionC
 
 func (ec *EventoController) GetAsistentesPorEvento(eventoID int64) ([]map[string]interface{}, *errors.Error) {
 	// Validar que el evento existe
-    _, err := ec.EventoAdapter.GetPostgresqlEventoById(eventoID)
-    if err != nil {
-        ec.Logger.Errorf("❌ [CONTROLLER] Evento no encontrado: %d", eventoID)
-        return nil, &errors.ObjectNotFoundError.EventoNotFound
-    }
+	_, err := ec.EventoAdapter.GetPostgresqlEventoById(eventoID)
+	if err != nil {
+		ec.Logger.Errorf("❌ [CONTROLLER] Evento no encontrado: %d", eventoID)
+		return nil, &errors.ObjectNotFoundError.EventoNotFound
+	}
 
-    asistentes, err := ec.EventoAdapter.GetAsistentesPorEvento(eventoID)
-    if err != nil {
-        return nil, err
-    }
+	asistentes, err := ec.EventoAdapter.GetAsistentesPorEvento(eventoID)
+	if err != nil {
+		return nil, err
+	}
 
-    return asistentes, nil
+	return asistentes, nil
 }

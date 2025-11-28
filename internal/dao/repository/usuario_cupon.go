@@ -44,7 +44,7 @@ func (uc *UsuarioCupon) CrearUsuarioCupon(usuarioCupon *model.UsuarioCupon) erro
 }
 
 func (uc *UsuarioCupon) ActualizarUsuarioCupon(usuarioCupon *model.UsuarioCupon) error {
-	respuesta := uc.PostgresqlDB.Table("usuario_cupon").Save(usuarioCupon)
+	respuesta := uc.PostgresqlDB.Save(usuarioCupon)
 	if respuesta.Error != nil {
 		return respuesta.Error
 	}

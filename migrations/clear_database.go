@@ -518,29 +518,6 @@ func seedEventos(
 			},
 			Cupon: &couponSeed{Codigo: "MOTORYMOTIVO", Valor: 7, Tipo: 1},
 		},
-		{
-			Titulo:            "Familia Hindu",
-			Descripcion:       "Musical de la película Familia Hindú. Una de las películas más famosas de Bollywood",
-			Lugar:             "Estadio Nacional",
-			Categoria:         "Conciertos",
-			OrganizadorIdx:    3,
-			DiasHastaFecha:    18,
-			HoraInicio:        7,
-			MinutoInicio:      30,
-			ImagenDescripcion: "https://media.discordapp.net/attachments/1437638232488542233/1442319101560229988/la-familia-hindu.png?ex=6924ffd6&is=6923ae56&hm=aa5a2608f36694be3eabdf6fce1d9ce761b43a5a640021a86ae08097995ad114&=&format=webp&quality=lossless",
-			ImagenPortada:     "https://media.discordapp.net/attachments/1437638232488542233/1442319101560229988/la-familia-hindu.png?ex=6924ffd6&is=6923ae56&hm=aa5a2608f36694be3eabdf6fce1d9ce761b43a5a640021a86ae08097995ad114&=&format=webp&quality=lossless",
-			VideoPresentacion: "https://nexivent-multimedia.s3.us-east-2.amazonaws.com/india.mp4",
-			ImagenEscenario:   "https://media.discordapp.net/attachments/1437638232488542233/1442319434617458719/mapa.png?ex=69250026&is=6923aea6&hm=4f4ace8d917db38d843212e49d67f3f6bb7a3d3599aa165c8fc0e69251d9ffad&=&format=webp&quality=lossless&width=925&height=890",
-			Sectores: []sectorSeed{
-				{Nombre: "VIP", Capacidad: 800, PrecioBase: 85},
-				{Nombre: "General", Capacidad: 1200, PrecioBase: 60},
-			},
-			Perfiles: []string{"Adulto", "Estudiante"},
-			Tickets: []ticketSeed{
-				{Nombre: "General", InicioDiasAntes: 40, FinDiasAntes: 0, MultiplicadorPrecio: 1.0},
-			},
-			Cupon: &couponSeed{Codigo: "MOTORYMOTIVO", Valor: 7, Tipo: 1},
-		},
 	}
 
 	perfilMultiplicador := map[string]float64{

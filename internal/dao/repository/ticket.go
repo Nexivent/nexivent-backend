@@ -3,6 +3,7 @@ package repository
 import (
 	"errors"
 	"time"
+
 	//"github.com/Nexivent/nexivent-backend/internal/schemas"
 	"github.com/Nexivent/nexivent-backend/internal/dao/model"
 	util "github.com/Nexivent/nexivent-backend/internal/dao/model/util"
@@ -324,7 +325,7 @@ func (c *Ticket) Crear(ticket *model.Ticket) error {
 	if ticket == nil {
 		return gorm.ErrInvalidData
 	}
-	
+
 	if err := c.PostgresqlDB.Create(ticket).Error; err != nil {
 		c.logger.Errorf("Ticket.Crear: %v", err)
 		return err
@@ -333,20 +334,19 @@ func (c *Ticket) Crear(ticket *model.Ticket) error {
 }
 
 type TicketRaro struct {
-	IDTicket    int64     //`json:"ticket_id"`
-	TipoSector  string    //`json:"sector_tipo"`
+	IDTicket   int64  //`json:"ticket_id"`
+	TipoSector string //`json:"sector_tipo"`
 	//Evento      EventoMini    `json:"evento"`
 	IDEvento      int64  //`json:"evento_id"`
 	Titulo        string //`json:"titulo"`
 	Lugar         string //`json:"lugar"`
 	ImagenPortada string //`json:"imagenPortada"`
-	FechaInicio string //`json:"hora_inicio"`
+	FechaInicio   string //`json:"hora_inicio"`
 }
 
+func (t *Ticket) ObternerTicketsPorUsuario(idUser int64) ([]*TicketRaro, error) {
 
-func (t *Ticket) ObternerTicketsPorUsuario (idUser int64) ([]*TicketRaro, error) {
-
-    var tickets []*TicketRaro
+	var tickets []*TicketRaro
 	res := t.PostgresqlDB.
 		Table("ticket t").
 		Select(
@@ -367,6 +367,7 @@ func (t *Ticket) ObternerTicketsPorUsuario (idUser int64) ([]*TicketRaro, error)
 		Where("oc.usuario_id = ?", idUser).
 		Where("e.estado = 1").
 		Where("ef.estado = 1").
+		Where("t.estado_de_ticket = 1").
 		Find(&tickets)
 
 	if res.Error != nil {

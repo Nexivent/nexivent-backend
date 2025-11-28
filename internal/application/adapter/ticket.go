@@ -179,7 +179,7 @@ func (t *Ticket) CancelarTickets(req *schemas.TicketCancelRequest) (*schemas.Tic
 		}
 
 		// No se pueden cancelar USADO(1) ni CANCELADO(2)
-		if row.EstadoDeTicket == 1 || row.EstadoDeTicket == 2 {
+		if row.EstadoDeTicket == 2 || row.EstadoDeTicket == 3 {
 			noCancelables = append(noCancelables, id)
 			continue
 		}
@@ -267,7 +267,7 @@ func (t *Ticket) EmitirTicketsConInfo(
 				EventoFechaID:   req.IdFechaEvento,
 				TarifaID:        ticketInfo.IdTarifa,
 				CodigoQR:        codigoQR,
-				EstadoDeTicket:  util.TicketVendido.Codigo(), // ESTADO 3
+				EstadoDeTicket:  util.TicketVendido.Codigo(), // ESTADO 1
 			}
 
 			if err := t.DaoPostgresql.Ticket.Crear(ticket); err != nil {

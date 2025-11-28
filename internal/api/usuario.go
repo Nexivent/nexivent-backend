@@ -196,15 +196,15 @@ func (a *Api) AuthenticateUsuario(c echo.Context) error {
 
 	if err := c.Bind(&input); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]interface{}{
-            "error": "Datos inválidos",
-        })
+			"error": "Datos inválidos",
+		})
 	}
 
 	usuario, newErr := a.BllController.Usuario.AuthenticateUsuario(input.Correo, input.Contrasenha)
 	if newErr != nil {
-        return c.JSON(http.StatusUnauthorized, map[string]interface{}{
-            "error": newErr.Message,
-        })
+		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
+			"error": newErr.Message,
+		})
 	}
 
 	// Obtener roles desde el controller (adapter -> repository)
@@ -213,30 +213,30 @@ func (a *Api) AuthenticateUsuario(c echo.Context) error {
 		rolesResp = &schemas.RolUsuarioResponse{IDUsuario: usuario.ID, Roles: []schemas.RolResponse{}}
 	}
 
-    // extraer slice de roles para uso y respuesta
-    var roles []schemas.RolResponse
-    if rolesResp != nil && len(rolesResp.Roles) > 0 {
-        roles = rolesResp.Roles
-    } else {
-        roles = []schemas.RolResponse{}
-    }
+	// extraer slice de roles para uso y respuesta
+	var roles []schemas.RolResponse
+	if rolesResp != nil && len(rolesResp.Roles) > 0 {
+		roles = rolesResp.Roles
+	} else {
+		roles = []schemas.RolResponse{}
+	}
 
-    // Determinar rol principal
-    var rolPrincipal string
-    if len(roles) > 0 {
-        for _, r := range roles {
-            // comparar con el nombre que usas para admin
-            if r.Nombre == "ADMINISTRADOR" {
-                rolPrincipal = "ADMINISTRADOR"
-                break
-            }
-        }
-        if rolPrincipal == "" {
-            rolPrincipal = roles[0].Nombre
-        }
-    } else {
-        rolPrincipal = "ASISTENTE"
-    }
+	// Determinar rol principal
+	var rolPrincipal string
+	if len(roles) > 0 {
+		for _, r := range roles {
+			// comparar con el nombre que usas para admin
+			if r.Nombre == "ADMINISTRADOR" {
+				rolPrincipal = "ADMINISTRADOR"
+				break
+			}
+		}
+		if rolPrincipal == "" {
+			rolPrincipal = roles[0].Nombre
+		}
+	} else {
+		rolPrincipal = "ASISTENTE"
+	}
 
 	// Generar token
 	token, err := a.BllController.Token.CreateToken(usuario.ID, 24*time.Hour, "authentication")
@@ -246,25 +246,25 @@ func (a *Api) AuthenticateUsuario(c echo.Context) error {
 			"message": "Error al generar el token de autenticación",
 		})
 	}
-	
-    response := map[string]interface{}{
-        "message": "Autenticación exitosa",
-        "token": map[string]interface{}{
-            "token":  token.Plaintext,
-            "expiry": time.Now().Add(24 * time.Hour).Unix(),
-        },
-        "usuario": map[string]interface{}{
-            "id":             usuario.ID,
-            "correo":         usuario.Correo,
-            "nombre":         usuario.Nombre,
-            "num_documento":  usuario.NumDocumento,
-            "telefono":       usuario.Telefono,
-            "tipo_documento": usuario.TipoDocumento,
-            "roles":          roles,
-            "rol_principal":  rolPrincipal,
-        },
-    }
-    return c.JSON(http.StatusOK, response)
+
+	response := map[string]interface{}{
+		"message": "Autenticación exitosa",
+		"token": map[string]interface{}{
+			"token":  token.Plaintext,
+			"expiry": time.Now().Add(24 * time.Hour).Unix(),
+		},
+		"usuario": map[string]interface{}{
+			"id":             usuario.ID,
+			"correo":         usuario.Correo,
+			"nombre":         usuario.Nombre,
+			"num_documento":  usuario.NumDocumento,
+			"telefono":       usuario.Telefono,
+			"tipo_documento": usuario.TipoDocumento,
+			"roles":          roles,
+			"rol_principal":  rolPrincipal,
+		},
+	}
+	return c.JSON(http.StatusOK, response)
 }
 
 func (a *Api) AuthenticateOrganizador(c echo.Context) error {
@@ -444,7 +444,7 @@ func (a *Api) GoogleAuth(c echo.Context) error {
 	nuevoUsuario.NumDocumento = input.NumDocumento
 	nuevoUsuario.EstadoDeCuenta = 1
 	nuevoUsuario.Estado = 1
-	nuevoUsuario.Contrasenha = "" 
+	nuevoUsuario.Contrasenha = ""
 	nuevoUsuario.Telefono = nil
 
 	usuarioRegistrado, newErr := a.BllController.Usuario.RegisterUsuario(&nuevoUsuario)
@@ -733,5 +733,55 @@ func (a *Api) CambiarEstadoUsuario(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
 		"message": fmt.Sprintf("Usuario %s correctamente", estadoTexto),
+	})
+}
+
+// Dentro de tu archivo api_usuario.go (o donde tengas los handlers)
+
+type actualizarPasswordRequest struct {
+	NuevaContrasenha string `json:"nuevaContrasenha"`
+}
+
+func (a *Api) ActualizarContrasenha(c echo.Context) error {
+	// 1) ID del path
+	idParam := c.Param("id")
+	usuarioID, err := strconv.ParseInt(idParam, 10, 64)
+	if err != nil {
+		a.Logger.Warnf("ID de usuario inválido: %s", idParam)
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"error": "ID de usuario inválido",
+		})
+	}
+
+	// 2) Body con nueva contraseña
+	var req actualizarPasswordRequest
+	if err := c.Bind(&req); err != nil {
+		a.Logger.Warnf("Body inválido al actualizar contraseña de usuario %d: %v", usuarioID, err)
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"error": "Body inválido",
+		})
+	}
+
+	if req.NuevaContrasenha == "" {
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"error": "La nueva contraseña es obligatoria",
+		})
+	}
+
+	// 3) updatedBy (luego lo sacas del token/JWT)
+	updatedBy := usuarioID
+
+	// 4) Llamar a la capa de negocio
+	apiErr := a.BllController.Usuario.ActualizarContrasenha(usuarioID, req.NuevaContrasenha, updatedBy)
+	if apiErr != nil {
+		a.Logger.Errorf("Error actualizando contraseña de usuario %d: %v", usuarioID, apiErr)
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+			"error": apiErr.Message,
+		})
+	}
+
+	// 5) Respuesta OK
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"message": "Contraseña actualizada correctamente",
 	})
 }

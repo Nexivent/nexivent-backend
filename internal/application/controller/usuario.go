@@ -368,3 +368,58 @@ func (uc *UsuarioController) DesactivarUsuario(usuarioID int64, updatedBy int64)
 	uc.Logger.Infof("Usuario %d desactivado exitosamente por usuario %d", usuarioID, updatedBy)
 	return nil
 }
+func (uc *UsuarioController) ActualizarContrasenha(
+	usuarioID int64,
+	newPassword string,
+	updatedBy int64,
+) *errors.Error {
+	// 1) Verificar que el usuario que realiza la modificación existe
+	_, err := uc.DB.Usuario.ObtenerUsuarioBasicoPorID(updatedBy)
+	if err != nil {
+		uc.Logger.Errorf("Usuario modificador no encontrado: %v", err)
+		return &errors.Error{
+			Code:    "INVALID_MODIFIER",
+			Message: "Usuario modificador no encontrado",
+		}
+	}
+
+	// 2) Verificar que el usuario a modificar existe
+	_, err = uc.DB.Usuario.ObtenerUsuarioBasicoPorID(usuarioID)
+	if err != nil {
+		uc.Logger.Errorf("Usuario a modificar no encontrado: %v", err)
+		return &errors.ObjectNotFoundError.UserNotFound
+	}
+
+	// 3) Hashear la nueva contraseña usando Argon2 (función del package model)
+	hashedPassword, errHash := model.HashPassword(newPassword)
+	if errHash != nil {
+		uc.Logger.Errorf("Error hasheando contraseña para usuario %d: %v", usuarioID, errHash)
+		return &errors.InternalServerError.Default
+	}
+
+	// Necesitamos un puntero al string
+	contrasenha := hashedPassword
+
+	// 4) Actualizar solo el campo contraseña
+	_, err = uc.DB.Usuario.ActualizarUsuario(
+		usuarioID,
+		nil,          // nombre
+		nil,          // tipoDocumento
+		nil,          // numDocumento
+		nil,          // correo
+		&contrasenha, // contrasenha
+		nil,          // telefono
+		nil,          // estadoDeCuenta
+		nil,          // codigoVerificacion
+		nil,          // fechaExpiracionCodigo
+		nil,          // estado
+		updatedBy,
+	)
+	if err != nil {
+		uc.Logger.Errorf("Error actualizando contraseña de usuario %d: %v", usuarioID, err)
+		return &errors.InternalServerError.Default
+	}
+
+	uc.Logger.Infof("Contraseña de usuario %d actualizada exitosamente por usuario %d", usuarioID, updatedBy)
+	return nil
+}

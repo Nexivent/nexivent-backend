@@ -1377,7 +1377,7 @@ func (e *Evento) EditarEvento(
 	return detalle, nil
 }
 
-func (e *Evento) ObtenerTransaccionesPorEvento(eventoId string) ([]model.OrdenDeCompra, *errors.Error) {
+func (e *Evento) ObtenerTransaccionesPorEvento(eventoId int64) ([]model.OrdenDeCompra, *errors.Error) {
 	// Implementa la lógica para obtener las transacciones por evento
 	// Esto es solo un placeholder
 	var transacciones []model.OrdenDeCompra

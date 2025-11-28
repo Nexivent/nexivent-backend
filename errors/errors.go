@@ -15,25 +15,26 @@ type Error struct {
 var (
 	// For 404 Not Found errors
 	ObjectNotFoundError = struct {
-		CommunityNotFound           Error
-		ReservationNotFound         Error
-		ProfessionalNotFound        Error
-		LocalNotFound               Error
-		UserNotFound                Error
-		ServiceNotFound             Error
-		PlanNotFound                Error
-		MembershipNotFound          Error
-		OnboardingNotFound          Error
-		CommunityPlanNotFound       Error
-		CommunityServiceNotFound    Error
-		ServiceLocalNotFound        Error
-		ServiceProfessionalNotFound Error
-		SessionNotFound             Error
-		EventoNotFound              Error
-		CategoriaNotFound           Error
-		CuponNotFound               Error
-		ReportNoDataFound           Error // <--- NUEVO ERROR AGREGADO
-		OrdenNotFound               Error
+		CommunityNotFound             Error
+		ReservationNotFound           Error
+		ProfessionalNotFound          Error
+		LocalNotFound                 Error
+		UserNotFound                  Error
+		ServiceNotFound               Error
+		PlanNotFound                  Error
+		MembershipNotFound            Error
+		OnboardingNotFound            Error
+		CommunityPlanNotFound         Error
+		CommunityServiceNotFound      Error
+		ServiceLocalNotFound          Error
+		ServiceProfessionalNotFound   Error
+		SessionNotFound               Error
+		EventoNotFound                Error
+		CategoriaNotFound             Error
+		CuponNotFound                 Error
+		ReportNoDataFound             Error // <--- NUEVO ERROR AGREGADO
+		OrdenNotFound                 Error
+		EventoOrganizadorNotDataFound Error
 	}{
 		CommunityNotFound: Error{
 			Code:    "COMMUNITY_ERROR_001",
@@ -103,6 +104,10 @@ var (
 		OrdenNotFound: Error{
 			Code:    "ORDEN_ERROR_001",
 			Message: "Orden de compra no encontrada",
+		},
+		EventoOrganizadorNotDataFound: Error{
+			Code:    "EVENTO_ORGANIZADOR_ERROR_002",
+			Message: "El organizador no tiene eventos que mostrar",
 		},
 	}
 

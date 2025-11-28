@@ -2,11 +2,11 @@ package adapter
 
 import (
 	"fmt"
-	"time"  
-	
+	"time"
+
 	"github.com/Nexivent/nexivent-backend/errors"
 	"github.com/Nexivent/nexivent-backend/internal/dao/model"
-	util "github.com/Nexivent/nexivent-backend/internal/dao/model/util"  
+	util "github.com/Nexivent/nexivent-backend/internal/dao/model/util"
 	daoPostgresql "github.com/Nexivent/nexivent-backend/internal/dao/repository"
 	"github.com/Nexivent/nexivent-backend/internal/schemas"
 	"github.com/Nexivent/nexivent-backend/logging"
@@ -267,7 +267,7 @@ func (t *Ticket) EmitirTicketsConInfo(
 				EventoFechaID:   req.IdFechaEvento,
 				TarifaID:        ticketInfo.IdTarifa,
 				CodigoQR:        codigoQR,
-				EstadoDeTicket:  int16(3), // ESTADO 3
+				EstadoDeTicket:  util.TicketVendido.Codigo(), // ESTADO 3
 			}
 
 			if err := t.DaoPostgresql.Ticket.Crear(ticket); err != nil {
@@ -302,15 +302,14 @@ func (t *Ticket) ObtenerTicketsPostesqlPorUsuario(idUser int64) ([]schemas.Ticke
 	ticketsCheveres := make([]schemas.TicketDetalle, len(tickets))
 	//var eventoChevere schemas.EventoMini
 	for i, t := range tickets {
-		
 
 		ticketsCheveres[i] = schemas.TicketDetalle{
-			IDTicket: t.IDTicket,
+			IDTicket:   t.IDTicket,
 			TipoSector: t.TipoSector,
 			Evento: schemas.EventoMini{
-				IDEvento: t.IDEvento,
-				Titulo: t.Titulo,
-				Lugar: t.Lugar,
+				IDEvento:      t.IDEvento,
+				Titulo:        t.Titulo,
+				Lugar:         t.Lugar,
 				ImagenPortada: t.ImagenPortada,
 			},
 			FechaInicio: t.FechaInicio,

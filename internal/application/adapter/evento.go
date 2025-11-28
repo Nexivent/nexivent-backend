@@ -914,7 +914,7 @@ func (e *Evento) GetPostgresqlReporteEvento(
 	if eventoID != nil {
 		evento, err := e.DaoPostgresql.Evento.ObtenerEventoPorId(*eventoID)
 		if err != nil {
-			return nil, &errors.ObjectNotFoundError.ReservationNotFound
+			return nil, &errors.ObjectNotFoundError.EventoNotFound
 		}
 
 		eventos = append(eventos, evento)
@@ -922,7 +922,7 @@ func (e *Evento) GetPostgresqlReporteEvento(
 		var err error
 		eventos, err = e.DaoPostgresql.Evento.ObtenerEventosDelOrganizador(organizadorID)
 		if err != nil {
-			return nil, &errors.ObjectNotFoundError.ReservationNotFound
+			return nil, &errors.ObjectNotFoundError.EventoNotFound
 		}
 	}
 

@@ -27,3 +27,7 @@ SELECT "evento"."evento_id","evento"."organizador_id","evento"."categoria_id","e
                 FROM fecha f2
                 JOIN evento_fecha ef2 ON ef2.fecha_id = f2.fecha_id
                 WHERE ef2.evento_id = evento.evento_id) ORDER BY ((2*evento.cant_me_gusta - evento.cant_no_interesa) / GREATEST(1, (f.fecha_evento::date - CURRENT_DATE))) DESC ;
+
+SELECT * FROM interaccion;
+
+SELECT * FROM usuario;

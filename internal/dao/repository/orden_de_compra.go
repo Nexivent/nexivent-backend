@@ -142,7 +142,7 @@ func (o *OrdenDeCompra) ObtenerIngresoCargoPorFecha(eventoID int64, fechaDesde *
 		Joins("JOIN evento_fecha ef ON ef.evento_fecha_id = t.evento_fecha_id").
 		Where("ef.evento_id = ?", eventoID).
 		Where("oc.estado_de_orden = ?", util.OrdenConfirmada.Codigo()).
-		Where("t.estado_de_ticket <> ?", util.TicketCancelado.Codigo())
+		Where("t.estado_de_ticket = ?", util.TicketVendido.Codigo())
 
 	if fechaDesde != nil {
 		query = query.Where("oc.fecha BETWEEN ? AND ?", fechaDesde, fechaHasta)

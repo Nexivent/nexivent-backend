@@ -272,7 +272,7 @@ func (a *Api) CreateEvento(c echo.Context) error {
 func (a *Api) GetReporteEvento(c echo.Context) error {
 	// TODO: Validar access token
 
-	usuarioIDStr := c.Param("eventoId")
+	usuarioIDStr := c.Param("organizadorId")
 	usuarioID, parseErr := strconv.ParseInt(usuarioIDStr, 10, 64)
 	if parseErr != nil {
 		return errors.HandleError(errors.UnprocessableEntityError.InvalidParsingInteger, c)
@@ -286,7 +286,7 @@ func (a *Api) GetReporteEvento(c echo.Context) error {
 	)
 
 	// eventoID
-	if q := c.QueryParam("eventoID"); q != "" {
+	if q := c.QueryParam("eventoId"); q != "" {
 		val, err := strconv.ParseInt(q, 10, 64)
 		if err != nil {
 			return errors.HandleError(errors.BadRequestError.InvalidIDParam, c)

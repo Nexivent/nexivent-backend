@@ -707,6 +707,28 @@ func (e *Evento) FetchPostgresqlEventosFeed(usuarioId *int64) (*schemas.EventosP
 		TotalPaginas: totalPaginas,
 	}, nil
 }
+func (e *Evento) FetchPostgresqlEventosConInteraccionesFeed(usuarioId *int64) (*schemas.EventosPaginados, *errors.Error) {
+	eventos, err := e.DaoPostgresql.Evento.CargarEventosNuevamenteParaElFeed(usuarioId)
+	if err != nil {
+		e.logger.Errorf("Failed to fetch eventos: %v", err)
+		return nil, &errors.BadRequestError.EventoNotFound
+	}
+
+	mapEventDates(eventos)
+
+	total := int64(len(eventos))
+	totalPaginas := 0
+	if total > 0 {
+		totalPaginas = 1
+	}
+
+	return &schemas.EventosPaginados{
+		Eventos:      eventos,
+		Total:        total,
+		PaginaActual: 1,
+		TotalPaginas: totalPaginas,
+	}, nil
+}
 
 // FetchPostgresqlEventos retrieves the upcoming events with filters
 func (e *Evento) FetchPostgresqlEventosWithFilters(

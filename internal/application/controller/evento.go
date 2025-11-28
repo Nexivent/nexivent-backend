@@ -42,6 +42,9 @@ func (ec *EventoController) FetchEventos() (*schemas.EventosPaginados, *errors.E
 func (ec *EventoController) FetchEventosFeed(usuarioId *int64) (*schemas.EventosPaginados, *errors.Error) {
 	return ec.EventoAdapter.FetchPostgresqlEventosFeed(usuarioId)
 }
+func (ec *EventoController) FetchEventosConInteraccionesFeed(usuarioId *int64) (*schemas.EventosPaginados, *errors.Error) {
+	return ec.EventoAdapter.FetchPostgresqlEventosConInteraccionesFeed(usuarioId)
+}
 
 func (ec *EventoController) FetchEventosWithFilters(
 	categoriaID *int64,

@@ -5,7 +5,7 @@ import (
 
 	"github.com/Nexivent/nexivent-backend/errors"
 	"github.com/Nexivent/nexivent-backend/internal/application/adapter"
-	"github.com/Nexivent/nexivent-backend/internal/dao/model"
+	daoPostgresql "github.com/Nexivent/nexivent-backend/internal/dao/repository"
 	"github.com/Nexivent/nexivent-backend/internal/schemas"
 	"github.com/Nexivent/nexivent-backend/logging"
 )
@@ -105,8 +105,8 @@ func (c *EventoController) EditarEvento(req *schemas.EditarEventoRequest) (*sche
 	return c.EventoAdapter.EditarEvento(req)
 }
 
-func (ec *EventoController) ObtenerTransaccionesPorEvento(eventoId int64) ([]model.OrdenDeCompra, *errors.Error) {
-	return ec.EventoAdapter.ObtenerTransaccionesPorEvento(eventoId)
+func (ec *EventoController) ObtenerTransaccionesPorEvento(eventoId int64) ([]daoPostgresql.Transaccion, *errors.Error) {
+    return ec.EventoAdapter.ObtenerTransaccionesPorEvento(eventoId)
 }
 
 func (ec *EventoController) PostInteraccionUsuarioEvento(req schemas.InteraccionConEventoRequest) (*schemas.InteraccionConEventoResponse, *errors.Error) {

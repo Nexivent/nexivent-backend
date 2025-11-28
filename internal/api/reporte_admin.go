@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/Nexivent/nexivent-backend/errors"
 	"github.com/Nexivent/nexivent-backend/internal/schemas"
@@ -40,10 +41,14 @@ func (a *Api) GetAdminReports(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, resp)
 }
-
 // GetAdminTransactionsByEvento GET /api/admin/transactions/:eventoId
 func (a *Api) GetAdminTransactionsByEvento(c echo.Context) error {
-	eventoId := c.Param("eventoId")
+	eventoIdStr := c.Param("eventoId")
+
+	eventoId, parseErr := strconv.ParseInt(eventoIdStr, 10, 64)
+	if parseErr != nil {
+		return errors.HandleError(errors.UnprocessableEntityError.InvalidRequestBody, c)
+	}
 
 	// Call Adapter
 	resp, err := a.BllController.Evento.ObtenerTransaccionesPorEvento(eventoId)

@@ -1355,16 +1355,13 @@ func (e *Evento) EditarEvento(
 	return detalle, nil
 }
 
-func (e *Evento) ObtenerTransaccionesPorEvento(eventoId int64) ([]model.OrdenDeCompra, *errors.Error) {
-	// Implementa la lógica para obtener las transacciones por evento
-	// Esto es solo un placeholder
-	var transacciones []model.OrdenDeCompra
-	transacciones, err := e.DaoPostgresql.OrdenDeCompra.ListarTransaccionesPorEvento(eventoId)
-	if err != nil {
-		e.logger.Errorf("Failed to get transacciones for evento %s: %v", eventoId, err)
-		return nil, &errors.BadRequestError.EventoNotFound
-	}
-	return transacciones, nil
+func (e *Evento) ObtenerTransaccionesPorEvento(eventoId int64) ([]daoPostgresql.Transaccion, *errors.Error) {
+    transacciones, err := e.DaoPostgresql.OrdenDeCompra.ListarTransaccionesPorEvento(eventoId)
+    if err != nil {
+        e.logger.Errorf("Failed to get transacciones for evento %d: %v", eventoId, err)
+        return nil, &errors.BadRequestError.EventoNotFound
+    }
+    return transacciones, nil
 }
 
 func (e *Evento) PostPostgresqlInteraccionUsuarioEvento(req schemas.InteraccionConEventoRequest) (*schemas.InteraccionConEventoResponse, *errors.Error) {

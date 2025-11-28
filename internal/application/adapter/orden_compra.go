@@ -277,6 +277,25 @@ func (a *OrdenDeCompra) ConfirmarOrden(
 		"Orden %d: Total=%.2f, FeeServicio=%.2f, GananciaNetaOrganizador=%.2f",
 		orderID, montoBruto, montoFee, gananciaNeta,
 	)
+	//Evento ganancia actualizar
+
+	// Evento ganancia actualizar
+	ahora := time.Now()    // time.Time
+	usuarioMod := int64(1) // o el ID real del usuario que modifica
+
+	updates := map[string]any{
+		"total_recaudado": gananciaNeta, // 👈 campo a actualizar
+	}
+
+	_, err_2 := a.DaoPostgresql.Evento.ActualizarCamposEvento(
+		req.IdEvento, // eventoID int64
+		updates,      // map[string]any
+		&usuarioMod,  // *int64
+		&ahora,       // *time.Time
+	)
+	if err_2 != nil {
+		a.logger.Errorf("Error actualizando TotalRecaudado del evento %d: %v", req.IdEvento, err)
+	}
 	// usar evento + fecha del request
 	if req.IdEvento > 0 && req.FechaEvento != "" {
 

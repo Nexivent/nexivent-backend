@@ -105,7 +105,7 @@ func (c *EventoController) EditarEvento(req *schemas.EditarEventoRequest) (*sche
 	return c.EventoAdapter.EditarEvento(req)
 }
 
-func (ec *EventoController) ObtenerTransaccionesPorEvento(eventoId string) ([]model.OrdenDeCompra, *errors.Error) {
+func (ec *EventoController) ObtenerTransaccionesPorEvento(eventoId int64) ([]model.OrdenDeCompra, *errors.Error) {
 	return ec.EventoAdapter.ObtenerTransaccionesPorEvento(eventoId)
 }
 

@@ -229,7 +229,7 @@ func (c *OrdenDeCompra) ConfirmarOrdenConPago(orderID int64, metodoPagoID int64,
 }
 
 // ObtenerTransaccionesPorEvento obtiene todas las órdenes de compra (transacciones) asociadas a un evento específico.
-func (c *OrdenDeCompra) ListarTransaccionesPorEvento(eventoId string) ([]model.OrdenDeCompra, error) {
+func (c *OrdenDeCompra) ListarTransaccionesPorEvento(eventoId int64) ([]model.OrdenDeCompra, error) {
 	var ordenes []model.OrdenDeCompra
 	err := c.PostgresqlDB.
 		Joins("JOIN ticket t ON t.orden_de_compra_id = orden_de_compra.orden_de_compra_id").
@@ -237,7 +237,7 @@ func (c *OrdenDeCompra) ListarTransaccionesPorEvento(eventoId string) ([]model.O
 		Where("ef.evento_id = ?", eventoId).
 		Find(&ordenes).Error
 	if err != nil {
-		c.logger.Errorf("ListarTransaccionesPorEvento(%s): %v", eventoId, err)
+		c.logger.Errorf("ListarTransaccionesPorEvento(%d): %v", eventoId, err)
 		return nil, err
 	}
 

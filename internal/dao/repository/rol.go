@@ -109,15 +109,26 @@ func (r *Rol) ObtenerRolPorID(idRol int64) (*model.Rol, error) {
 }
 
 func (r *Rol) ObtenerRolesDeUsuario(usuarioID int64) ([]*model.Rol, error) {
-	var roles []*model.Rol
-	res := r.PostgresqlDB.
-		Select("rol.*").
-		Joins("JOIN rol_usuario ru ON ru.rol_id = rol.rol_id AND ru.estado = 1").
-		Where("ru.usuario_id = ?", usuarioID).
-		Distinct().
-		Find(&roles)
-	if res.Error != nil {
-		return nil, res.Error
-	}
-	return roles, nil
+	r.logger.Infof("📊 [REPO] Buscando roles para usuario ID: %d", usuarioID)
+
+    var roles []*model.Rol
+
+    res := r.PostgresqlDB.
+        Table("rol").
+        Select("rol.rol_id as rol_id, rol.nombre as nombre, rol.usuario_creacion, rol.fecha_creacion, rol.usuario_modificacion, rol.fecha_modificacion").
+        Joins("INNER JOIN rol_usuario ru ON ru.rol_id = rol.rol_id AND ru.estado = 1").
+        Where("ru.usuario_id = ?", usuarioID).
+        Scan(&roles)
+
+    if res.Error != nil {
+        r.logger.Errorf("❌ [REPO] Error obteniendo roles: %v", res.Error)
+        return nil, res.Error
+    }
+
+    r.logger.Infof("✅ [REPO] Roles encontrados: %d", len(roles))
+    for i, rol := range roles {
+        r.logger.Infof("   [REPO] Rol %d: ID=%d, Nombre=%s", i+1, rol.ID, rol.Nombre)
+    }
+
+    return roles, nil
 }

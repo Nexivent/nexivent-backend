@@ -100,9 +100,9 @@ type EventoRequest struct {
 	Descripcion       string              `json:"descripcion"`
 	Lugar             string              `json:"lugar"`
 	Estado            string              `json:"estado"`
-	Likes             int                 `json:"likes"`
-	NoInteres         int                 `json:"noInteres"`
-	CantVendidasTotal int                 `json:"cantVendidasTotal"`
+	Likes             int64               `json:"likes"`
+	NoInteres         int64               `json:"noInteres"`
+	CantVendidasTotal int64               `json:"cantVendidasTotal"`
 	TotalRecaudado    float64             `json:"totalRecaudado"`
 	ImagenPortada     string              `json:"imagenPortada"`
 	ImagenLugar       string              `json:"imagenLugar"`
@@ -124,9 +124,9 @@ type EventoResponse struct {
 	Descripcion       string               `json:"descripcion"`
 	Lugar             string               `json:"lugar"`
 	Estado            string               `json:"estado"`
-	Likes             int                  `json:"likes"`
-	NoInteres         int                  `json:"noInteres"`
-	CantVendidasTotal int                  `json:"cantVendidasTotal"`
+	Likes             int64                `json:"likes"`
+	NoInteres         int64                `json:"noInteres"`
+	CantVendidasTotal int64                `json:"cantVendidasTotal"`
 	TotalRecaudado    float64              `json:"totalRecaudado"`
 	ImagenPortada     string               `json:"imagenPortada"`
 	ImagenLugar       string               `json:"imagenLugar"`
@@ -164,7 +164,7 @@ type EventoReporte struct {
 }
 
 // Reporte resumido por evento para un organizador.
-type EventoOrganizadorReporte struct {
+type EventoOrganizadorReporte struct { ////////////////////////
 	IdEvento        int64                           `json:"idEvento"`
 	Nombre          string                          `json:"nombre"`
 	Ubicacion       string                          `json:"ubicacion"`
@@ -190,4 +190,24 @@ type EventoFechaOrganizadorReporte struct {
 	Fecha         string `json:"fecha"`
 	HoraInicio    string `json:"horaInicio"`
 	HoraFin       string `json:"horaFin"`
+}
+
+type InteraccionConEventoRequest struct {
+	EventoId  int64 `json:"eventoId"`
+	UsuarioId int64 `json:"usuarioId"`
+	Accion    int64 `json:"accion"`
+}
+
+type EventoInteraccionResponse struct {
+	EventoId            int64 `json:"eventoId"`
+	UsuarioId           int64 `json:"usuarioId"`
+	LikesTotales        int64 `json:"likesTotales"`
+	NoMeInteresaTotales int64 `json:"noInteresaTotales"`
+	Like                bool  `json:"like"`
+	NoInteresa          bool  `json:"noInteresa"`
+}
+
+type InteraccionConEventoResponse struct {
+	Success bool                      `json:"success"`
+	Data    EventoInteraccionResponse `json:"data"`
 }

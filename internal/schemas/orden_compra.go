@@ -23,7 +23,7 @@ type CrearOrdenTemporalRequest struct {
 	IdEvento      int64                 `json:"idEvento"`
 	IdFechaEvento int64                 `json:"idFechaEvento"`
 	IdUsuario     int64                 `json:"idUsuario"`
-	Total         float64               `json:"total"`      
+	Total         float64               `json:"total"`
 	Entradas      []EntradaOrdenRequest `json:"entradas"`
 }
 

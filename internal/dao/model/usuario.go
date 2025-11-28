@@ -29,7 +29,7 @@ type Usuario struct {
 	FechaModificacion     *time.Time
 	Estado                int16 `gorm:"default:1"`
 
-	Comentarios    []Comentario
+	Interaccion    []Interaccion
 	Ordenes        []OrdenDeCompra
 	RolesAsignados []RolUsuario
 	Cupones        []UsuarioCupon

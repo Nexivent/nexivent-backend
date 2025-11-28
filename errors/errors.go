@@ -33,6 +33,7 @@ var (
 		CategoriaNotFound           Error
 		CuponNotFound               Error
 		ReportNoDataFound           Error // <--- NUEVO ERROR AGREGADO
+		OrdenNotFound               Error
 	}{
 		CommunityNotFound: Error{
 			Code:    "COMMUNITY_ERROR_001",
@@ -98,6 +99,10 @@ var (
 		ReportNoDataFound: Error{
 			Code:    "NO_DATA",
 			Message: "No se encontraron registros para generar el reporte.",
+		},
+		OrdenNotFound: Error{
+			Code:    "ORDEN_ERROR_001",
+			Message: "Orden de compra no encontrada",
 		},
 	}
 
@@ -245,6 +250,8 @@ var (
 		InvalidFechaCupon             Error
 		CantLimitUseCupon             Error
 		UsuarioCuponNotUpdate         Error
+		InvalidBodyFormat             Error
+		OrdenNotCreated               Error
 	}{
 		InvalidUpdatedByValue: Error{
 			Code:    "REQUEST_ERROR_002",
@@ -398,6 +405,14 @@ var (
 			Code:    "USUARIO_CUPON_ERROR_006",
 			Message: "Updated by usuario cupon error",
 		},
+		InvalidBodyFormat: Error{
+			Code:    "INVALID_BODY_FORMAT_Error_007",
+			Message: "Invalid body format",
+		},
+		OrdenNotCreated: Error{
+			Code:    "ORDEN_NOT_CREATED_ERROR_007",
+			Message: "Orden not created",
+		},
 	}
 
 	// For 401 Unauthorized errors
@@ -432,9 +447,10 @@ var (
 
 	// For 409 Conflict errors
 	ConflictError = struct {
-		EmailAlreadyExists Error
-		UserAlreadyExists  Error
-		CuponAlreadyExists Error
+		EmailAlreadyExists       Error
+		UserAlreadyExists        Error
+		CuponAlreadyExists       Error
+		InteraccionAlreadyExists Error
 	}{
 		UserAlreadyExists: Error{
 			Code:    "USER_ERROR_006",
@@ -447,6 +463,10 @@ var (
 		EmailAlreadyExists: Error{
 			Code:    "USER_ERROR_007",
 			Message: "Email already exists",
+		},
+		InteraccionAlreadyExists: Error{
+			Code:    "INTERACCION_ERROR_008",
+			Message: "Interaccion already exists",
 		},
 	}
 

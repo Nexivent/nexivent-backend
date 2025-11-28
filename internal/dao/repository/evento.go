@@ -69,6 +69,8 @@ func (e *Evento) ObtenerEventosDisponiblesConFiltros(
 
 	// Construcción base del query
 	query := e.PostgresqlDB.
+		Model(&model.Evento{}).
+		Select("DISTINCT ON (evento.evento_id) evento.*").
 		Preload("Fechas.Fecha").
 		Preload("Sectores").
 		Preload("Sectores.Tarifa").
@@ -124,13 +126,9 @@ func (e *Evento) ObtenerEventosDisponiblesConFiltros(
 		query = query.Where(orGroup, valores...)
 	}
 
-	// Contar total antes de aplicar limit/offset
-	//queryCount := query.Session(&gorm.Session{}) // Clona el query sin afectar el original
-	//queryCount.Count(&total)
-
 	// Aplicar paginación
 	respuesta := query.
-		Order("f.fecha_evento ASC").
+		Order("evento.evento_id, f.fecha_evento ASC").
 		//Limit(limit).
 		//Offset(offset).
 		Find(&eventos)
@@ -139,16 +137,41 @@ func (e *Evento) ObtenerEventosDisponiblesConFiltros(
 		return nil, respuesta.Error
 	}
 
-	// Calcular total de páginas
-	//totalPaginas := int((total + int64(limit) - 1) / int64(limit))
+	return eventos, nil
+}
 
-	// Retornar resultado completo
-	/*resultado := &schemas.EventosPaginados{
-		Eventos:      eventos,
-		Total:        total,
-		PaginaActual: page,
-		TotalPaginas: totalPaginas,
-	}*/
+func (e *Evento) ObtenerEventosParaElFeed(usuarioId *int64) ([]*model.Evento, error) {
+	// Construcción base del query
+	var eventos []*model.Evento
+	query := e.PostgresqlDB.
+		Preload("Fechas").
+		Preload("Fechas.Fecha").
+		Preload("Sectores").
+		Preload("Sectores.Tarifa").
+		Preload("Sectores.Tarifa.TipoDeTicket").
+		Preload("Sectores.Tarifa.PerfilPersona").
+		Preload("TiposTicket").
+		Joins("JOIN evento_fecha ef ON ef.evento_id = evento.evento_id").
+		Joins("JOIN fecha f ON f.fecha_id = ef.fecha_id").
+		Where("f.fecha_evento >= CURRENT_DATE").
+		Where("evento.evento_estado = 1").
+		Where("evento.estado = 1").
+		Where(`f.fecha_evento = ( SELECT MIN(f2.fecha_evento)
+        	FROM fecha f2
+        	JOIN evento_fecha ef2 ON ef2.fecha_id = f2.fecha_id
+        	WHERE ef2.evento_id = evento.evento_id)`)
+
+	if usuarioId != nil {
+		query = query.Where(`NOT EXISTS (SELECT 1 FROM interaccion i WHERE i.usuario_id = ? AND i.evento_id = evento.evento_id)`, usuarioId)
+	}
+
+	respuesta := query.
+		Order("((2*evento.cant_me_gusta - evento.cant_no_interesa) / GREATEST(1, (f.fecha_evento::date - CURRENT_DATE))) DESC").
+		Find(&eventos)
+
+	if respuesta.Error != nil {
+		return nil, respuesta.Error
+	}
 
 	return eventos, nil
 }
@@ -276,6 +299,41 @@ func (e *Evento) ActualizarEstadoFlagEvento(
 
 	if res.Error != nil {
 		e.logger.Errorf("ActualizarEstadoFlagEvento id=%d: %v", eventoID, res.Error)
+		return nil, res.Error
+	}
+	if res.RowsAffected == 0 {
+		return nil, gorm.ErrRecordNotFound
+	}
+	return &ev, nil
+}
+
+// ActualizarCamposEvento actualiza columnas puntuales del evento en una sola llamada.
+func (e *Evento) ActualizarCamposEvento(
+	eventoID int64,
+	updates map[string]any,
+	usuarioModificacion *int64,
+	fechaModificacion *time.Time,
+) (*model.Evento, error) {
+	if eventoID <= 0 || len(updates) == 0 {
+		return nil, gorm.ErrInvalidData
+	}
+
+	if usuarioModificacion != nil {
+		updates["usuario_modificacion"] = *usuarioModificacion
+	}
+	if fechaModificacion != nil {
+		updates["fecha_modificacion"] = *fechaModificacion
+	}
+
+	var ev model.Evento
+	res := e.PostgresqlDB.
+		Model(&ev).
+		Clauses(clause.Returning{}).
+		Where("evento_id = ?", eventoID).
+		Updates(updates)
+
+	if res.Error != nil {
+		e.logger.Errorf("ActualizarCamposEvento id=%d: %v", eventoID, res.Error)
 		return nil, res.Error
 	}
 	if res.RowsAffected == 0 {
@@ -544,4 +602,82 @@ func (e *Evento) ObtenerEventoDetalle(eventoId int64) (*schemas.EventoDetalleDTO
 		Fechas:        fechas,
 		Tarifas:       tarifas,
 	}, nil
+}
+
+func (e *Evento) ActualizarInteracciones(evento model.Evento) error {
+	respuesta := e.PostgresqlDB.
+		Table("evento").
+		Where("evento_id = ?", evento.ID).
+		Update("cant_me_gusta", evento.CantMeGusta).
+		Update("cant_no_interesa", evento.CantNoInteresa)
+
+	if respuesta != nil {
+		return respuesta.Error
+	}
+	return nil
+}
+
+func (e *Evento) ObtenerAsistentesPorEvento(eventoID int64) ([]map[string]interface{}, error) {
+	e.logger.Infof("📋 [REPO] Obteniendo asistentes del evento ID: %d", eventoID)
+
+	var asistentes []map[string]interface{}
+
+	query := `
+        SELECT DISTINCT
+            u.usuario_id as id,
+            u.correo as email,
+            u.nombre as nombre,
+            COUNT(DISTINCT t.ticket_id) as cantidad_tickets,
+            SUM(DISTINCT odc.total) as total_gastado
+        FROM usuario u
+        INNER JOIN orden_de_compra odc ON u.usuario_id = odc.usuario_id
+        INNER JOIN ticket t ON t.orden_de_compra_id = odc.orden_de_compra_id
+        INNER JOIN evento_fecha ef ON t.evento_fecha_id = ef.evento_fecha_id
+        INNER JOIN evento ev ON ef.evento_id = ev.evento_id
+        WHERE ev.evento_id = $1
+          AND odc.estado_de_orden = 1
+          AND t.estado_de_ticket = 1
+          AND u.usuario_id != ev.organizador_id
+        GROUP BY u.usuario_id, u.correo, u.nombre
+        ORDER BY u.nombre ASC
+    `
+
+	rows, err := e.PostgresqlDB.Raw(query, eventoID).Rows()
+	if err != nil {
+		e.logger.Errorf("❌ [REPO] Error ejecutando query de asistentes: %v", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var asistente struct {
+			ID              int64
+			Email           string
+			Nombre          string
+			CantidadTickets int
+			TotalGastado    float64
+		}
+
+		if err := rows.Scan(
+			&asistente.ID,
+			&asistente.Email,
+			&asistente.Nombre,
+			&asistente.CantidadTickets,
+			&asistente.TotalGastado,
+		); err != nil {
+			e.logger.Errorf("❌ [REPO] Error escaneando asistente: %v", err)
+			continue
+		}
+
+		asistentes = append(asistentes, map[string]interface{}{
+			"id":               asistente.ID,
+			"email":            asistente.Email,
+			"nombre":           asistente.Nombre,
+			"cantidad_tickets": asistente.CantidadTickets,
+			"total_gastado":    asistente.TotalGastado,
+		})
+	}
+
+	e.logger.Infof("✅ [REPO] Asistentes encontrados: %d", len(asistentes))
+	return asistentes, nil
 }

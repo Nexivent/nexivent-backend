@@ -19,7 +19,7 @@ type NexiventPsqlEntidades struct {
 	Categoria       *Categoria
 	Roles           *Rol
 	RolesUsuario    *RolUsuarioRepo
-	Comentario      *Comentario
+	Interaccion     *Interaccion
 	OrdenDeCompra   *OrdenDeCompra
 	PerfilDePersona *PerfilDePersona
 	Sector          *Sector
@@ -78,10 +78,7 @@ func NewNexiventPsqlEntidades(
 			logger:       logger,
 			PostgresqlDB: postgresqlDB,
 		},
-		Comentario: &Comentario{
-			logger:       logger,
-			PostgresqlDB: postgresqlDB,
-		},
+		Interaccion: NewInteraccionController(logger, postgresqlDB),
 		OrdenDeCompra: &OrdenDeCompra{
 			logger:       logger,
 			PostgresqlDB: postgresqlDB,
@@ -130,13 +127,13 @@ func crearTablas(astroCatPsqlDB *gorm.DB) {
 	}
 	fmt.Println("Tabla Evento creada exitosamente.")
 
-	// Crear tabla Comentario
-	fmt.Println("Creando tabla Comentario...")
-	if err := astroCatPsqlDB.AutoMigrate(&model.Comentario{}); err != nil {
-		fmt.Printf("Error creando tabla Comentario: %v\n", err)
+	// Crear tabla Interaccion
+	fmt.Println("Creando tabla Interaccion...")
+	if err := astroCatPsqlDB.AutoMigrate(&model.Interaccion{}); err != nil {
+		fmt.Printf("Error creando tabla Interaccion: %v\n", err)
 		panic(err)
 	}
-	fmt.Println("Tabla Comentario creada exitosamente.")
+	fmt.Println("Tabla Interaccion creada exitosamente.")
 
 	// Crear tabla Sector
 	fmt.Println("Creando tabla Sector...")
@@ -281,7 +278,7 @@ func BorrarTodasLasTablas(nexiventPsqlDB *gorm.DB) {
 		"sector",
 		"tipo_de_ticket",
 		"perfil_de_persona",
-		"comentario",
+		"interaccion",
 		"orden_de_compra",
 		"metodo_de_pago",
 		"evento",

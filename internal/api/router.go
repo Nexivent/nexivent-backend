@@ -79,7 +79,7 @@ func (a *Api) RegisterRoutes(configEnv *config.ConfigEnv) {
 	a.Echo.POST("/logout", a.Logout)
 
 	a.Echo.GET("/usuario/:id", a.GetUsuario)
-
+	a.Echo.PATCH("/usuario/:id", a.DesactivarUsuario)
 	// Eventos endpoints
 	a.Echo.GET("/evento/", a.FetchEventos)
 	a.Echo.GET("/evento/:eventoId/", a.GetEvento)

@@ -43,18 +43,14 @@ func (a *Api) GetAdminReports(c echo.Context) error {
 }
 // GetAdminTransactionsByEvento GET /api/admin/transactions/:eventoId
 func (a *Api) GetAdminTransactionsByEvento(c echo.Context) error {
-	eventoIdStr := c.Param("eventoId")
-
-	eventoId, parseErr := strconv.ParseInt(eventoIdStr, 10, 64)
-	if parseErr != nil {
-		return errors.HandleError(errors.UnprocessableEntityError.InvalidRequestBody, c)
-	}
-
-	// Call Adapter
-	resp, err := a.BllController.Evento.ObtenerTransaccionesPorEvento(eventoId)
-	// Manejo de errores
+	idParam := c.Param("eventoId")
+	eventoID, err := strconv.ParseInt(idParam, 10, 64)
 	if err != nil {
-		return errors.HandleError(*err, c)
+		return errors.HandleError(errors.BadRequestError.InvalidIDParam, c)
+	}
+	resp, err_2 := a.BllController.Evento.ObtenerTransaccionesPorEvento(eventoID)
+	if err_2 != nil {
+		return errors.HandleError(*err_2, c)
 	}
 	return c.JSON(http.StatusOK, resp)
 }

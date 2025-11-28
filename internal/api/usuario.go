@@ -207,6 +207,13 @@ func (a *Api) AuthenticateUsuario(c echo.Context) error {
 		})
 	}
 
+	if usuario.Estado != 1 {
+		return c.JSON(http.StatusForbidden, map[string]interface{}{
+			"error":   "ACCOUNT_DISABLED",
+			"message": "Tu cuenta ha sido deshabilitada. Contacta al soporte.",
+		})
+	}
+
 	// Obtener roles desde el controller (adapter -> repository)
 	rolesResp, rolErr := a.BllController.RolUsuario.GetUserRoles(usuario.ID)
 	if rolErr != nil {
@@ -307,12 +314,10 @@ func (a *Api) AuthenticateOrganizador(c echo.Context) error {
 		})
 	}
 
-	// Validar que la cuenta esté activa (aprobada por admin)
-	if usuario.EstadoDeCuenta != 1 {
+	if usuario.Estado != 1 {
 		return c.JSON(http.StatusForbidden, map[string]interface{}{
-			"error":         "ACCOUNT_NOT_ACTIVE",
-			"message":       "Tu cuenta está pendiente de aprobación por un administrador. Recibirás un correo cuando sea activada.",
-			"estado_cuenta": usuario.EstadoDeCuenta,
+			"error":   "ACCOUNT_DISABLED",
+			"message": "Tu cuenta ha sido deshabilitada. Contacta al soporte.",
 		})
 	}
 
@@ -406,6 +411,13 @@ func (a *Api) GoogleAuth(c echo.Context) error {
 	}
 
 	usuarioExistente, err := a.BllController.Usuario.DB.Usuario.ObtenerUsuarioPorCorreo(googleUser.Email)
+
+	if usuarioExistente.Estado != 1 {
+		return c.JSON(http.StatusForbidden, map[string]interface{}{
+			"error":   "ACCOUNT_DISABLED",
+			"message": "Tu cuenta ha sido deshabilitada. Contacta al soporte.",
+		})
+	}
 
 	if err == nil && usuarioExistente != nil {
 		token, tokenErr := a.BllController.Token.CreateToken(usuarioExistente.ID, 24*time.Hour, "authentication")

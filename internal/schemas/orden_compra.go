@@ -66,9 +66,10 @@ type ObtenerHoldResponse struct {
 // Request:
 // { "paymentId": "" }
 type ConfirmarOrdenRequest struct {
-	PaymentID   string `json:"paymentId"`
-	IdEvento    int64  `json:"idEvento"`
-	FechaEvento string `json:"fechaEvento"` // "YYYY-MM-DD"
+	PaymentID       string `json:"paymentId"`
+	IdEvento        int64  `json:"idEvento"`
+	FechaEvento     string `json:"fechaEvento"` // "YYYY-MM-DD"
+	CantidadVendida int64  `json:"cantidadVendida"`
 }
 
 // Response 200:

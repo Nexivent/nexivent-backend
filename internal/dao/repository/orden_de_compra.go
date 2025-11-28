@@ -132,12 +132,12 @@ func (o *OrdenDeCompra) ObtenerIngresoCargoPorFecha(eventoID int64, fechaDesde *
 	}
 	var data IngresoCargoDTO
 
-	query := o.PostgresqlDB.Table("orden_de_compra oc").
+	query := o.PostgresqlDB.Model(&model.OrdenDeCompra{}).
 		Select(`
-            COALESCE(SUM(oc.total), 0) AS ingreso_total,
-            COALESCE(SUM(oc.monto_fee_servicio), 0) AS cargo_serv,
+            oc.total,
+            oc.monto_fee_servicio,
             COUNT(t.ticket_id) AS tickets_vendidos
-        `).
+        `).Table("orden_de_compra oc").
 		Joins("JOIN ticket t ON t.orden_de_compra_id = oc.orden_de_compra_id").
 		Joins("JOIN evento_fecha ef ON ef.evento_fecha_id = t.evento_fecha_id").
 		Where("ef.evento_id = ?", eventoID).
@@ -149,8 +149,13 @@ func (o *OrdenDeCompra) ObtenerIngresoCargoPorFecha(eventoID int64, fechaDesde *
 	} else {
 		query = query.Where("oc.fecha <= ?", fechaHasta)
 	}
+	query = query.Group("oc.orden_de_compra_id, oc.total, oc.monto_fee_servicio")
 
-	if err := query.Scan(&data).Error; err != nil {
+	err := o.PostgresqlDB.Table("(?) as ordenes", query).
+		Select("COALESCE(SUM(total), 0) AS ingreso_total, COALESCE(SUM(monto_fee_servicio), 0) AS cargo_serv, COALESCE(SUM(tickets_vendidos), 0) AS tickets_vendidos").
+		Scan(&data).Error
+
+	if err != nil {
 		o.logger.Errorf("ObtenerIngresoCargoPorFecha evento_id=%d: %v", eventoID, err)
 		return 0, 0, 0
 	}

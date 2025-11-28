@@ -277,6 +277,30 @@ func (a *OrdenDeCompra) ConfirmarOrden(
 		"Orden %d: Total=%.2f, FeeServicio=%.2f, GananciaNetaOrganizador=%.2f",
 		orderID, montoBruto, montoFee, gananciaNeta,
 	)
+	//Evento ganancia actualizar
+	// cantidadVendida: la cantidad de entradas / items de ESTA orden
+	cantidadVendida := req.CantidadVendida // ej: req.CantidadEntradas
+
+	ahora := time.Now()
+	usuarioMod := int64(1) // o el ID real del usuario que modifica
+
+	updates := map[string]any{
+		// SUMAR la ganancia de esta orden al total acumulado
+		"total_recaudado": gorm.Expr("total_recaudado + ?", gananciaNeta),
+
+		// SUMAR la cantidad vendida de esta orden al total acumulado
+		"cant_vendido_total": gorm.Expr("cant_vendido_total + ?", cantidadVendida),
+	}
+
+	_, err_2 := a.DaoPostgresql.Evento.ActualizarCamposEvento(
+		req.IdEvento, // eventoID
+		updates,
+		&usuarioMod,
+		&ahora,
+	)
+	if err_2 != nil {
+		a.logger.Errorf("Error actualizando totales del evento %d: %v", req.IdEvento, err)
+	}
 	// usar evento + fecha del request
 	if req.IdEvento > 0 && req.FechaEvento != "" {
 

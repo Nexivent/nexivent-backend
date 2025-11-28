@@ -1,4 +1,4 @@
-SELECT "evento"."evento_id","evento"."organizador_id","evento"."categoria_id","evento"."titulo","evento"."descripcion","evento"."lugar","evento"."evento_estado","evento"."cant_me_gusta","evento"."cant_no_interesa","evento"."cant_vendido_total","evento"."imagen_descripcion","evento"."imagen_portada","evento"."video_presentacion","evento"."imagen_escenario","evento"."total_recaudado","evento"."estado","evento"."usuario_creacion","evento"."fecha_creacion","evento"."usuario_modificacion","evento"."fecha_modificacion", f.fecha_evento FROM "evento" 
+/*SELECT "evento"."evento_id","evento"."organizador_id","evento"."categoria_id","evento"."titulo","evento"."descripcion","evento"."lugar","evento"."evento_estado","evento"."cant_me_gusta","evento"."cant_no_interesa","evento"."cant_vendido_total","evento"."imagen_descripcion","evento"."imagen_portada","evento"."video_presentacion","evento"."imagen_escenario","evento"."total_recaudado","evento"."estado","evento"."usuario_creacion","evento"."fecha_creacion","evento"."usuario_modificacion","evento"."fecha_modificacion", f.fecha_evento FROM "evento" 
 JOIN evento_fecha ef ON ef.evento_id = evento.evento_id 
 JOIN fecha f ON f.fecha_id = ef.fecha_id 
 WHERE f.fecha_evento >= CURRENT_DATE 
@@ -31,3 +31,31 @@ SELECT "evento"."evento_id","evento"."organizador_id","evento"."categoria_id","e
 SELECT * FROM interaccion;
 
 SELECT * FROM usuario;
+*/
+SELECT * FROM evento;
+
+SELECT * FROM "evento" WHERE organizador_id = 1 AND evento_estado=1;
+
+SELECT 
+            COALESCE(SUM(DISTINCT oc.total), 0) AS ingreso_total,
+            COALESCE(SUM(DISTINCT oc.monto_fee_servicio), 0) AS cargo_serv,
+            COUNT(t.ticket_id) AS tickets_vendidos
+         FROM orden_de_compra oc 
+         JOIN ticket t ON t.orden_de_compra_id = oc.orden_de_compra_id 
+         JOIN evento_fecha ef ON ef.evento_fecha_id = t.evento_fecha_id 
+         WHERE ef.evento_id = 9 
+                AND oc.estado_de_orden = 1 
+                AND t.estado_de_ticket = 1 
+                AND (oc.fecha BETWEEN '2025-11-28 00:00:00' AND '2025-11-28 23:59:00')
+        GROUP BY oc.orden_de_compra_id, oc.total, oc.monto_fee_servicio;
+
+SELECT * FROM orden_de_compra
+WHERE usuario_id = 5;
+
+SELECT * FROM evento_fecha
+WHERE evento_fecha.evento_id = 9;
+
+SELECT * FROM ticket
+JOIN evento_fecha ef ON ef.evento_fecha_id = ticket.evento_fecha_id
+WHERE ef.evento_id = 9;
+

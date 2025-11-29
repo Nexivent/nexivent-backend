@@ -98,6 +98,33 @@ func (a *Api) FetchEventosFeed(c echo.Context) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
+func (a *Api) FetchEventosConInteraccionesFeed(c echo.Context) error {
+	// 1. Leer usuarioId del query param (ej: /feed/eventos?usuarioId=123)
+	uidStr := c.QueryParam("usuarioId")
+
+	var usuarioId *int64 = nil
+
+	// 2. Si se envía, convertirlo a int64 y validar
+	if uidStr != "" {
+		uid, err := strconv.ParseInt(uidStr, 10, 64)
+		if err != nil || uid <= 0 {
+			// Si falla el parse o es <= 0 → error 422
+			return errors.HandleError(errors.UnprocessableEntityError.InvalidParsingInteger, c)
+		}
+		usuarioId = &uid
+	}
+
+	// 3. Llamar a la lógica de negocio (tu función real)
+	resp, newErr := a.BllController.Evento.FetchEventosConInteraccionesFeed(usuarioId)
+	if newErr != nil {
+		// 4. Si la capa BLL devuelve error → responderlo
+		return errors.HandleError(*newErr, c)
+	}
+
+	// 5. Todo OK → devolver JSON 200
+	return c.JSON(http.StatusOK, resp)
+}
+
 // @Summary      Fetch Eventos filtrados.
 // @Description  Obtiene la lista de eventos disponibles aplicando filtros opcionales.
 // @Tags         Evento

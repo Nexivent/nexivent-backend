@@ -707,6 +707,28 @@ func (e *Evento) FetchPostgresqlEventosFeed(usuarioId *int64) (*schemas.EventosP
 		TotalPaginas: totalPaginas,
 	}, nil
 }
+func (e *Evento) FetchPostgresqlEventosConInteraccionesFeed(usuarioId *int64) (*schemas.EventosPaginados, *errors.Error) {
+	eventos, err := e.DaoPostgresql.Evento.CargarEventosNuevamenteParaElFeed(usuarioId)
+	if err != nil {
+		e.logger.Errorf("Failed to fetch eventos: %v", err)
+		return nil, &errors.BadRequestError.EventoNotFound
+	}
+
+	mapEventDates(eventos)
+
+	total := int64(len(eventos))
+	totalPaginas := 0
+	if total > 0 {
+		totalPaginas = 1
+	}
+
+	return &schemas.EventosPaginados{
+		Eventos:      eventos,
+		Total:        total,
+		PaginaActual: 1,
+		TotalPaginas: totalPaginas,
+	}, nil
+}
 
 // FetchPostgresqlEventos retrieves the upcoming events with filters
 func (e *Evento) FetchPostgresqlEventosWithFilters(
@@ -1355,16 +1377,13 @@ func (e *Evento) EditarEvento(
 	return detalle, nil
 }
 
-func (e *Evento) ObtenerTransaccionesPorEvento(eventoId string) ([]model.OrdenDeCompra, *errors.Error) {
-	// Implementa la lógica para obtener las transacciones por evento
-	// Esto es solo un placeholder
-	var transacciones []model.OrdenDeCompra
-	transacciones, err := e.DaoPostgresql.OrdenDeCompra.ListarTransaccionesPorEvento(eventoId)
-	if err != nil {
-		e.logger.Errorf("Failed to get transacciones for evento %s: %v", eventoId, err)
-		return nil, &errors.BadRequestError.EventoNotFound
-	}
-	return transacciones, nil
+func (e *Evento) ObtenerTransaccionesPorEvento(eventoId int64) ([]daoPostgresql.Transaccion, *errors.Error) {
+    transacciones, err := e.DaoPostgresql.OrdenDeCompra.ListarTransaccionesPorEvento(eventoId)
+    if err != nil {
+        e.logger.Errorf("Failed to get transacciones for evento %d: %v", eventoId, err)
+        return nil, &errors.BadRequestError.EventoNotFound
+    }
+    return transacciones, nil
 }
 
 func (e *Evento) PostPostgresqlInteraccionUsuarioEvento(req schemas.InteraccionConEventoRequest) (*schemas.InteraccionConEventoResponse, *errors.Error) {

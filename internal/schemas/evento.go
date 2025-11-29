@@ -211,3 +211,4 @@ type InteraccionConEventoResponse struct {
 	Success bool                      `json:"success"`
 	Data    EventoInteraccionResponse `json:"data"`
 }
+

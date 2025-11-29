@@ -52,8 +52,8 @@ func NewNexiventPsqlEntidades(
 	if err := postgresqlDB.Use(otelgorm.NewPlugin()); err != nil {
 		logger.Panicln("Failed to instrument AstroCat Postgresql database")
 	}
-	BorrarTodasLasTablas(postgresqlDB)
-	crearTablas(postgresqlDB)
+	//BorrarTodasLasTablas(postgresqlDB)
+	//crearTablas(postgresqlDB)
 
 	return &NexiventPsqlEntidades{
 		Logger:          logger,

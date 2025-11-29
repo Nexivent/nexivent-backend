@@ -201,7 +201,7 @@ func (e *Evento) CargarEventosNuevamenteParaElFeed(usuarioId *int64) ([]*model.E
         )`)
 	// solo pre-cargamos la interacción del usuario (si existe)
 	if usuarioId != nil {
-		query = query.Preload("Interaccion", "usuario_id = ?", *usuarioId)
+		query = query.Preload("Interacciones", "usuario_id = ?", *usuarioId)
 	}
 
 	respuesta := query.

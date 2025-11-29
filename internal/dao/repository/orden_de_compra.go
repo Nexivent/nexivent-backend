@@ -165,38 +165,39 @@ func (o *OrdenDeCompra) ObtenerIngresoCargoPorFecha(eventoID int64, fechaDesde *
 
 // VentaPorSectorDTO resume ventas por sector para un evento.
 type VentaPorSectorDTO struct {
-	Sector          string  `gorm:"column:sector"`
+	Sector          string  `gorm:"column:tipo_sector"`
+	Capacidad       int64   `gorm:"column:capacidad"`
 	TicketsVendidos int64   `gorm:"column:tickets_vendidos"`
 	Ingresos        float64 `gorm:"column:ingresos"`
 }
 
 func (o *OrdenDeCompra) ObtenerVentasPorSector(eventoID int64, fechaDesde *time.Time, fechaHasta *time.Time) ([]VentaPorSectorDTO, error) {
 	if fechaHasta == nil {
-		fecha := time.Now()
+		fecha := time.Now().Truncate(24 * time.Hour)
 		fechaHasta = &fecha
 	}
 
 	var data []VentaPorSectorDTO
 
-	query := o.PostgresqlDB.Table("ticket t").
+	query := o.PostgresqlDB.Table("sector s").
 		Select(`
-			s.sector_tipo AS sector,
+			s.sector_tipo AS tipo_sector,
+			s.total_entradas as capacidad,
 			COUNT(t.ticket_id) AS tickets_vendidos,
 			COALESCE(SUM(tf.precio), 0) AS ingresos
 		`).
+		Joins("JOIN tarifa tf ON tf.sector_id = s.sector_id").
+		Joins("JOIN ticket t ON t.tarifa_id = tf.tarifa_id").
 		Joins("JOIN orden_de_compra oc ON oc.orden_de_compra_id = t.orden_de_compra_id").
-		Joins("JOIN evento_fecha ef ON ef.evento_fecha_id = t.evento_fecha_id").
-		Joins("JOIN tarifa tf ON tf.tarifa_id = t.tarifa_id").
-		Joins("JOIN sector s ON s.sector_id = tf.sector_id").
-		Where("ef.evento_id = ?", eventoID).
+		Where("s.evento_id = ?", eventoID).
 		Where("oc.estado_de_orden = ?", util.OrdenConfirmada.Codigo()).
-		Where("t.estado_de_ticket <> ?", util.TicketCancelado.Codigo()).
-		Group("s.sector_tipo")
+		Where("t.estado_de_ticket = ?", util.TicketVendido.Codigo()).
+		Group("s.sector_tipo, s.total_entradas")
 
 	if fechaDesde != nil {
-		query = query.Where("oc.fecha BETWEEN ? AND ?", fechaDesde, fechaHasta)
+		query = query.Where("DATE(oc.fecha) BETWEEN ? AND ?", fechaDesde, fechaHasta)
 	} else {
-		query = query.Where("oc.fecha <= ?", fechaHasta)
+		query = query.Where("DATE(oc.fecha) <= ?", fechaHasta)
 	}
 
 	if err := query.Find(&data).Error; err != nil {

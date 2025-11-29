@@ -31,7 +31,7 @@ SELECT "evento"."evento_id","evento"."organizador_id","evento"."categoria_id","e
 SELECT * FROM interaccion;
 
 SELECT * FROM usuario;
-*/
+
 SELECT * FROM evento;
 
 SELECT * FROM "evento" WHERE organizador_id = 1 AND evento_estado=1;
@@ -59,3 +59,28 @@ SELECT * FROM ticket
 JOIN evento_fecha ef ON ef.evento_fecha_id = ticket.evento_fecha_id
 WHERE ef.evento_id = 9;
 
+
+SELECT s.sector_tipo AS sector,
+        --s.total_entradas as capacidad,
+        COUNT(t.ticket_id) AS tickets_vendidos,
+        COALESCE(SUM(tf.precio), 0) AS ingresos
+FROM ticket t 
+JOIN orden_de_compra oc ON oc.orden_de_compra_id = t.orden_de_compra_id 
+JOIN evento_fecha ef ON ef.evento_fecha_id = t.evento_fecha_id 
+JOIN tarifa tf ON tf.tarifa_id = t.tarifa_id 
+JOIN sector s ON s.sector_id = tf.sector_id 
+WHERE ef.evento_id = 7 
+AND oc.estado_de_orden = 1 
+AND t.estado_de_ticket = 1 
+AND (oc.fecha BETWEEN '2025-11-28 00:00:00' AND '2025-11-28 18:04:48.446') 
+GROUP BY s.sector_id;--, s.total_entradas
+*/
+
+SELECT 
+                        s.sector_tipo AS tipo_sector,
+                        s.total_entradas as capacidad,
+                        COUNT(t.ticket_id) AS tickets_vendidos,
+                        COALESCE(SUM(tf.precio), 0) AS ingresos
+                 FROM sector s JOIN tarifa tf ON tf.sector_id = s.sector_id JOIN ticket t ON t.tarifa_id = tf.tarifa_id JOIN orden_de_compra oc ON oc.orden_de_compra_id = t.orden_de_compra_id WHERE s.evento_id = 4 AND oc.estado_de_orden = 1 AND t.estado_de_ticket = 1 AND (DATE(oc.fecha) BETWEEN '2025-11-28 00:00:00' AND '2025-11-28 19:00:00') GROUP BY s.sector_tipo, s.total_entradas;
+
+SELECT * FROM orden_de_compra;

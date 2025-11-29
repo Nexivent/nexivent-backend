@@ -26,7 +26,7 @@ func (a *Api) HealthCheck(c echo.Context) error {
 }
 
 func (a *Api) RegisterRoutes(configEnv *config.ConfigEnv) {
-	allowOrigins := []string{"http://localhost:3000", "http://localhost:3001", "https://accounts.google.com"}
+	allowOrigins := []string{"http://localhost:3000", "http://localhost:3001", "https://accounts.google.com", "https://front-nexivent-bevv.vercel.app/"}
 
 	if extraOrigins := os.Getenv("CORS_ALLOWED_ORIGINS"); extraOrigins != "" {
 		if extraOrigins == "*" {

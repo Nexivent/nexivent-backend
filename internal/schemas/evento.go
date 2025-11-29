@@ -180,9 +180,10 @@ type EventoOrganizadorReporte struct { ////////////////////////
 }
 
 type VentaPorSectorOrganizador struct {
-	Sector   string  `json:"sector"`
-	Vendidos int64   `json:"vendidos"`
-	Ingresos float64 `json:"ingresos"`
+	Sector    string  `json:"sector"`
+	Vendidos  int64   `json:"vendidos"`
+	Ingresos  float64 `json:"ingresos"`
+	Capacidad int64   `json:"capacidad"`
 }
 
 type EventoFechaOrganizadorReporte struct {

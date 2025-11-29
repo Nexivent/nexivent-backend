@@ -1000,9 +1000,10 @@ func (e *Evento) GetPostgresqlReporteEventosOrganizador(
 		ventasPorSector := make([]schemas.VentaPorSectorOrganizador, 0, len(ventasPorSectorDTO))
 		for _, v := range ventasPorSectorDTO {
 			ventasPorSector = append(ventasPorSector, schemas.VentaPorSectorOrganizador{
-				Sector:   v.Sector,
-				Vendidos: v.TicketsVendidos,
-				Ingresos: v.Ingresos,
+				Sector:    v.Sector,
+				Vendidos:  v.TicketsVendidos,
+				Ingresos:  v.Ingresos,
+				Capacidad: v.Capacidad,
 			})
 		}
 
@@ -1028,7 +1029,7 @@ func (e *Evento) GetPostgresqlReporteEventosOrganizador(
 
 		estado := deriveEstadoEventoOrganizador(ev.EventoEstado, capacidadEvento, ticketsVendidos)
 		gananciaNeta := ingresoTotal - cargosServicio
-		comisiones := gananciaNeta * 0.05
+		//comisiones := gananciaNeta * 0.05
 		if gananciaNeta < 0 {
 			gananciaNeta = 0 // por si acaso, evitar negativos raros
 		}
@@ -1044,7 +1045,7 @@ func (e *Evento) GetPostgresqlReporteEventosOrganizador(
 			VentasPorSector: ventasPorSector,
 			Fechas:          fechas,
 			CargosServicio:  cargosServicio,
-			Comisiones:      comisiones,
+			Comisiones:      0,
 		})
 	}
 

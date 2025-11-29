@@ -20,6 +20,9 @@ type OrdenDeCompra struct {
 
 	Tickets          []Ticket
 	ComprobantesPago []ComprobanteDePago
+	// Campos calculados/virtuales (no se persisten en BD)
+    PrecioEntrada      float64    `gorm:"-" json:"precio_entrada,omitempty"`
+    TicketID           *int64     `gorm:"-" json:"ticket_id,omitempty"`
 }
 
 func (OrdenDeCompra) TableName() string { return "orden_de_compra" }

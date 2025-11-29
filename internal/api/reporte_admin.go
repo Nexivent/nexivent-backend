@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/Nexivent/nexivent-backend/errors"
 	"github.com/Nexivent/nexivent-backend/internal/schemas"
@@ -40,16 +41,16 @@ func (a *Api) GetAdminReports(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, resp)
 }
-
 // GetAdminTransactionsByEvento GET /api/admin/transactions/:eventoId
 func (a *Api) GetAdminTransactionsByEvento(c echo.Context) error {
-	eventoId := c.Param("eventoId")
-
-	// Call Adapter
-	resp, err := a.BllController.Evento.ObtenerTransaccionesPorEvento(eventoId)
-	// Manejo de errores
+	idParam := c.Param("eventoId")
+	eventoID, err := strconv.ParseInt(idParam, 10, 64)
 	if err != nil {
-		return errors.HandleError(*err, c)
+		return errors.HandleError(errors.BadRequestError.InvalidIDParam, c)
+	}
+	resp, err_2 := a.BllController.Evento.ObtenerTransaccionesPorEvento(eventoID)
+	if err_2 != nil {
+		return errors.HandleError(*err_2, c)
 	}
 	return c.JSON(http.StatusOK, resp)
 }

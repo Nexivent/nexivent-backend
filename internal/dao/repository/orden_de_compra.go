@@ -11,6 +11,20 @@ import (
 	"gorm.io/gorm/clause"
 )
 
+type Transaccion struct {
+	OrdenDeCompraID  int64      `json:"orden_de_compra_id"`
+    UsuarioID        int64      `json:"usuario_id"`
+    Fecha            time.Time  `json:"fecha"`
+    Total            float64    `json:"total"`
+    MetodoDePagoID   *int64     `json:"metodo_de_pago_id"`
+    EstadoDeOrden    int16      `json:"estado_de_orden"`
+    MontoFeeServicio float64    `json:"monto_fee_servicio"`
+    FechaHoraIni     time.Time  `json:"fecha_hora_ini"`
+    FechaHoraFin     *time.Time `json:"fecha_hora_fin"`
+    TicketID         int64      `json:"ticket_id"`
+    PrecioEntrada    float64    `json:"precio_entrada"`
+}
+
 type OrdenDeCompra struct {
 	logger       logging.Logger
 	PostgresqlDB *gorm.DB
@@ -132,12 +146,12 @@ func (o *OrdenDeCompra) ObtenerIngresoCargoPorFecha(eventoID int64, fechaDesde *
 	}
 	var data IngresoCargoDTO
 
-	query := o.PostgresqlDB.Model(&model.OrdenDeCompra{}).
+	query := o.PostgresqlDB.Table("orden_de_compra oc").
 		Select(`
-            oc.total,
-            oc.monto_fee_servicio,
+            COALESCE(SUM(oc.total), 0) AS ingreso_total,
+            COALESCE(SUM(oc.monto_fee_servicio), 0) AS cargo_serv,
             COUNT(t.ticket_id) AS tickets_vendidos
-        `).Table("orden_de_compra oc").
+        `).
 		Joins("JOIN ticket t ON t.orden_de_compra_id = oc.orden_de_compra_id").
 		Joins("JOIN evento_fecha ef ON ef.evento_fecha_id = t.evento_fecha_id").
 		Where("ef.evento_id = ?", eventoID).
@@ -149,13 +163,8 @@ func (o *OrdenDeCompra) ObtenerIngresoCargoPorFecha(eventoID int64, fechaDesde *
 	} else {
 		query = query.Where("oc.fecha <= ?", fechaHasta)
 	}
-	query = query.Group("oc.orden_de_compra_id, oc.total, oc.monto_fee_servicio")
 
-	err := o.PostgresqlDB.Table("(?) as ordenes", query).
-		Select("COALESCE(SUM(total), 0) AS ingreso_total, COALESCE(SUM(monto_fee_servicio), 0) AS cargo_serv, COALESCE(SUM(tickets_vendidos), 0) AS tickets_vendidos").
-		Scan(&data).Error
-
-	if err != nil {
+	if err := query.Scan(&data).Error; err != nil {
 		o.logger.Errorf("ObtenerIngresoCargoPorFecha evento_id=%d: %v", eventoID, err)
 		return 0, 0, 0
 	}
@@ -230,17 +239,36 @@ func (c *OrdenDeCompra) ConfirmarOrdenConPago(orderID int64, metodoPagoID int64,
 }
 
 // ObtenerTransaccionesPorEvento obtiene todas las órdenes de compra (transacciones) asociadas a un evento específico.
-func (c *OrdenDeCompra) ListarTransaccionesPorEvento(eventoId string) ([]model.OrdenDeCompra, error) {
-	var ordenes []model.OrdenDeCompra
-	err := c.PostgresqlDB.
-		Joins("JOIN ticket t ON t.orden_de_compra_id = orden_de_compra.orden_de_compra_id").
-		Joins("JOIN evento_fecha ef ON ef.evento_fecha_id = t.evento_fecha_id").
-		Where("ef.evento_id = ?", eventoId).
-		Find(&ordenes).Error
-	if err != nil {
-		c.logger.Errorf("ListarTransaccionesPorEvento(%s): %v", eventoId, err)
-		return nil, err
-	}
+func (c *OrdenDeCompra) ListarTransaccionesPorEvento(eventoId int64) ([]Transaccion, error) {
+    var transacciones []Transaccion
+    
+    err := c.PostgresqlDB.
+        Table("orden_de_compra oc").
+        Select(`
+            oc.orden_de_compra_id,
+            oc.usuario_id,
+            oc.fecha,
+            oc.total,
+            oc.metodo_de_pago_id,
+            oc.estado_de_orden,
+            oc.monto_fee_servicio,
+            oc.fecha_hora_ini,
+            oc.fecha_hora_fin,
+            t.ticket_id,
+            COALESCE(tarifa.precio, 0) as precio_entrada
+        `).
+        Joins("JOIN ticket t ON t.orden_de_compra_id = oc.orden_de_compra_id").
+        Joins("JOIN tarifa ON tarifa.tarifa_id = t.tarifa_id").
+        Joins("JOIN evento_fecha ef ON ef.evento_fecha_id = t.evento_fecha_id").
+        Where("ef.evento_id = ?", eventoId).
+        Where("oc.estado_de_orden IN (?, ?)", util.OrdenTemporal.Codigo(), util.OrdenConfirmada.Codigo()).
+        Order("oc.fecha DESC, oc.orden_de_compra_id DESC").
+        Scan(&transacciones).Error
+    
+    if err != nil {
+        c.logger.Errorf("ListarTransaccionesPorEvento(%d): %v", eventoId, err)
+        return nil, err
+    }
 
-	return ordenes, nil
+    return transacciones, nil
 }

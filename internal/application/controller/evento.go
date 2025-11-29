@@ -5,7 +5,7 @@ import (
 
 	"github.com/Nexivent/nexivent-backend/errors"
 	"github.com/Nexivent/nexivent-backend/internal/application/adapter"
-	"github.com/Nexivent/nexivent-backend/internal/dao/model"
+	daoPostgresql "github.com/Nexivent/nexivent-backend/internal/dao/repository"
 	"github.com/Nexivent/nexivent-backend/internal/schemas"
 	"github.com/Nexivent/nexivent-backend/logging"
 )
@@ -41,6 +41,9 @@ func (ec *EventoController) FetchEventos() (*schemas.EventosPaginados, *errors.E
 
 func (ec *EventoController) FetchEventosFeed(usuarioId *int64) (*schemas.EventosPaginados, *errors.Error) {
 	return ec.EventoAdapter.FetchPostgresqlEventosFeed(usuarioId)
+}
+func (ec *EventoController) FetchEventosConInteraccionesFeed(usuarioId *int64) (*schemas.EventosPaginados, *errors.Error) {
+	return ec.EventoAdapter.FetchPostgresqlEventosConInteraccionesFeed(usuarioId)
 }
 
 func (ec *EventoController) FetchEventosWithFilters(
@@ -105,8 +108,8 @@ func (c *EventoController) EditarEvento(req *schemas.EditarEventoRequest) (*sche
 	return c.EventoAdapter.EditarEvento(req)
 }
 
-func (ec *EventoController) ObtenerTransaccionesPorEvento(eventoId string) ([]model.OrdenDeCompra, *errors.Error) {
-	return ec.EventoAdapter.ObtenerTransaccionesPorEvento(eventoId)
+func (ec *EventoController) ObtenerTransaccionesPorEvento(eventoId int64) ([]daoPostgresql.Transaccion, *errors.Error) {
+    return ec.EventoAdapter.ObtenerTransaccionesPorEvento(eventoId)
 }
 
 func (ec *EventoController) PostInteraccionUsuarioEvento(req schemas.InteraccionConEventoRequest) (*schemas.InteraccionConEventoResponse, *errors.Error) {

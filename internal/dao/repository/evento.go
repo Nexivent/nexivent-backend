@@ -176,6 +176,45 @@ func (e *Evento) ObtenerEventosParaElFeed(usuarioId *int64) ([]*model.Evento, er
 	return eventos, nil
 }
 
+func (e *Evento) CargarEventosNuevamenteParaElFeed(usuarioId *int64) ([]*model.Evento, error) {
+	var eventos []*model.Evento
+
+	// Query base
+	query := e.PostgresqlDB.
+		Preload("Fechas").
+		Preload("Fechas.Fecha").
+		Preload("Sectores").
+		Preload("Sectores.Tarifa").
+		Preload("Sectores.Tarifa.TipoDeTicket").
+		Preload("Sectores.Tarifa.PerfilPersona").
+		Preload("TiposTicket").
+		Joins("JOIN evento_fecha ef ON ef.evento_id = evento.evento_id").
+		Joins("JOIN fecha f ON f.fecha_id = ef.fecha_id").
+		Where("f.fecha_evento >= CURRENT_DATE").
+		Where("evento.evento_estado = 1").
+		Where("evento.estado = 1").
+		Where(`f.fecha_evento = (
+            SELECT MIN(f2.fecha_evento)
+            FROM fecha f2
+            JOIN evento_fecha ef2 ON ef2.fecha_id = f2.fecha_id
+            WHERE ef2.evento_id = evento.evento_id
+        )`)
+	// solo pre-cargamos la interacción del usuario (si existe)
+	if usuarioId != nil {
+		query = query.Preload("Interacciones", "usuario_id = ?", *usuarioId)
+	}
+
+	respuesta := query.
+		Order("((2*evento.cant_me_gusta - evento.cant_no_interesa) / GREATEST(1, (f.fecha_evento::date - CURRENT_DATE))) DESC").
+		Find(&eventos)
+
+	if respuesta.Error != nil {
+		return nil, respuesta.Error
+	}
+
+	return eventos, nil
+}
+
 // ===============================
 //
 //	Actualización: UBICACIÓN
